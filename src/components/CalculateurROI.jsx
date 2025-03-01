@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { calculerTRI, calculerDelaiRecuperation, calculerFluxActualise, appliquerInflation } from '../utils/calculationHelpers';
+import PDFExport from './PDFExport';
 
 // Calculateur général pour l'automatisation industrielle
 const CalculateurROI = () => {
@@ -41,6 +42,14 @@ const CalculateurROI = () => {
   const [variationSensibilite, setVariationSensibilite] = useState(20); // variation en pourcentage
   const [resultatsSensibilite, setResultatsSensibilite] = useState([]);
   const [viewMode, setViewMode] = useState('basique'); // 'basique', 'avance'
+  
+  // État pour le mode d'export PDF
+  const [showPDF, setShowPDF] = useState(false);
+  
+  // Fonction pour gérer l'export PDF
+  const handleExportPDF = () => {
+    setShowPDF(!showPDF);
+  };
   
   // Fonction pour calculer l'analyse de sensibilité
   const calculerSensibilite = () => {
@@ -370,6 +379,52 @@ const CalculateurROI = () => {
     annee: `Année ${item.annee}`,
     cumulatif: item.cumulFluxTresorerie
   }));
+
+  // Si le mode PDF est activé, afficher le composant d'export PDF
+  if (showPDF) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="mb-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-blue-700">Export PDF</h2>
+          <button
+            onClick={handleExportPDF}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all"
+          >
+            Revenir au calculateur
+          </button>
+        </div>
+        
+        <PDFExport 
+          type="general" 
+          data={{
+            coutSysteme,
+            coutInstallation,
+            coutIngenierie,
+            coutFormation,
+            coutMaintenance,
+            coutEnergie,
+            dureeVie,
+            tauxAmortissement,
+            coutMainOeuvre,
+            nbEmployesRemplaces,
+            coutErrorHumaine,
+            augmentationProduction,
+            tauxProblemeQualite,
+            coutQualite,
+            production,
+            margeUnitaire,
+            tauxInflation,
+            tauxActualisation,
+            subventions,
+            roi,
+            delaiRecuperation,
+            van,
+            tri
+          }} 
+        />
+      </div>
+    );
+  }
   
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
@@ -682,7 +737,18 @@ const CalculateurROI = () => {
         {/* Résultats */}
         <div className="flex flex-col gap-6">
           <div className="bg-white p-4 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-blue-700">Résultats</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-blue-700">Résultats</h2>
+              <button
+                onClick={handleExportPDF}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-all flex items-center"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Exporter PDF
+              </button>
+            </div>
             
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-blue-50 p-3 rounded">
