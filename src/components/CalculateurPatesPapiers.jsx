@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { calculerTRI, calculerDelaiRecuperation, calculerFluxActualise, appliquerInflation } from '../utils/calculationHelpers';
 
 // Calculateur spécifique à l'industrie des pâtes et papiers
 const CalculateurPatesPapiers = () => {
   // États pour les données d'entrée - Paramètres spécifiques à l'industrie des pâtes et papiers
+  // Configuration par défaut pour le désempilement et débrochage de ballots
   const [coutSysteme, setCoutSysteme] = useState(380000);
   const [coutInstallation, setCoutInstallation] = useState(45000);
   const [coutIngenierie, setCoutIngenierie] = useState(25000);
@@ -41,8 +43,8 @@ const CalculateurPatesPapiers = () => {
   const [tri, setTri] = useState(0);
   const [economiesCO2, setEconomiesCO2] = useState(0);
   
-  // Fonction de calcul des résultats optimisée avec useCallback
-  const calculerROI = useCallback(() => {
+  // Fonction de calcul des résultats
+  const calculerROI = () => {
     const investissementInitial = coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions;
     let fluxTresorerie = [];
     let cumulFluxTresorerie = 0;
@@ -154,34 +156,22 @@ const CalculateurPatesPapiers = () => {
     setVan(valeurActuelleNette);
     setTri(triApprox);
     setEconomiesCO2(totalTonnesCO2Economisees);
-
-    return {
-      resultatAnnuel: fluxTresorerie,
-      roi: roiCalcule,
-      delaiRecuperation: periodeRecuperation,
-      van: valeurActuelleNette,
-      tri: triApprox,
-      economiesCO2: totalTonnesCO2Economisees
-    };
-  }, [
-    coutSysteme, coutInstallation, coutIngenierie, coutFormation, 
-    coutMaintenance, coutEnergie, dureeVie, tauxAmortissement, 
-    coutMainOeuvre, nbEmployesRemplaces, reductionDechet, 
-    coutDechet, tonnageAnnuel, augmentationProduction, 
-    reductionEnergie, coutEnergieTonne, reductionEau, 
-    coutEauTonne, ameliorationQualite, margeBrute, 
-    tauxInflation, tauxActualisation, subventions, 
-    reductionEmpreinteCO2, tauxRejetsFils, tauxRejetsManuel, 
-    coutRejets
-  ]);
-
-  // Utilisation de useEffect avec la fonction de calcul
+  };
+  
+  // Calcul initial et lors des changements
   useEffect(() => {
     calculerROI();
-  }, [calculerROI]);
+  }, [
+    coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance, coutEnergie,
+    dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
+    reductionDechet, coutDechet, tonnageAnnuel, augmentationProduction,
+    reductionEnergie, coutEnergieTonne, reductionEau, coutEauTonne,
+    ameliorationQualite, margeBrute, tauxInflation, tauxActualisation, subventions,
+    reductionEmpreinteCO2, capaciteTraitement, tauxRejetsFils, tauxRejetsManuel, coutRejets
+  ]);
 
-  // Données pour les graphiques (memoized pour éviter des recalculs inutiles)
-  const dataComparaisonTauxRejets = useMemo(() => [
+  // Données pour les graphiques
+  const dataComparaisonTauxRejets = [
     {
       name: 'Système manuel',
       taux: tauxRejetsManuel
@@ -190,21 +180,234 @@ const CalculateurPatesPapiers = () => {
       name: 'Système automatisé',
       taux: tauxRejetsFils
     }
-  ], [tauxRejetsManuel, tauxRejetsFils]);
+  ];
 
   // Données pour le graphique de flux de trésorerie
-  const dataFluxTresorerie = useMemo(() => 
-    resultatAnnuel.map(item => ({
-      annee: `Année ${item.annee}`,
-      fluxTresorerie: item.fluxAnnuel
-    })), 
-    [resultatAnnuel]
-  );
+  const dataFluxTresorerie = resultatAnnuel.map(item => ({
+    annee: `Année ${item.annee}`,
+    fluxTresorerie: item.fluxAnnuel
+  }));
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
-      {/* Le reste du code de rendu reste identique à votre version originale */}
+      <div className="mb-8 bg-green-100 p-4 rounded-lg border border-green-300">
+        <h3 className="text-xl font-bold text-green-800 mb-2">Avantages de l'Automatisation du Désempilement et Débrochage de Ballots</h3>
+        <p className="mb-2">Notre système automatisé de débrochage de ballots peut traiter jusqu'à <span className="font-bold">{capaciteTraitement} ballots par heure</span>, offrant un ROI généralement inférieur à 2 ans.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div className="bg-white p-3 rounded shadow">
+            <h4 className="font-bold text-green-700">Efficacité Maximale</h4>
+            <p>Augmentation notable de la capacité de production avec une alimentation continue du triturateur.</p>
+          </div>
+          <div className="bg-white p-3 rounded shadow">
+            <h4 className="font-bold text-green-700">Sécurité Améliorée</h4>
+            <p>Réduction des risques d'accidents liés à la manipulation manuelle des ballots et des fils métalliques.</p>
+          </div>
+          <div className="bg-white p-3 rounded shadow">
+            <h4 className="font-bold text-green-700">Qualité Supérieure</h4>
+            <p>Moins de contamination par les fils métalliques, réduisant les arrêts machine et améliorant la qualité du produit final.</p>
+          </div>
+        </div>
+      </div>
       
+      <h1 className="text-2xl font-bold text-green-800 mb-6 text-center">Calculateur de ROI pour l'Automatisation du Désempilement et Débrochage de Ballots</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Formulaire d'entrée */}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-green-700">Paramètres d'investissement</h2>
+          
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-2">Coûts initiaux</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût du système ($)</label>
+                <input
+                  type="number"
+                  value={coutSysteme}
+                  onChange={(e) => setCoutSysteme(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût d'installation ($)</label>
+                <input
+                  type="number"
+                  value={coutInstallation}
+                  onChange={(e) => setCoutInstallation(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+              </div
+                <div>
+                <label className="block text-sm font-medium mb-1">Coût d'ingénierie ($)</label>
+                <input
+                  type="number"
+                  value={coutIngenierie}
+                  onChange={(e) => setCoutIngenierie(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût de formation ($)</label>
+                <input
+                  type="number"
+                  value={coutFormation}
+                  onChange={(e) => setCoutFormation(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Subventions ($)</label>
+                <input
+                  type="number"
+                  value={subventions}
+                  onChange={(e) => setSubventions(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-2">Performance du système</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Capacité (ballots/heure)</label>
+                <input
+                  type="number"
+                  value={capaciteTraitement}
+                  onChange={(e) => setCapaciteTraitement(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Nombre de ballots que le système peut traiter par heure à pleine capacité.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Taux de rejet fils système (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={tauxRejetsFils}
+                  onChange={(e) => setTauxRejetsFils(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Pourcentage de fils métalliques retrouvés dans la pâte avec le système automatisé.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Taux de rejet fils manuel (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={tauxRejetsManuel}
+                  onChange={(e) => setTauxRejetsManuel(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Pourcentage de fils métalliques retrouvés dans la pâte avec le système manuel actuel.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût des rejets/tonne ($)</label>
+                <input
+                  type="number"
+                  value={coutRejets}
+                  onChange={(e) => setCoutRejets(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Coût moyen par tonne associé au retraitement ou à la perte liée aux rejets de fils métalliques.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-2">Coûts opérationnels</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Maintenance annuelle ($)</label>
+                <input
+                  type="number"
+                  value={coutMaintenance}
+                  onChange={(e) => setCoutMaintenance(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût énergie système/an ($)</label>
+                <input
+                  type="number"
+                  value={coutEnergie}
+                  onChange={(e) => setCoutEnergie(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Résultats */}
+        <div className="flex flex-col gap-6">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4 text-green-700">Résultats</h2>
+            
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-green-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">ROI global</h3>
+                <p className="text-2xl font-bold text-green-800">{roi.toFixed(2)}%</p>
+              </div>
+              <div className="bg-blue-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">Délai de récupération</h3>
+                <p className={`text-2xl font-bold ${delaiRecuperation <= 2 ? 'text-green-600' : 'text-blue-800'}`}>
+                  {delaiRecuperation.toFixed(2)} ans
+                  {delaiRecuperation <= 2 && <span className="text-sm font-normal block">ROI inférieur à 2 ans ✓</span>}
+                </p>
+              </div>
+              <div className="bg-purple-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">VAN</h3>
+                <p className="text-2xl font-bold text-purple-800">${van.toFixed(2)}</p>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">TRI</h3>
+                <p className="text-2xl font-bold text-indigo-800">{tri.toFixed(2)}%</p>
+              </div>
+            </div>
+            
+            <div className="bg-green-50 p-3 rounded mb-6">
+              <h3 className="text-sm font-medium text-gray-700">Impact opérationnel - Capacité</h3>
+              <p className="text-2xl font-bold text-green-800">{capaciteTraitement} ballots/heure</p>
+              <p className="text-sm text-gray-600">Une alimentation continue et fiable pour votre triturateur</p>
+            </div>
+            
+            <div className="mb-6">
+              <h3 className="font-medium text-gray-700 mb-2">Avantages par rapport au système actuel</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-red-50 p-3 rounded">
+                  <h4 className="text-sm font-medium text-gray-700">Taux de rejet manuel</h4>
+                  <p className="text-xl font-bold text-red-600">{tauxRejetsManuel}%</p>
+                </div>
+                <div className="bg-green-50 p-3 rounded">
+                  <h4 className="text-sm font-medium text-gray-700">Taux de rejet système</h4>
+                  <p className="text-xl font-bold text-green-600">{tauxRejetsFils}%</p>
+                </div>
+                <div className="bg-red-50 p-3 rounded">
+                  <h4 className="text-sm font-medium text-gray-700">Main d'œuvre</h4>
+                  <p className="text-xl font-bold text-red-600">2+ opérateurs</p>
+                </div>
+                <div className="bg-green-50 p-3 rounded">
+                  <h4 className="text-sm font-medium text-gray-700">Main d'œuvre</h4>
+                  <p className="text-xl font-bold text-green-600">0-1 opérateur</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 p-4 rounded border border-yellow-200 mb-6">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Pourquoi automatiser?</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Sécurité: réduction des risques liés à la manipulation des fils métalliques</li>
+                <li>Qualité: moins de fils dans le pulpeur = moins d'arrêts et meilleure pâte</li>
+                <li>Production: capacité accrue et constante d'alimentation</li>
+                <li>Économies: réduction de la main d'œuvre et des déchets</li>
+                <li>Environnement: moins de pertes et de consommation d'énergie</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Graphique de comparaison des taux de rejet */}
       <div className="mt-8 bg-white p-4 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4 text-green-700">Comparaison des taux de rejet de fils métalliques</h2>
@@ -222,8 +425,29 @@ const CalculateurPatesPapiers = () => {
         </div>
         <p className="text-sm text-gray-600 mt-2">Le système automatisé réduit considérablement le taux de fils métalliques retrouvés dans la pâte, améliorant ainsi la qualité du produit final et réduisant les arrêts machine.</p>
       </div>
-
-      {/* Le reste de votre composant reste identique */}
+      
+      {/* Section Impact environnemental */}
+      <div className="mt-8 bg-white p-4 rounded-lg shadow">
+        <h2 className="text-xl font-semibold mb-4 text-green-700">Impact environnemental</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-green-50 p-4 rounded">
+            <h3 className="font-medium text-green-800 mb-1">Réduction émissions CO2</h3>
+            <p className="text-2xl font-bold text-green-600">{reductionEmpreinteCO2}%</p>
+            <p className="text-sm text-gray-600">Des processus de production</p>
+          </div>
+          <div className="bg-blue-50 p-4 rounded">
+            <h3 className="font-medium text-blue-800 mb-1">Économie d'eau</h3>
+            <p className="text-2xl font-bold text-blue-600">{reductionEau}%</p>
+            <p className="text-sm text-gray-600">De la consommation habituelle</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded">
+            <h3 className="font-medium text-purple-800 mb-1">Tonnes CO2 économisées</h3>
+            <p className="text-2xl font-bold text-purple-600">{economiesCO2.toFixed(0)} tonnes</p>
+            <p className="text-sm text-gray-600">Sur la durée de vie du système</p>
+          </div>
+        </div>
+        <p className="text-sm text-gray-600 mt-4">L'automatisation contribue significativement à la réduction de l'empreinte environnementale de votre usine, un argument de plus en plus important pour les clients et régulateurs.</p>
+      </div>
     </div>
   );
 };
