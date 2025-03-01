@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { calculerTRI, calculerDelaiRecuperation, calculerFluxActualise, appliquerInflation } from '../utils/calculationHelpers';
 
 // Calculateur spécifique à l'industrie des pâtes et papiers
 const CalculateurPatesPapiers = () => {
@@ -236,8 +235,8 @@ const CalculateurPatesPapiers = () => {
                   onChange={(e) => setCoutInstallation(Number(e.target.value))}
                   className="w-full p-2 border rounded"
                 />
-              </div
-                <div>
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-1">Coût d'ingénierie ($)</label>
                 <input
                   type="number"
@@ -408,6 +407,7 @@ const CalculateurPatesPapiers = () => {
           </div>
         </div>
       </div>
+      
       {/* Graphique de comparaison des taux de rejet */}
       <div className="mt-8 bg-white p-4 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4 text-green-700">Comparaison des taux de rejet de fils métalliques</h2>
