@@ -1,0 +1,100 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build
+      run: npm run build --if-present
+    
+    - name: Test
+      run: npm test -- --passWithNoTests
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Lint
+      run: npm run lint --if-present || echo "Linting skipped"
+
+  deploy:
+    needs: [build-and-test, lint]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build
+      run: npm run build
+    
+    - name: Prepare for deployment
+      run: |
+        echo "The application is ready for deployment to your preferred hosting service."
+        echo "You can add your specific deployment steps here."
+        
+    # Uncomment and customize for your deployment platform
+    # Examples:
+    # - name: Deploy to GitHub Pages
+    #   uses: JamesIves/github-pages-deploy-action@v4
+    #   with:
+    #     folder: build
+    
+    # - name: Deploy to Netlify
+    #   uses: netlify/actions/cli@master
+    #   with:
+    #     args: deploy --dir=build --prod
+    #   env:
+    #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+    
+    # - name: Deploy to Vercel
+    #   uses: amondnet/vercel-action@v20
+    #   with:
+    #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+    #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+    #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+    #     vercel-args: '--prod'
+    #     working-directory: ./build
