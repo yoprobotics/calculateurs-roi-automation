@@ -171,6 +171,9 @@ const CalculateurPatesPapiers = () => {
     // Calcul de la réduction de main d'œuvre
     const reductionMainOeuvreCalc = (nombreEmployes - (nombreEmployes - nbEmployesRemplaces)) * coutMainOeuvre;
     
+    // Variable pour stocker le bénéfice de qualité de la dernière année (pour l'affichage)
+    let dernierBeneficeQualite = 0;
+    
     // Calcul des économies annuelles et bénéfices
     for (let annee = 1; annee <= dureeVie; annee++) {
       // Calcul des coûts ajustés avec l'inflation
@@ -204,6 +207,11 @@ const CalculateurPatesPapiers = () => {
       
       // Bénéfices liés à l'amélioration de la qualité (moins de retours, meilleure réputation)
       const beneficeQualite = (tonnageAnnuel * ameliorationQualite / 100) * (margeBrute * 0.2) * facteurInflation;
+      
+      // Stockage de la dernière valeur pour l'affichage
+      if (annee === dureeVie) {
+        dernierBeneficeQualite = beneficeQualite;
+      }
       
       // Économies liées à la sécurité (ajustées pour l'inflation)
       const economieSecuriteAjustee = economiesAccidents * facteurInflation;
@@ -295,7 +303,7 @@ const CalculateurPatesPapiers = () => {
       economieAnnuelle: economieAnnuelleCalc,
       reductionMainOeuvre: reductionMainOeuvreCalc,
       economiesSecurite: economiesAccidents,
-      economiesQualite: beneficeQualite,
+      economiesQualite: dernierBeneficeQualite,
       economiesTempsArret: economiesTempsArretCalc
     });
   };
