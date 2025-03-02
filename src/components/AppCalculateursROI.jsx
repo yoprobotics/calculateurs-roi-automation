@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import CalculateurROI from './CalculateurROI';
 import CalculateurPatesPapiers from './CalculateurPatesPapiers';
+import Disclaimer from './Disclaimer';
+import DisclaimerModal from './DisclaimerModal';
+import Footer from './Footer';
 
 // Composant principal qui intègre les deux calculateurs
 const AppCalculateursROI = () => {
@@ -8,9 +11,12 @@ const AppCalculateursROI = () => {
   
   return (
     <div className="container mx-auto p-4 pb-20">
+      <DisclaimerModal />
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Calculateurs de ROI pour l'Automatisation Industrielle</h1>
         <p className="text-xl text-gray-600 mb-6">Évaluez la rentabilité de vos projets d'automatisation industrielle</p>
+        
+        <Disclaimer />
         
         <div className="flex justify-center space-x-4 mb-8">
           <button
@@ -41,6 +47,8 @@ const AppCalculateursROI = () => {
       ) : (
         <CalculateurPatesPapiers />
       )}
+      
+      <Footer />
     </div>
   );
 };
