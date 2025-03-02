@@ -98,3 +98,75 @@ const CalculateurROI = () => {
   const [nomScenario, setNomScenario] = useState('Scénario de base');
   const [parametreSensibilite, setParametreSensibilite] = useState('coutSysteme');
   const [resultatsSensibilite, setResultatsSensibilite] = useState([]);
+  
+  // Fonction qui adapte les paramètres par défaut en fonction du type de système actuel
+  useEffect(() => {
+    if (typeSystemeActuel === 'manuel') {
+      setParametresSystemeActuel({
+        ...parametresSystemeActuel,
+        capacite: 35,
+        tempsCycle: 102.86,
+        nombreEmployes: 2,
+        coutSysteme: 10000, 
+        maintenance: 3000,
+        energie: 2000,
+        tauxRejets: 6,
+        perteProduction: 12,
+        frequenceAccident: 3.5,
+        formationAnnuelle: 1500,
+        consommablesAnnuels: 12000
+      });
+    } else if (typeSystemeActuel === 'semi-auto') {
+      setParametresSystemeActuel({
+        ...parametresSystemeActuel,
+        capacite: 60,
+        tempsCycle: 60,
+        nombreEmployes: 1.5,
+        coutSysteme: 65000,
+        maintenance: 8000,
+        energie: 5000,
+        tauxRejets: 4,
+        perteProduction: 8,
+        frequenceAccident: 2.2,
+        formationAnnuelle: 3000,
+        consommablesAnnuels: 10000
+      });
+    } else if (typeSystemeActuel === 'auto-ancien') {
+      setParametresSystemeActuel({
+        ...parametresSystemeActuel,
+        capacite: 70,
+        tempsCycle: 51.43,
+        nombreEmployes: 1,
+        coutSysteme: 120000,
+        maintenance: 12000,
+        energie: 7000,
+        tauxRejets: 3.5,
+        perteProduction: 6,
+        frequenceAccident: 1.2,
+        formationAnnuelle: 4500,
+        consommablesAnnuels: 9000
+      });
+    }
+  }, [typeSystemeActuel]);
+  
+  // Synchroniser le temps de cycle et la capacité pour le système actuel
+  useEffect(() => {
+    const tempsCycleCalcule = 3600 / parametresSystemeActuel.capacite;
+    if (Math.abs(tempsCycleCalcule - parametresSystemeActuel.tempsCycle) > 0.1) {
+      setParametresSystemeActuel({
+        ...parametresSystemeActuel,
+        tempsCycle: parseFloat(tempsCycleCalcule.toFixed(2))
+      });
+    }
+  }, [parametresSystemeActuel.capacite]);
+  
+  // Synchroniser le temps de cycle et la capacité pour le système automatisé
+  useEffect(() => {
+    const tempsCycleCalcule = 3600 / parametresSystemeAutomatise.capaciteTraitement;
+    if (Math.abs(tempsCycleCalcule - parametresSystemeAutomatise.tempsCycle) > 0.1) {
+      setParametresSystemeAutomatise({
+        ...parametresSystemeAutomatise,
+        tempsCycle: parseFloat(tempsCycleCalcule.toFixed(2))
+      });
+    }
+  }, [parametresSystemeAutomatise.capaciteTraitement]);
