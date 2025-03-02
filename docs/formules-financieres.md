@@ -53,21 +53,48 @@ Où :
 - **B** : Valeur absolue du flux de trésorerie cumulé à la période A
 - **C** : Flux de trésorerie de la période A+1
 
+## Conversions entre temps de cycle et capacité de production
+
+### Temps de cycle vers capacité horaire
+Le temps de cycle est le temps nécessaire pour produire une unité. La conversion en capacité horaire se fait selon la formule :
+
+```
+Capacité horaire (unités/heure) = 3600 / Temps de cycle (secondes/unité)
+```
+
+### Capacité horaire vers temps de cycle
+Inversement, pour déterminer le temps de cycle à partir de la capacité horaire :
+
+```
+Temps de cycle (secondes/unité) = 3600 / Capacité horaire (unités/heure)
+```
+
+Ces formules sont fondamentales pour comparer les performances des systèmes actuels et automatisés.
+
 ## Formules spécifiques à l'automatisation industrielle
 
 ### Économies de main d'œuvre
 ```
-Économie annuelle = Coût annuel par employé × Nombre d'employés remplacés
+Économie annuelle = Coût annuel par employé × (Nombre d'employés avant - Nombre d'employés après)
 ```
+
+### Coûts cachés de formation continue
+Les coûts cachés de formation continue sont des dépenses récurrentes souvent négligées dans l'analyse ROI :
+
+```
+Coût annuel de formation continue = Coût initial × Facteur d'inflation^(année-1)
+```
+
+Ces coûts sont soustraits des flux de trésorerie annuels.
 
 ### Économies liées à la réduction des déchets
 ```
-Économie annuelle = Tonnage annuel × (% Réduction des déchets / 100) × Coût par tonne de déchets
+Économie annuelle = Production annuelle × (% Réduction des déchets / 100) × Coût par unité de déchets
 ```
 
 ### Économies liées à la réduction d'énergie
 ```
-Économie annuelle = Tonnage annuel × (% Réduction d'énergie / 100) × Coût énergétique par tonne
+Économie annuelle = Production annuelle × (% Réduction d'énergie / 100) × Coût énergétique par unité
 ```
 
 ### Bénéfices liés à l'augmentation de production
@@ -117,3 +144,22 @@ Avantage fiscal annuel = (Investissement initial / Durée vie) × (Taux amortiss
 ```
 
 Cet avantage est ajouté au flux de trésorerie annuel.
+
+## Sécurité et temps d'arrêt
+
+### Économies liées aux accidents
+Les économies liées à la réduction des accidents de travail sont calculées comme suit :
+
+```
+Économie annuelle = Fréquence d'accidents × Coût moyen par accident × (% Réduction des accidents / 100)
+```
+
+### Économies liées au temps d'arrêt
+Les économies liées à la réduction du temps d'arrêt dû aux accidents :
+
+```
+Économie annuelle = Fréquence d'accidents × Temps d'arrêt moyen par accident × Valeur de production horaire × (% Réduction des accidents / 100)
+```
+
+Où :
+- **Valeur de production horaire** = (Production annuelle × Marge unitaire) / Heures d'opération annuelles
