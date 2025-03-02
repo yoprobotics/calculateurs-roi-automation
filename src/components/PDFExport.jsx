@@ -1,294 +1,141 @@
-import React from 'react';
-import { 
-  Document, 
-  Page, 
-  Text, 
-  View, 
-  StyleSheet, 
-  PDFViewer,
-  Image 
-} from '@react-pdf/renderer';
+import React, { useRef } from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
-// Styles pour le PDF
-const styles = StyleSheet.create({
-  page: {
-    flexDirection: 'column',
-    backgroundColor: '#FFFFFF',
-    padding: 30
-  },
-  section: {
-    margin: 10,
-    padding: 10,
-    flexGrow: 1
-  },
-  header: {
-    fontSize: 24,
-    textAlign: 'center',
-    marginBottom: 20,
-    color: '#2563EB'
-  },
-  subheader: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: '#374151',
-    borderBottom: '1 solid #E5E7EB',
-    paddingBottom: 5
-  },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 5
-  },
-  label: {
-    width: '60%',
-    fontWeight: 'bold',
-    color: '#4B5563'
-  },
-  value: {
-    width: '40%',
-    textAlign: 'right'
-  },
-  highlight: {
-    backgroundColor: '#F3F4F6',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5
-  },
-  resultsContainer: {
-    marginTop: 20,
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#EFF6FF',
-    borderRadius: 5
-  },
-  resultsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#1E40AF'
-  },
-  resultsRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    paddingBottom: 5,
-    borderBottom: '1 solid #DBEAFE'
-  },
-  footer: {
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 30,
-    color: '#6B7280'
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20
-  },
-  logo: {
-    width: 120,
-    height: 40
-  },
-  date: {
-    fontSize: 10,
-    color: '#6B7280'
-  },
-  imageContainer: {
-    alignItems: 'center',
-    marginVertical: 10
-  },
-  image: {
-    width: '80%',
-    height: 200,
-    objectFit: 'contain'
-  }
-});
-
-// Composant pour l'export PDF général
-const GeneralROIDocument = ({ data }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.logoContainer}>
-        <Text style={styles.date}>Généré le {new Date().toLocaleDateString()}</Text>
-      </View>
+// Composant pour l'export PDF des résultats de calcul
+const PDFExport = ({ contentRef, fileName = 'resultats-roi.pdf', buttonText = 'Exporter en PDF' }) => {
+  // Fonction pour générer le PDF
+  const handleExport = async () => {
+    if (!contentRef.current) return;
+    
+    try {
+      // Message de chargement
+      const loadingElement = document.createElement('div');
+      loadingElement.style.position = 'fixed';
+      loadingElement.style.top = '0';
+      loadingElement.style.left = '0';
+      loadingElement.style.width = '100%';
+      loadingElement.style.height = '100%';
+      loadingElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      loadingElement.style.zIndex = '9999';
+      loadingElement.style.display = 'flex';
+      loadingElement.style.justifyContent = 'center';
+      loadingElement.style.alignItems = 'center';
       
-      <View>
-        <Text style={styles.header}>Rapport de Retour sur Investissement</Text>
-        <Text style={{fontSize: 16, textAlign: 'center', marginBottom: 20, color: '#4B5563'}}>
-          Automatisation Industrielle
-        </Text>
-      </View>
+      const loadingText = document.createElement('div');
+      loadingText.textContent = 'Génération du PDF en cours...';
+      loadingText.style.backgroundColor = 'white';
+      loadingText.style.padding = '20px';
+      loadingText.style.borderRadius = '8px';
+      loadingText.style.fontSize = '18px';
       
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsTitle}>Résultats de l'analyse</Text>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>ROI global:</Text>
-          <Text style={styles.value}>{data.roi.toFixed(2)}%</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Délai de récupération:</Text>
-          <Text style={styles.value}>{data.delaiRecuperation.toFixed(2)} ans</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Valeur Actuelle Nette (VAN):</Text>
-          <Text style={styles.value}>${data.van.toFixed(2)}</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Taux de Rendement Interne (TRI):</Text>
-          <Text style={styles.value}>{data.tri.toFixed(2)}%</Text>
-        </View>
-      </View>
+      loadingElement.appendChild(loadingText);
+      document.body.appendChild(loadingElement);
       
-      <View style={styles.section}>
-        <Text style={styles.subheader}>Paramètres d'investissement</Text>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Coût total du système:</Text>
-          <Text style={styles.value}>${data.coutSysteme + data.coutInstallation + data.coutIngenierie + data.coutFormation}</Text>
-        </View>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Subventions:</Text>
-          <Text style={styles.value}>${data.subventions}</Text>
-        </View>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Durée de vie:</Text>
-          <Text style={styles.value}>{data.dureeVie} ans</Text>
-        </View>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Économies de main d'œuvre:</Text>
-          <Text style={styles.value}>${data.coutMainOeuvre * data.nbEmployesRemplaces}/an</Text>
-        </View>
-      </View>
+      // Définir les options
+      const options = {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0
+      };
       
-      <View style={styles.highlight}>
-        <Text style={{fontWeight: 'bold', marginBottom: 5}}>Recommandation:</Text>
-        <Text>
-          {data.van > 0 && data.tri > data.tauxActualisation 
-            ? "✓ Projet recommandé - Cet investissement en automatisation semble financièrement viable avec un ROI positif et un délai de récupération raisonnable."
-            : "⚠ À réévaluer - Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives."}
-        </Text>
-      </View>
+      // Capturer le contenu
+      const canvas = await html2canvas(contentRef.current, options);
       
-      <View style={styles.footer}>
-        <Text>Ce rapport a été généré automatiquement par l'application Calculateurs ROI - Automatisation</Text>
-        <Text>© {new Date().getFullYear()} - Tous droits réservés</Text>
-      </View>
-    </Page>
-  </Document>
-);
-
-// Composant pour l'export PDF pour l'industrie des pâtes et papiers
-const PapersROIDocument = ({ data }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.logoContainer}>
-        <Text style={styles.date}>Généré le {new Date().toLocaleDateString()}</Text>
-      </View>
+      // Créer un PDF au format A4
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
       
-      <View>
-        <Text style={styles.header}>Rapport de Retour sur Investissement</Text>
-        <Text style={{fontSize: 16, textAlign: 'center', marginBottom: 20, color: '#4B5563'}}>
-          Désempilement et Débrochage de Ballots - Industrie des Pâtes et Papiers
-        </Text>
-      </View>
+      // Calculer le ratio d'aspect
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsTitle}>Résultats de l'analyse</Text>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>ROI global:</Text>
-          <Text style={styles.value}>{data.roi.toFixed(2)}%</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Délai de récupération:</Text>
-          <Text style={styles.value}>{data.delaiRecuperation.toFixed(2)} ans</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Valeur Actuelle Nette (VAN):</Text>
-          <Text style={styles.value}>${data.van.toFixed(2)}</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Taux de Rendement Interne (TRI):</Text>
-          <Text style={styles.value}>{data.tri.toFixed(2)}%</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Capacité de traitement:</Text>
-          <Text style={styles.value}>{data.capaciteTraitement} ballots/heure</Text>
-        </View>
-        
-        <View style={styles.resultsRow}>
-          <Text style={styles.label}>Tonnes CO2 économisées:</Text>
-          <Text style={styles.value}>{data.economiesCO2.toFixed(0)} tonnes</Text>
-        </View>
-      </View>
+      let position = 0;
+      const maxHeight = 287; // A4 height in mm (minus margins)
       
-      <View style={styles.section}>
-        <Text style={styles.subheader}>Améliorations par rapport au système manuel</Text>
+      // Si l'image est plus grande que la hauteur d'une page
+      if (imgHeight > maxHeight) {
+        let remainingHeight = imgHeight;
+        let currentPosition = 0;
         
-        <View style={styles.row}>
-          <Text style={styles.label}>Réduction du taux de rejet:</Text>
-          <Text style={styles.value}>{(data.tauxRejetsManuel - data.tauxRejetsFils).toFixed(2)}%</Text>
-        </View>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Réduction des déchets:</Text>
-          <Text style={styles.value}>{data.reductionDechet}%</Text>
-        </View>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Économie d'énergie:</Text>
-          <Text style={styles.value}>{data.reductionEnergie}%</Text>
-        </View>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Économie d'eau:</Text>
-          <Text style={styles.value}>{data.reductionEau}%</Text>
-        </View>
-        
-        <View style={styles.row}>
-          <Text style={styles.label}>Augmentation de production:</Text>
-          <Text style={styles.value}>{data.augmentationProduction}%</Text>
-        </View>
-      </View>
+        // Diviser l'image en plusieurs pages
+        while (remainingHeight > 0) {
+          // Créer une nouvelle page après la première
+          if (position > 0) {
+            pdf.addPage();
+          }
+          
+          // Calculer la partie de l'image à rendre
+          const canvasPartHeight = Math.min(maxHeight, remainingHeight);
+          const partImageData = canvas.toDataURL('image/png', 1.0);
+          
+          pdf.addImage(
+            partImageData,
+            'PNG',
+            0,
+            position === 0 ? 0 : -currentPosition,
+            imgWidth,
+            imgHeight,
+            '',
+            'FAST'
+          );
+          
+          // Mettre à jour la position pour la prochaine page
+          remainingHeight -= maxHeight;
+          position++;
+          currentPosition += maxHeight;
+        }
+      } else {
+        // L'image tient sur une seule page
+        pdf.addImage(
+          canvas.toDataURL('image/png', 1.0),
+          'PNG',
+          0,
+          0,
+          imgWidth,
+          imgHeight,
+          '',
+          'FAST'
+        );
+      }
       
-      <View style={styles.highlight}>
-        <Text style={{fontWeight: 'bold', marginBottom: 5}}>Pourquoi automatiser:</Text>
-        <Text style={{fontSize: 10, marginBottom: 3}}>• Sécurité: réduction des risques liés à la manipulation des fils métalliques</Text>
-        <Text style={{fontSize: 10, marginBottom: 3}}>• Qualité: moins de fils dans le pulpeur = moins d'arrêts et meilleure pâte</Text>
-        <Text style={{fontSize: 10, marginBottom: 3}}>• Production: capacité accrue et constante d'alimentation</Text>
-        <Text style={{fontSize: 10, marginBottom: 3}}>• Économies: réduction de la main d'œuvre et des déchets</Text>
-        <Text style={{fontSize: 10}}>• Environnement: moins de pertes et de consommation d'énergie</Text>
-      </View>
+      // Ajouter des métadonnées
+      pdf.setProperties({
+        title: 'Résultats du calculateur ROI',
+        subject: 'Analyse de retour sur investissement',
+        author: 'Calculateurs ROI Automation',
+        keywords: 'ROI, automatisation, industrie, pâtes et papiers',
+        creator: 'Calculateurs ROI Automation'
+      });
       
-      <View style={styles.footer}>
-        <Text>Ce rapport a été généré automatiquement par l'application Calculateurs ROI - Automatisation</Text>
-        <Text>© {new Date().getFullYear()} - Tous droits réservés</Text>
-      </View>
-    </Page>
-  </Document>
-);
-
-// Composant principal d'export PDF avec viewer
-const PDFExport = ({ type, data }) => (
-  <PDFViewer style={{width: '100%', height: '600px'}}>
-    {type === 'general' ? 
-      <GeneralROIDocument data={data} /> : 
-      <PapersROIDocument data={data} />
+      // Enregistrer le PDF
+      pdf.save(fileName);
+      
+      // Supprimer le message de chargement
+      document.body.removeChild(loadingElement);
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error);
+      alert('Une erreur est survenue lors de la génération du PDF. Veuillez réessayer.');
     }
-  </PDFViewer>
-);
-
-// Fonction pour télécharger directement le PDF sans prévisualisation
-// à implémenter si nécessaire
+  };
+  
+  return (
+    <button
+      onClick={handleExport}
+      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center"
+      aria-label="Exporter les résultats en PDF"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
+      </svg>
+      {buttonText}
+    </button>
+  );
+};
 
 export default PDFExport;
