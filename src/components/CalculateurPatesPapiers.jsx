@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import PDFExport from './PDFExport';
 
 // Calculateur optimisé pour l'industrie des pâtes et papiers
 const CalculateurPatesPapiers = () => {
@@ -78,6 +79,9 @@ const CalculateurPatesPapiers = () => {
     afficherDetails: false,
     ongletActif: 'general'
   });
+  
+  // Référence pour le graphique à exporter
+  const graphiqueRef = useRef(null);
   
   // Fonction qui adapte les paramètres par défaut en fonction du type de système actuel
   useEffect(() => {
@@ -322,7 +326,8 @@ const CalculateurPatesPapiers = () => {
   
   // Extraction des valeurs des paramètres généraux
   const { 
-    margeBrute, tonnageAnnuel, heuresOperationParJour, joursOperationParAn 
+    margeBrute, tonnageAnnuel, heuresOperationParJour, joursOperationParAn,
+    tauxInflation, tauxActualisation 
   } = parametresGeneraux;
   
   // Extraction des valeurs des paramètres du système actuel
@@ -337,7 +342,8 @@ const CalculateurPatesPapiers = () => {
   const {
     capaciteTraitement, tauxRejets: tauxRejetsFils, reductionAccidents, 
     coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance,
-    coutEnergie, dureeVie, nbEmployesRemplaces, subventions
+    coutEnergie, dureeVie, nbEmployesRemplaces, subventions,
+    reductionEmpreinteCO2
   } = parametresSystemeAutomatise;
   
   // Données pour les graphiques mémorisées pour éviter les recalculs inutiles
@@ -473,47 +479,49 @@ const CalculateurPatesPapiers = () => {
       </div>
       
       {/* Navigation par onglets */}
-      <div className="flex flex-wrap mb-6 bg-white rounded-lg shadow-md">
-        <button
-          onClick={() => changerOnglet('general')}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'general'
-              ? 'text-green-700 border-b-2 border-green-500'
-              : 'text-gray-600 hover:text-green-600'
-          }`}
-        >
-          Vue générale
-        </button>
-        <button
-          onClick={() => changerOnglet('comparatif')}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'comparatif'
-              ? 'text-green-700 border-b-2 border-green-500'
-              : 'text-gray-600 hover:text-green-600'
-          }`}
-        >
-          Analyse comparative
-        </button>
-        <button
-          onClick={() => changerOnglet('financier')}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'financier'
-              ? 'text-green-700 border-b-2 border-green-500'
-              : 'text-gray-600 hover:text-green-600'
-          }`}
-        >
-          Détails financiers
-        </button>
-        <button
-          onClick={() => changerOnglet('securite')}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'securite'
-              ? 'text-green-700 border-b-2 border-green-500'
-              : 'text-gray-600 hover:text-green-600'
-          }`}
-        >
-          Sécurité & Environnement
-        </button>
+      <div className="flex flex-wrap mb-6 bg-white rounded-lg shadow-md overflow-x-auto">
+        <div className="flex min-w-full md:min-w-0 md:flex-wrap">
+          <button
+            onClick={() => changerOnglet('general')}
+            className={`px-4 py-3 font-medium transition-all whitespace-nowrap ${
+              ongletActif === 'general'
+                ? 'text-green-700 border-b-2 border-green-500'
+                : 'text-gray-600 hover:text-green-600'
+            }`}
+          >
+            Vue générale
+          </button>
+          <button
+            onClick={() => changerOnglet('comparatif')}
+            className={`px-4 py-3 font-medium transition-all whitespace-nowrap ${
+              ongletActif === 'comparatif'
+                ? 'text-green-700 border-b-2 border-green-500'
+                : 'text-gray-600 hover:text-green-600'
+            }`}
+          >
+            Analyse comparative
+          </button>
+          <button
+            onClick={() => changerOnglet('financier')}
+            className={`px-4 py-3 font-medium transition-all whitespace-nowrap ${
+              ongletActif === 'financier'
+                ? 'text-green-700 border-b-2 border-green-500'
+                : 'text-gray-600 hover:text-green-600'
+            }`}
+          >
+            Détails financiers
+          </button>
+          <button
+            onClick={() => changerOnglet('securite')}
+            className={`px-4 py-3 font-medium transition-all whitespace-nowrap ${
+              ongletActif === 'securite'
+                ? 'text-green-700 border-b-2 border-green-500'
+                : 'text-gray-600 hover:text-green-600'
+            }`}
+          >
+            Sécurité & Environnement
+          </button>
+        </div>
       </div>
       
       {/* Vue générale - Premier onglet */}
@@ -740,6 +748,20 @@ const CalculateurPatesPapiers = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Ajout du bouton d'export PDF */}
+                <div className="mt-4">
+                  <PDFExport 
+                    resultats={resultats} 
+                    typeCalculateur='patespapiers' 
+                    parametres={{
+                      ...parametresSystemeActuel,
+                      ...parametresSystemeAutomatise,
+                      ...parametresGeneraux,
+                      tauxRejetsManuel: parametresSystemeActuel.tauxRejets
+                    }} 
+                  />
+                </div>
               </div>
               
               {/* Instructions de sécurité */}
@@ -875,6 +897,44 @@ const CalculateurPatesPapiers = () => {
           <div className="bg-white p-4 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4 text-green-700">Analyse comparative détaillée</h2>
             
+            {/* Composant pour afficher les données en format tabulaire sur mobile */}
+            <div className="md:hidden mb-6">
+              <h3 className="font-medium text-gray-700 mb-2">Comparaison des systèmes</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-3 py-2 text-left">Comparaison</th>
+                      <th className="px-3 py-2 text-center">Système actuel</th>
+                      <th className="px-3 py-2 text-center">Automatisé</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t">
+                      <td className="px-3 py-2">Capacité (ballots/h)</td>
+                      <td className="px-3 py-2 text-center text-red-600 font-medium">{capaciteActuelle}</td>
+                      <td className="px-3 py-2 text-center text-green-600 font-medium">{capaciteTraitement}</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2">Main d'œuvre (ETP)</td>
+                      <td className="px-3 py-2 text-center text-red-600 font-medium">{nombreEmployesActuel}</td>
+                      <td className="px-3 py-2 text-center text-green-600 font-medium">{nombreEmployesActuel - nbEmployesRemplaces}</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2">Taux de rejets (%)</td>
+                      <td className="px-3 py-2 text-center text-red-600 font-medium">{tauxRejetsManuel}</td>
+                      <td className="px-3 py-2 text-center text-green-600 font-medium">{tauxRejetsFils}</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="px-3 py-2">Accidents/an</td>
+                      <td className="px-3 py-2 text-center text-red-600 font-medium">{frequenceAccidentActuel.toFixed(1)}</td>
+                      <td className="px-3 py-2 text-center text-green-600 font-medium">{(frequenceAccidentActuel * (1 - reductionAccidents/100)).toFixed(1)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium text-gray-700">Comparaison des systèmes</h3>
@@ -891,7 +951,7 @@ const CalculateurPatesPapiers = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="h-80">
+                <div className="h-80 md:h-96">
                   <h4 className="text-sm font-medium text-gray-700 mb-2 text-center">Capacité de traitement (ballots/heure)</h4>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={dataGraphiques.dataComparaisonCapacite} layout="vertical">
@@ -904,7 +964,7 @@ const CalculateurPatesPapiers = () => {
                   </ResponsiveContainer>
                 </div>
                 
-                <div className="h-80">
+                <div className="h-80 md:h-96">
                   <h4 className="text-sm font-medium text-gray-700 mb-2 text-center">Main d'œuvre requise (ETP)</h4>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={dataGraphiques.dataComparaisonEmployes} layout="vertical">
@@ -919,9 +979,34 @@ const CalculateurPatesPapiers = () => {
               </div>
             </div>
             
-            <div className="mt-8 h-80">
+            {/* Version mobile pour les économies annuelles */}
+            <div className="md:hidden mb-6">
+              <h3 className="font-medium text-gray-700 mb-2">Économies annuelles par catégorie</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-3 py-2 text-left">Catégorie</th>
+                      <th className="px-3 py-2 text-right">Économie</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dataGraphiques.dataEconomies.map((item, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="px-3 py-2">{item.name}</td>
+                        <td className="px-3 py-2 text-right font-medium text-green-600">
+                          {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(item.value)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="mt-8 h-80 md:h-96">
               <h3 className="font-medium text-gray-700 mb-4">Économies annuelles par catégorie</h3>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" ref={graphiqueRef}>
                 <BarChart data={dataGraphiques.dataEconomies}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
@@ -1023,9 +1108,34 @@ const CalculateurPatesPapiers = () => {
               </div>
             </div>
             
+            {/* Version mobile du graphique financier */}
+            <div className="md:hidden mb-6">
+              <h3 className="font-medium text-gray-700 mb-2">Flux de trésorerie cumulatifs</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-3 py-2 text-left">Période</th>
+                      <th className="px-3 py-2 text-right">Flux cumulé</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dataGraphiques.dataCumulatif.map((item, index) => (
+                      <tr key={index} className="border-t">
+                        <td className="px-3 py-2">{item.annee}</td>
+                        <td className="px-3 py-2 text-right font-medium">
+                          {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(item.cumulatif)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
             <div className="mb-8">
               <h3 className="font-medium text-gray-700 mb-3">Projection des flux de trésorerie</h3>
-              <div className="h-80">
+              <div className="h-80 md:h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={dataGraphiques.dataCumulatif}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -1112,7 +1222,7 @@ const CalculateurPatesPapiers = () => {
                     <div className="p-3 bg-green-50 rounded">
                       <p className="text-xs text-gray-500">Réduction des émissions de CO2</p>
                       <p className="flex justify-between">
-                        <span className="text-xl font-bold text-green-600">{parametresSystemeAutomatise.reductionEmpreinteCO2}%</span>
+                        <span className="text-xl font-bold text-green-600">{reductionEmpreinteCO2}%</span>
                         <span className="text-sm font-medium text-green-700">{economiesCO2.toFixed(0)} tonnes sur {dureeVie} ans</span>
                       </p>
                     </div>
@@ -1123,6 +1233,21 @@ const CalculateurPatesPapiers = () => {
           </div>
         </div>
       )}
+      
+      {/* Bouton flottant de retour en haut pour mobile */}
+      <div className="fixed bottom-4 right-4 md:hidden">
+        <div className="bg-white rounded-full shadow-lg p-4">
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center justify-center w-12 h-12 bg-green-500 text-white rounded-full shadow-md hover:bg-green-600 transition-colors"
+            aria-label="Retour en haut"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
