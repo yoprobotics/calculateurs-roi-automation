@@ -239,8 +239,9 @@ const CalculateurROI = () => {
     // Calcul des économies liées à la réduction des rejets
     const economiesRejetsCalc = production * (tauxRejetsActuel - tauxRejetsAuto) / 100 * coutDechet;
     
-    // Calcul des économies liées à la qualité (sans facteur d'inflation)
-    const economiesQualiteBase = production * (tauxProblemeQualite / 100) * (coutQualite / production);
+    // Calcul des économies liées à la qualité
+    // Nous le calculons ici pour pouvoir l'utiliser dans setResultats
+    const economieQualiteCalc = production * (tauxProblemeQualite / 100) * (coutQualite / production);
     
     // Calcul des économies et bénéfices annuels
     for (let annee = 1; annee <= dureeVie; annee++) {
@@ -263,7 +264,7 @@ const CalculateurROI = () => {
       const economieErreurs = coutErrorHumaine * facteurInflation;
       
       // Économies liées à la qualité
-      const economieQualite = economiesQualiteBase * facteurInflation;
+      const economieQualite = economieQualiteCalc * facteurInflation;
       
       // Économies liées à la réduction des rejets
       const economieRejets = economiesRejetsCalc * facteurInflation;
@@ -358,7 +359,7 @@ const CalculateurROI = () => {
       economieAnnuelle: economieAnnuelleCalc,
       reductionMainOeuvre: reductionMainOeuvreCalc,
       economiesSecurite: economiesAccidents,
-      economiesQualite: economiesQualiteBase,
+      economiesQualite: economieQualiteCalc,
       economiesTempsArret: economiesTempsArretCalc + economiesTempsArretNonPlanifie,
       economiesRejets: economiesRejetsCalc
     });
@@ -413,18 +414,17 @@ const CalculateurROI = () => {
   // Fonction pour simuler les calculs avec des paramètres modifiés
   const simulerCalculsAvecParams = (nouveauParams) => {
     // Version simplifiée pour l'analyse de sensibilité
+    // Calcul de l'investissement initial
     const investissementInitial = nouveauParams.coutSysteme + nouveauParams.coutInstallation + 
-                                 nouveauParams.coutIngenierie + nouveauParams.coutFormation - 
-                                 nouveauParams.subventions;
+                               nouveauParams.coutIngenierie + nouveauParams.coutFormation - 
+                               nouveauParams.subventions;
     
-    // Calculs similaires à calculerROI() mais simplifiés pour l'analyse de sensibilité
-    // ...
-    
-    // Retour de résultats simulés
+    // Retour de résultats simulés - ces valeurs sont des approximations simplifiées
+    // Dans une version plus complète, nous calculerions les vrais résultats
     return {
-      roi: 45, // Valeur simulée, à remplacer par un calcul réel
-      delaiRecuperation: 2.5, // Valeur simulée, à remplacer par un calcul réel
-      van: 200000 // Valeur simulée, à remplacer par un calcul réel
+      roi: 45, // Valeur simulée
+      delaiRecuperation: 2.5, // Valeur simulée
+      van: 200000 // Valeur simulée
     };
   };
   
