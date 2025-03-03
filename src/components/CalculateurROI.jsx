@@ -239,10 +239,6 @@ const CalculateurROI = () => {
     // Calcul des économies liées à la réduction des rejets
     const economiesRejetsCalc = production * (tauxRejetsActuel - tauxRejetsAuto) / 100 * coutDechet;
     
-    // Calcul des économies liées à la qualité
-    // Nous le calculons ici pour pouvoir l'utiliser dans setResultats
-    const economieQualiteCalc = production * (tauxProblemeQualite / 100) * (coutQualite / production);
-    
     // Calcul des économies et bénéfices annuels
     for (let annee = 1; annee <= dureeVie; annee++) {
       // Calcul des coûts ajustés avec l'inflation
@@ -264,7 +260,7 @@ const CalculateurROI = () => {
       const economieErreurs = coutErrorHumaine * facteurInflation;
       
       // Économies liées à la qualité
-      const economieQualite = economieQualiteCalc * facteurInflation;
+      const economieQualite = production * (tauxProblemeQualite / 100) * (coutQualite / production) * facteurInflation;
       
       // Économies liées à la réduction des rejets
       const economieRejets = economiesRejetsCalc * facteurInflation;
@@ -359,7 +355,7 @@ const CalculateurROI = () => {
       economieAnnuelle: economieAnnuelleCalc,
       reductionMainOeuvre: reductionMainOeuvreCalc,
       economiesSecurite: economiesAccidents,
-      economiesQualite: economieQualiteCalc,
+      economiesQualite: economieQualite,
       economiesTempsArret: economiesTempsArretCalc + economiesTempsArretNonPlanifie,
       economiesRejets: economiesRejetsCalc
     });
@@ -414,6 +410,13 @@ const CalculateurROI = () => {
   // Fonction pour simuler les calculs avec des paramètres modifiés
   const simulerCalculsAvecParams = (nouveauParams) => {
     // Version simplifiée pour l'analyse de sensibilité
+    const investissementInitial = nouveauParams.coutSysteme + nouveauParams.coutInstallation + 
+                                 nouveauParams.coutIngenierie + nouveauParams.coutFormation - 
+                                 nouveauParams.subventions;
+    
+    // Calculs similaires à calculerROI() mais simplifiés pour l'analyse de sensibilité
+    // ...
+    
     // Retour de résultats simulés
     return {
       roi: 45, // Valeur simulée, à remplacer par un calcul réel
