@@ -414,13 +414,6 @@ const CalculateurROI = () => {
   // Fonction pour simuler les calculs avec des paramètres modifiés
   const simulerCalculsAvecParams = (nouveauParams) => {
     // Version simplifiée pour l'analyse de sensibilité
-    const investissementInitial = nouveauParams.coutSysteme + nouveauParams.coutInstallation + 
-                                 nouveauParams.coutIngenierie + nouveauParams.coutFormation - 
-                                 nouveauParams.subventions;
-    
-    // Calculs similaires à calculerROI() mais simplifiés pour l'analyse de sensibilité
-    // ...
-    
     // Retour de résultats simulés
     return {
       roi: 45, // Valeur simulée, à remplacer par un calcul réel
