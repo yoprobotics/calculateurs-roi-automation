@@ -392,7 +392,7 @@ const CalculateurROI = () => {
     
     // Données pour le graphique des économies
     const dataEconomies = [
-      { name: 'Main d\\'œuvre', value: reductionMainOeuvre > 0 ? reductionMainOeuvre : 0 },
+      { name: "Main d'œuvre", value: reductionMainOeuvre > 0 ? reductionMainOeuvre : 0 },
       { name: 'Qualité', value: economiesQualite > 0 ? economiesQualite : 0 },
       { name: 'Sécurité', value: economiesSecurite + economiesTempsArret > 0 ? economiesSecurite + economiesTempsArret : 0 },
       { name: 'Production', value: differenceProduction * (parametresGeneraux.margeUnitaire) > 0 ? differenceProduction * (parametresGeneraux.margeUnitaire) : 0 },
@@ -1074,7 +1074,7 @@ const CalculateurROI = () => {
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip formatter={(value) => [`${value} ETP`, 'Main d\\'œuvre']} />
+                <Tooltip formatter={(value) => [`${value} ETP`, "Main d'œuvre"]} />
                 <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
               </BarChart>
             </ResponsiveContainer>
