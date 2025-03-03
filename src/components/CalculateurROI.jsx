@@ -230,6 +230,9 @@ const CalculateurROI = () => {
     // Calcul des économies liées à la réduction des rejets
     const economiesRejetsCalc = production * (tauxRejetsActuel - tauxRejetsAuto) / 100 * coutDechet;
     
+    // Calcul de l'économie liée à la qualité (sans facteur d'inflation)
+    const economieQualiteBase = production * (tauxProblemeQualite / 100) * (coutQualite / production);
+    
     // Calcul des économies et bénéfices annuels
     for (let annee = 1; annee <= dureeVie; annee++) {
       // Calcul des coûts ajustés avec l'inflation
@@ -251,7 +254,7 @@ const CalculateurROI = () => {
       const economieErreurs = coutErrorHumaine * facteurInflation;
       
       // Économies liées à la qualité
-      const economieQualite = production * (tauxProblemeQualite / 100) * (coutQualite / production) * facteurInflation;
+      const economieQualite = economieQualiteBase * facteurInflation;
       
       // Économies liées à la réduction des rejets
       const economieRejets = economiesRejetsCalc * facteurInflation;
@@ -346,7 +349,7 @@ const CalculateurROI = () => {
       economieAnnuelle: economieAnnuelleCalc,
       reductionMainOeuvre: reductionMainOeuvreCalc,
       economiesSecurite: economiesAccidents,
-      economiesQualite: economieQualite,
+      economiesQualite: economieQualiteBase, // Correction ici : utilisation de economieQualiteBase
       economiesTempsArret: economiesTempsArretCalc + economiesTempsArretNonPlanifie,
       economiesRejets: economiesRejetsCalc
     });
