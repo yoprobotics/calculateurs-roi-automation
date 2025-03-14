@@ -76,6 +76,14 @@ const CalculateurROI = () => {
     economiesQualite: 0,
     economiesTempsArret: 0,
     economiesRejets: 0,
+    ameliorationTempsCycle: 0,
+    impactTempsCycle: 0,
+    capaciteTheoriqueActuelle: 0,
+    capaciteTheoriqueAutomatisee: 0,
+    efficaciteActuelle: 0,
+    efficaciteAutomatisee: 0,
+    revenuSupplementairePotentiel: 0,
+    gainFlexibiliteProduction: 0
   });
   
   // États pour l'interface utilisateur
@@ -131,22 +139,22 @@ const CalculateurROI = () => {
     }
   }, [typeSystemeActuel]);
   
-  // Suppression des useEffect qui lient capacité et temps de cycle
-  
   // Fonction de calcul des résultats
   const calculerROI = () => {
     const {
       coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutFormationContinue,
       coutMaintenance, coutEnergie, dureeVie, tauxAmortissement, capacite: capaciteAuto,
-      coutMainOeuvre, nbEmployesRemplaces, reductionDechet, coutDechet, tauxRejets: tauxRejetsAuto,
-      reductionAccidents, reductionTempsArret, augmentationProduction, coutErrorHumaine,
-      tauxProblemeQualite, coutQualite, subventions, coutMiseAJourLogiciel, coutConsommables
+      tempsCycle: tempsCycleAuto, coutMainOeuvre, nbEmployesRemplaces, reductionDechet, 
+      coutDechet, tauxRejets: tauxRejetsAuto, reductionAccidents, reductionTempsArret, 
+      augmentationProduction, coutErrorHumaine, tauxProblemeQualite, coutQualite, 
+      subventions, coutMiseAJourLogiciel, coutConsommables
     } = parametresSystemeAutomatise;
     
     const {
-      capacite: capaciteActuelle, nombreEmployes, maintenance: maintenanceActuelle, 
-      energie: energieActuelle, perteProduction, tauxRejets: tauxRejetsActuel,
-      frequenceAccident, coutMoyenAccident, tempsArretAccident, tempsArretNonPlanifie
+      capacite: capaciteActuelle, tempsCycle: tempsCycleActuel, nombreEmployes, 
+      maintenance: maintenanceActuelle, energie: energieActuelle, perteProduction, 
+      tauxRejets: tauxRejetsActuel, frequenceAccident, coutMoyenAccident, 
+      tempsArretAccident, tempsArretNonPlanifie
     } = parametresSystemeActuel;
     
     const {
@@ -167,10 +175,32 @@ const CalculateurROI = () => {
     // Calcul du nombre d'heures d'opération par an
     const heuresOperationAnnuelles = heuresOperationParJour * joursOperationParAn;
     
-    // Calcul de la production annuelle (actuelle vs automatisée)
+    // Calcul des capacités théoriques basées sur le temps de cycle
+    const capaciteTheoriqueActuelleCalc = 3600 / tempsCycleActuel;
+    const capaciteTheoriqueAutomatiseeCalc = 3600 / tempsCycleAuto;
+    
+    // Calcul des taux d'efficacité (capacité réelle vs théorique)
+    const efficaciteActuelleCalc = (capaciteActuelle / capaciteTheoriqueActuelleCalc) * 100;
+    const efficaciteAutomatiseeCalc = (capaciteAuto / capaciteTheoriqueAutomatiseeCalc) * 100;
+    
+    // Calcul du pourcentage d'amélioration du temps de cycle
+    const ameliorationTempsCycleCalc = ((tempsCycleActuel - tempsCycleAuto) / tempsCycleActuel) * 100;
+    
+    // Calcul de la production annuelle (actuelle vs automatisée) - avec impact du temps de cycle
+    // La production est influencée par le temps de cycle et les pertes de production
     const productionActuelle = capaciteActuelle * heuresOperationAnnuelles * (1 - perteProduction / 100);
     const productionAutomatisee = capaciteAuto * heuresOperationAnnuelles * (1 - (perteProduction * (1 - reductionTempsArret/100)) / 100);
     const differenceProductionCalc = productionAutomatisee - productionActuelle;
+    
+    // Calcul de la production potentielle supplémentaire basée sur l'amélioration du temps de cycle
+    const potentielProductionParTempsCycle = (capaciteTheoriqueAutomatiseeCalc - capaciteTheoriqueActuelleCalc) * heuresOperationAnnuelles * (1 - perteProduction / 100);
+    const revenuSupplementairePotentielCalc = potentielProductionParTempsCycle * margeUnitaire;
+    
+    // Calcul du gain de flexibilité (capacité à répondre aux pics de demande)
+    const gainFlexibiliteProductionCalc = capaciteTheoriqueAutomatiseeCalc / capaciteTheoriqueActuelleCalc;
+    
+    // Impact financier direct du temps de cycle (revenus supplémentaires dus à la production accrue)
+    const impactTempsCycleCalc = differenceProductionCalc * margeUnitaire * (ameliorationTempsCycleCalc / 100);
     
     // Calcul des économies d'accidents
     const economiesAccidents = (frequenceAccident * coutMoyenAccident * reductionAccidents / 100);
@@ -217,8 +247,11 @@ const CalculateurROI = () => {
       // Économies liées à la réduction des rejets
       const economieRejets = economiesRejetsCalc * facteurInflation;
       
-      // Bénéfices liés à l'augmentation de la production
+      // Bénéfices liés à l'augmentation de la production (incluant impact du temps de cycle)
       const beneficeSupplementaire = differenceProductionCalc * margeUnitaire * facteurInflation;
+      
+      // Bénéfices spécifiquement liés à l'amélioration du temps de cycle
+      const beneficeTempsCycle = impactTempsCycleCalc * facteurInflation;
       
       // Économies liées à la sécurité
       const economieSecuriteAjustee = economiesAccidents * facteurInflation;
@@ -230,7 +263,7 @@ const CalculateurROI = () => {
       
       // Calcul du flux de trésorerie annuel
       const fluxAnnuel = economiePersonnel + economieErreurs + economieQualite + beneficeSupplementaire + 
-                       economieMaintenance + economieEnergie + economieRejets +
+                       beneficeTempsCycle + economieMaintenance + economieEnergie + economieRejets +
                        economieSecuriteAjustee + economieTempsArretAjustee + economieTempsArretNonPlanifieAjustee - 
                        maintenanceAnnuelle - energieOperationAnnuelle - formationContinueAnnuelle - 
                        miseAJourLogicielAnnuelle - consommablesAnnuels + amortissement;
@@ -261,6 +294,7 @@ const CalculateurROI = () => {
         economieErreurs,
         economieQualite,
         beneficeSupplementaire,
+        beneficeTempsCycle,
         economieMaintenance,
         economieEnergie,
         economieRejets,
@@ -307,9 +341,17 @@ const CalculateurROI = () => {
       economieAnnuelle: economieAnnuelleCalc,
       reductionMainOeuvre: reductionMainOeuvreCalc,
       economiesSecurite: economiesAccidents,
-      economiesQualite: economieQualiteBase, // Correction ici : utilisation de economieQualiteBase
+      economiesQualite: economieQualiteBase,
       economiesTempsArret: economiesTempsArretCalc + economiesTempsArretNonPlanifie,
-      economiesRejets: economiesRejetsCalc
+      economiesRejets: economiesRejetsCalc,
+      ameliorationTempsCycle: ameliorationTempsCycleCalc,
+      impactTempsCycle: impactTempsCycleCalc,
+      capaciteTheoriqueActuelle: capaciteTheoriqueActuelleCalc,
+      capaciteTheoriqueAutomatisee: capaciteTheoriqueAutomatiseeCalc,
+      efficaciteActuelle: efficaciteActuelleCalc,
+      efficaciteAutomatisee: efficaciteAutomatiseeCalc,
+      revenuSupplementairePotentiel: revenuSupplementairePotentielCalc,
+      gainFlexibiliteProduction: gainFlexibiliteProductionCalc
     });
   };
   
@@ -322,7 +364,10 @@ const CalculateurROI = () => {
   const { 
     roi, delaiRecuperation, van, tri, differenceProduction, 
     economieAnnuelle, reductionMainOeuvre, economiesSecurite, 
-    economiesQualite, economiesTempsArret, economiesRejets, fluxTresorerie 
+    economiesQualite, economiesTempsArret, economiesRejets, fluxTresorerie,
+    ameliorationTempsCycle, impactTempsCycle, capaciteTheoriqueActuelle,
+    capaciteTheoriqueAutomatisee, efficaciteActuelle, efficaciteAutomatisee,
+    revenuSupplementairePotentiel, gainFlexibiliteProduction
   } = resultats;
   
   // Données pour les graphiques mémorisées pour éviter les recalculs inutiles
@@ -351,12 +396,25 @@ const CalculateurROI = () => {
       { name: 'Solution Automatisée', value: parametresSystemeActuel.frequenceAccident * (1 - parametresSystemeAutomatise.reductionAccidents/100), fill: '#22c55e' }
     ];
     
-    // Données pour le graphique des économies
+    // Comparaison des temps de cycle
+    const dataComparaisonTempsCycle = [
+      { name: 'Système Actuel', value: parametresSystemeActuel.tempsCycle, fill: '#ef4444' },
+      { name: 'Solution Automatisée', value: parametresSystemeAutomatise.tempsCycle, fill: '#22c55e' }
+    ];
+
+    // Comparaison des capacités théoriques vs réelles
+    const dataCapacitesTheoretiques = [
+      { name: 'Capacité Théorique', actuel: capaciteTheoriqueActuelle, automatise: capaciteTheoriqueAutomatisee },
+      { name: 'Capacité Réelle', actuel: parametresSystemeActuel.capacite, automatise: parametresSystemeAutomatise.capacite }
+    ];
+    
+    // Données pour le graphique des économies (incluant l'impact du temps de cycle)
     const dataEconomies = [
       { name: "Main d'œuvre", value: reductionMainOeuvre > 0 ? reductionMainOeuvre : 0 },
       { name: 'Qualité', value: economiesQualite > 0 ? economiesQualite : 0 },
       { name: 'Sécurité', value: economiesSecurite + economiesTempsArret > 0 ? economiesSecurite + economiesTempsArret : 0 },
       { name: 'Production', value: differenceProduction * (parametresGeneraux.margeUnitaire) > 0 ? differenceProduction * (parametresGeneraux.margeUnitaire) : 0 },
+      { name: 'Impact Temps Cycle', value: impactTempsCycle > 0 ? impactTempsCycle : 0 },
       { name: 'Rejets', value: economiesRejets > 0 ? economiesRejets : 0 },
       { name: 'Maintenance', value: parametresSystemeActuel.maintenance - parametresSystemeAutomatise.coutMaintenance > 0 ? parametresSystemeActuel.maintenance - parametresSystemeAutomatise.coutMaintenance : 0 },
       { name: 'Énergie', value: parametresSystemeActuel.energie - parametresSystemeAutomatise.coutEnergie > 0 ? parametresSystemeActuel.energie - parametresSystemeAutomatise.coutEnergie : 0 }
@@ -378,20 +436,45 @@ const CalculateurROI = () => {
             parametresSystemeAutomatise.subventions
     }));
     
+    // Données pour la répartition des contributions au flux de trésorerie
+    const contributionsFlux = fluxTresorerie.length > 0 ? [
+      { name: "Main d'œuvre", value: fluxTresorerie[0].economiePersonnel },
+      { name: "Qualité", value: fluxTresorerie[0].economieQualite },
+      { name: "Temps Cycle", value: fluxTresorerie[0].beneficeTempsCycle },
+      { name: "Production", value: fluxTresorerie[0].beneficeSupplementaire },
+      { name: "Sécurité", value: fluxTresorerie[0].economieSecuriteAjustee + fluxTresorerie[0].economieTempsArretAjustee + fluxTresorerie[0].economieTempsArretNonPlanifieAjustee },
+      { name: "Rejets", value: fluxTresorerie[0].economieRejets },
+      { name: "Maintenance", value: fluxTresorerie[0].economieMaintenance },
+      { name: "Énergie", value: fluxTresorerie[0].economieEnergie }
+    ].filter(item => item.value > 0) : [];
+    
     return {
       dataComparaisonCapacite,
       dataComparaisonEmployes,
       dataComparaisonRejets,
       dataComparaisonAccidents,
+      dataComparaisonTempsCycle,
+      dataCapacitesTheoretiques,
       dataEconomies,
       dataCoutsSupplementaires,
-      dataCumulatif
+      dataCumulatif,
+      contributionsFlux
     };
   }, [
     parametresSystemeActuel, 
     parametresSystemeAutomatise,
     parametresGeneraux,
-    resultats
+    resultats,
+    fluxTresorerie,
+    capaciteTheoriqueActuelle,
+    capaciteTheoriqueAutomatisee,
+    impactTempsCycle,
+    differenceProduction,
+    economiesSecurite,
+    economiesTempsArret,
+    economiesRejets,
+    economiesQualite,
+    reductionMainOeuvre
   ]);
   
   // Fonctions pour changer l'onglet et afficher/masquer les détails
@@ -993,6 +1076,93 @@ const CalculateurROI = () => {
         </div>
       </div>
       
+      {/* Nouvelle section: Impact du temps de cycle */}
+      <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-indigo-700 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+          </svg>
+          Impact du temps de cycle
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="h-64">
+            <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Temps de cycle (secondes/unité)</h3>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dataGraphiques.dataComparaisonTempsCycle} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={150} />
+                <Tooltip formatter={(value) => [`${value} secondes`, 'Temps de cycle']} />
+                <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="text-xs text-center text-gray-500 mt-1">
+              Amélioration: -{ameliorationTempsCycle.toFixed(1)}% ({parametresSystemeActuel.tempsCycle - parametresSystemeAutomatise.tempsCycle} secondes)
+            </p>
+          </div>
+          
+          <div className="bg-indigo-50 p-4 rounded-lg">
+            <h3 className="text-md font-medium text-indigo-800 mb-3">Analyse d'impact du temps de cycle</h3>
+            
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Capacité théorique maximale:</p>
+                <div className="flex justify-between text-sm">
+                  <span>• Système actuel: <strong>{capaciteTheoriqueActuelle.toFixed(1)} unités/heure</strong></span>
+                  <span>• Système automatisé: <strong>{capaciteTheoriqueAutomatisee.toFixed(1)} unités/heure</strong></span>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-700">Taux d'utilisation:</p>
+                <div className="flex justify-between text-sm">
+                  <span>• Système actuel: <strong>{efficaciteActuelle.toFixed(1)}%</strong></span>
+                  <span>• Système automatisé: <strong>{efficaciteAutomatisee.toFixed(1)}%</strong></span>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-700">Revenus supplémentaires potentiels:</p>
+                <p className="text-sm">
+                  <strong>{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(revenuSupplementairePotentiel)}</strong> par an si toute la capacité théorique était utilisée
+                </p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-700">Contribution au flux de trésorerie:</p>
+                <p className="text-sm">
+                  <strong>{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(impactTempsCycle)}</strong> par an d'économies directement attribuables à la réduction du temps de cycle
+                </p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-700">Gain de flexibilité de production:</p>
+                <p className="text-sm">
+                  <strong>×{gainFlexibiliteProduction.toFixed(1)}</strong> (capacité à absorber les pics de demande)
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="h-72">
+          <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Contribution des différents facteurs au ROI</h3>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={dataGraphiques.contributionsFlux}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(value), 'Contribution']} />
+              <Bar dataKey="value" fill="#4F46E5" />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-xs text-center text-gray-500 mt-2">
+            * Ce graphique montre la contribution de chaque facteur au flux de trésorerie annuel, permettant d'identifier les principaux moteurs de rentabilité.
+          </p>
+        </div>
+      </div>
+      
       {/* Graphiques comparatifs */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-700">Analyse comparative</h2>
@@ -1170,30 +1340,46 @@ const CalculateurROI = () => {
         
         <div className="mb-4">
           <h3 className="font-medium text-gray-700 mb-2">Avantages du système automatisé</h3>
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Traitement de <strong>{parametresSystemeAutomatise.capacite} unités/heure</strong> contre {parametresSystemeActuel.capacite} actuellement</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Traitement de <strong>{parametresSystemeAutomatise.capacite} unités/heure</strong> contre {parametresSystemeActuel.capacite} actuellement</span>
+              </div>
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Réduction du temps de cycle de <strong>{ameliorationTempsCycle.toFixed(1)}%</strong> ({parametresSystemeActuel.tempsCycle} à {parametresSystemeAutomatise.tempsCycle} secondes)</span>
+              </div>
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Gain de flexibilité de production de <strong>{(gainFlexibiliteProduction - 1) * 100}%</strong></span>
+              </div>
             </div>
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Réduction de la main d'œuvre de <strong>{parametresSystemeAutomatise.nbEmployesRemplaces.toFixed(1)} ETP</strong></span>
-            </div>
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Diminution des rejets de <strong>{(parametresSystemeActuel.tauxRejets - parametresSystemeAutomatise.tauxRejets).toFixed(1)}%</strong></span>
-            </div>
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Réduction des accidents de <strong>{parametresSystemeAutomatise.reductionAccidents}%</strong></span>
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Réduction de la main d'œuvre de <strong>{parametresSystemeAutomatise.nbEmployesRemplaces.toFixed(1)} ETP</strong></span>
+              </div>
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Diminution des rejets de <strong>{(parametresSystemeActuel.tauxRejets - parametresSystemeAutomatise.tauxRejets).toFixed(1)}%</strong></span>
+              </div>
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Réduction des accidents de <strong>{parametresSystemeAutomatise.reductionAccidents}%</strong></span>
+              </div>
             </div>
           </div>
         </div>
