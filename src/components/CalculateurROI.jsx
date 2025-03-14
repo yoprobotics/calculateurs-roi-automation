@@ -1208,26 +1208,10 @@ const CalculateurROI = () => {
             
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-medium text-gray-700">Capacité théorique maximum basée sur le temps de cycle:</p>
-                <div className="flex justify-between text-sm">
-                  <span>• Système actuel: <strong>{capaciteTheoriqueActuelle.toFixed(1)} unités/heure</strong></span>
-                  <span>• Système automatisé: <strong>{capaciteTheoriqueAutomatisee.toFixed(1)} unités/heure</strong></span>
-                </div>
-              </div>
-              
-              <div>
                 <p className="text-sm font-medium text-gray-700">Capacité réelle saisie:</p>
                 <div className="flex justify-between text-sm">
                   <span>• Système actuel: <strong>{parametresSystemeActuel.capacite} unités/heure</strong></span>
                   <span>• Système automatisé: <strong>{parametresSystemeAutomatise.capacite} unités/heure</strong></span>
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-700">Taux d'utilisation:</p>
-                <div className="flex justify-between text-sm">
-                  <span>• Système actuel: <strong>{efficaciteActuelle.toFixed(1)}%</strong></span>
-                  <span>• Système automatisé: <strong>{efficaciteAutomatisee.toFixed(1)}%</strong></span>
                 </div>
               </div>
               
