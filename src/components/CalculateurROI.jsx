@@ -89,16 +89,54 @@ const CalculateurROI = () => {
   // États pour l'interface utilisateur
   const [ui, setUi] = useState({
     afficherDetails: false,
-    ongletActif: 'general'
+    ongletActif: 'general',
+    modeSynchronisation: true, // Nouvelle option pour synchroniser automatiquement temps de cycle et capacité
   });
+  
+  // Fonction pour synchroniser le temps de cycle basé sur la capacité
+  const syncTempsCycleFromCapacite = (capacite, setParams, params) => {
+    if (ui.modeSynchronisation && capacite > 0) {
+      const nouveauTempsCycle = Math.round((3600 / capacite) * 10) / 10; // Arrondi à 1 décimale
+      setParams({
+        ...params,
+        capacite: capacite,
+        tempsCycle: nouveauTempsCycle
+      });
+    } else {
+      setParams({
+        ...params,
+        capacite: capacite
+      });
+    }
+  };
+  
+  // Fonction pour synchroniser la capacité basée sur le temps de cycle
+  const syncCapaciteFromTempsCycle = (tempsCycle, setParams, params) => {
+    if (ui.modeSynchronisation && tempsCycle > 0) {
+      const nouvelleCapacite = Math.round((3600 / tempsCycle) * 10) / 10; // Arrondi à 1 décimale
+      setParams({
+        ...params,
+        tempsCycle: tempsCycle,
+        capacite: nouvelleCapacite
+      });
+    } else {
+      setParams({
+        ...params,
+        tempsCycle: tempsCycle
+      });
+    }
+  };
   
   // Fonction qui adapte les paramètres par défaut en fonction du type de système actuel
   useEffect(() => {
     if (typeSystemeActuel === 'manuel') {
+      // Manuel: temps de cycle = 120 sec, capacité = 30 unités/h
+      const tempsCycle = 120;
+      const capacite = 30;
       setParametresSystemeActuel({
         ...parametresSystemeActuel,
-        capacite: 30,
-        tempsCycle: 120,
+        capacite: capacite,
+        tempsCycle: tempsCycle,
         nombreEmployes: 3,
         coutSysteme: 20000, 
         maintenance: 5000,
@@ -109,10 +147,13 @@ const CalculateurROI = () => {
         tempsArretNonPlanifie: 15
       });
     } else if (typeSystemeActuel === 'semi-auto') {
+      // Semi-auto: temps de cycle = 60 sec, capacité = 60 unités/h
+      const tempsCycle = 60;
+      const capacite = 60;
       setParametresSystemeActuel({
         ...parametresSystemeActuel,
-        capacite: 60,
-        tempsCycle: 60,
+        capacite: capacite,
+        tempsCycle: tempsCycle,
         nombreEmployes: 2,
         coutSysteme: 80000,
         maintenance: 12000,
@@ -123,10 +164,13 @@ const CalculateurROI = () => {
         tempsArretNonPlanifie: 10
       });
     } else if (typeSystemeActuel === 'auto-ancien') {
+      // Auto-ancien: temps de cycle = 48 sec, capacité = 75 unités/h
+      const tempsCycle = 48;
+      const capacite = 75;
       setParametresSystemeActuel({
         ...parametresSystemeActuel,
-        capacite: 75,
-        tempsCycle: 48,
+        capacite: capacite,
+        tempsCycle: tempsCycle,
         nombreEmployes: 1.5,
         coutSysteme: 120000,
         maintenance: 20000,
@@ -175,32 +219,35 @@ const CalculateurROI = () => {
     // Calcul du nombre d'heures d'opération par an
     const heuresOperationAnnuelles = heuresOperationParJour * joursOperationParAn;
     
-    // Calcul des capacités théoriques basées sur le temps de cycle
-    const capaciteTheoriqueActuelleCalc = 3600 / tempsCycleActuel;
-    const capaciteTheoriqueAutomatiseeCalc = 3600 / tempsCycleAuto;
+    // Utilisation des capacités saisies par l'utilisateur pour la cohérence
+    // Tout en préservant le calcul théorique pour la comparaison
+    const capaciteTheoriqueActuelleCalc = Math.round((3600 / tempsCycleActuel) * 10) / 10;
+    const capaciteTheoriqueAutomatiseeCalc = Math.round((3600 / tempsCycleAuto) * 10) / 10;
     
     // Calcul des taux d'efficacité (capacité réelle vs théorique)
-    const efficaciteActuelleCalc = (capaciteActuelle / capaciteTheoriqueActuelleCalc) * 100;
-    const efficaciteAutomatiseeCalc = (capaciteAuto / capaciteTheoriqueAutomatiseeCalc) * 100;
+    // Si les capacités sont synchronisées avec les temps de cycle, l'efficacité sera de 100%
+    const efficaciteActuelleCalc = Math.min(100, (capaciteActuelle / capaciteTheoriqueActuelleCalc) * 100);
+    const efficaciteAutomatiseeCalc = Math.min(100, (capaciteAuto / capaciteTheoriqueAutomatiseeCalc) * 100);
     
     // Calcul du pourcentage d'amélioration du temps de cycle
     const ameliorationTempsCycleCalc = ((tempsCycleActuel - tempsCycleAuto) / tempsCycleActuel) * 100;
     
-    // Calcul de la production annuelle (actuelle vs automatisée) - avec impact du temps de cycle
-    // La production est influencée par le temps de cycle et les pertes de production
+    // Calcul de la production annuelle (actuelle vs automatisée) basée sur les capacités réelles saisies
     const productionActuelle = capaciteActuelle * heuresOperationAnnuelles * (1 - perteProduction / 100);
     const productionAutomatisee = capaciteAuto * heuresOperationAnnuelles * (1 - (perteProduction * (1 - reductionTempsArret/100)) / 100);
     const differenceProductionCalc = productionAutomatisee - productionActuelle;
     
     // Calcul de la production potentielle supplémentaire basée sur l'amélioration du temps de cycle
-    const potentielProductionParTempsCycle = (capaciteTheoriqueAutomatiseeCalc - capaciteTheoriqueActuelleCalc) * heuresOperationAnnuelles * (1 - perteProduction / 100);
+    // En utilisant les capacités réelles (pas théoriques) pour la cohérence avec les entrées utilisateur
+    const potentielProductionParTempsCycle = (capaciteAuto - capaciteActuelle) * heuresOperationAnnuelles * (1 - perteProduction / 100);
     const revenuSupplementairePotentielCalc = potentielProductionParTempsCycle * margeUnitaire;
     
-    // Calcul du gain de flexibilité (capacité à répondre aux pics de demande)
-    const gainFlexibiliteProductionCalc = capaciteTheoriqueAutomatiseeCalc / capaciteTheoriqueActuelleCalc;
+    // Calcul du gain de flexibilité (basé sur le rapport des capacités réelles)
+    const gainFlexibiliteProductionCalc = capaciteAuto / capaciteActuelle;
     
     // Impact financier direct du temps de cycle (revenus supplémentaires dus à la production accrue)
-    const impactTempsCycleCalc = differenceProductionCalc * margeUnitaire * (ameliorationTempsCycleCalc / 100);
+    // Utilisation d'une formule qui reflète mieux l'impact réel du changement de temps de cycle
+    const impactTempsCycleCalc = (capaciteAuto - capaciteActuelle) * heuresOperationAnnuelles * margeUnitaire * (1 - perteProduction / 100);
     
     // Calcul des économies d'accidents
     const economiesAccidents = (frequenceAccident * coutMoyenAccident * reductionAccidents / 100);
@@ -486,8 +533,12 @@ const CalculateurROI = () => {
     setUi(prev => ({ ...prev, afficherDetails: !prev.afficherDetails }));
   };
   
+  const toggleSynchronisation = () => {
+    setUi(prev => ({ ...prev, modeSynchronisation: !prev.modeSynchronisation }));
+  };
+  
   // Extraction des valeurs de l'UI
-  const { afficherDetails, ongletActif } = ui;
+  const { afficherDetails, ongletActif, modeSynchronisation } = ui;
   
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
@@ -509,6 +560,32 @@ const CalculateurROI = () => {
             <h4 className="font-bold text-blue-700">Réduction des Coûts</h4>
             <p>Diminution des coûts de main d'œuvre et optimisation de la consommation d'énergie et de matières.</p>
           </div>
+        </div>
+      </div>
+      
+      {/* Option de synchronisation temps de cycle/capacité */}
+      <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-blue-800">Mode de saisie des données de production</h3>
+            <p className="text-sm text-gray-600">La capacité et le temps de cycle sont liés par la formule: Capacité (unités/h) = 3600 / Temps de cycle (s)</p>
+          </div>
+          <label className="inline-flex items-center cursor-pointer">
+            <span className={`mr-3 text-sm font-medium ${modeSynchronisation ? 'text-green-700' : 'text-gray-500'}`}>
+              Synchronisation Automatique
+            </span>
+            <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modeSynchronisation ? 'bg-green-600' : 'bg-gray-300'}`}>
+              <span 
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${modeSynchronisation ? 'translate-x-6' : 'translate-x-1'}`} 
+              />
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={modeSynchronisation}
+                onChange={toggleSynchronisation}
+              />
+            </div>
+          </label>
         </div>
       </div>
       
@@ -566,10 +643,11 @@ const CalculateurROI = () => {
                     <input
                       type="number"
                       value={parametresSystemeActuel.capacite}
-                      onChange={(e) => setParametresSystemeActuel({
-                        ...parametresSystemeActuel,
-                        capacite: Number(e.target.value)
-                      })}
+                      onChange={(e) => syncTempsCycleFromCapacite(
+                        Number(e.target.value),
+                        setParametresSystemeActuel,
+                        parametresSystemeActuel
+                      )}
                       className="w-full p-2 border rounded"
                     />
                     <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
@@ -579,15 +657,26 @@ const CalculateurROI = () => {
                     <input
                       type="number"
                       value={parametresSystemeActuel.tempsCycle}
-                      onChange={(e) => setParametresSystemeActuel({
-                        ...parametresSystemeActuel,
-                        tempsCycle: Number(e.target.value)
-                      })}
+                      onChange={(e) => syncCapaciteFromTempsCycle(
+                        Number(e.target.value),
+                        setParametresSystemeActuel,
+                        parametresSystemeActuel
+                      )}
                       className="w-full p-2 border rounded"
                     />
                     <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
                   </div>
                 </div>
+                {modeSynchronisation && (
+                  <div className="mt-2 p-2 bg-blue-50 rounded-lg text-sm text-blue-800">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-700" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      La capacité réelle correspond à {Math.round((parametresSystemeActuel.capacite / capaciteTheoriqueActuelle) * 100)}% de la capacité théorique maximum.
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="mb-4">
@@ -752,10 +841,11 @@ const CalculateurROI = () => {
                     <input
                       type="number"
                       value={parametresSystemeAutomatise.capacite}
-                      onChange={(e) => setParametresSystemeAutomatise({
-                        ...parametresSystemeAutomatise,
-                        capacite: Number(e.target.value)
-                      })}
+                      onChange={(e) => syncTempsCycleFromCapacite(
+                        Number(e.target.value),
+                        setParametresSystemeAutomatise,
+                        parametresSystemeAutomatise
+                      )}
                       className="w-full p-2 border rounded"
                     />
                     <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
@@ -765,15 +855,26 @@ const CalculateurROI = () => {
                     <input
                       type="number"
                       value={parametresSystemeAutomatise.tempsCycle}
-                      onChange={(e) => setParametresSystemeAutomatise({
-                        ...parametresSystemeAutomatise,
-                        tempsCycle: Number(e.target.value)
-                      })}
+                      onChange={(e) => syncCapaciteFromTempsCycle(
+                        Number(e.target.value),
+                        setParametresSystemeAutomatise,
+                        parametresSystemeAutomatise
+                      )}
                       className="w-full p-2 border rounded"
                     />
                     <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
                   </div>
                 </div>
+                {modeSynchronisation && (
+                  <div className="mt-2 p-2 bg-green-50 rounded-lg text-sm text-green-800">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-700" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      La capacité réelle correspond à {Math.round((parametresSystemeAutomatise.capacite / capaciteTheoriqueAutomatisee) * 100)}% de la capacité théorique maximum.
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="mb-4">
@@ -1107,10 +1208,18 @@ const CalculateurROI = () => {
             
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-medium text-gray-700">Capacité théorique maximale:</p>
+                <p className="text-sm font-medium text-gray-700">Capacité théorique maximum basée sur le temps de cycle:</p>
                 <div className="flex justify-between text-sm">
                   <span>• Système actuel: <strong>{capaciteTheoriqueActuelle.toFixed(1)} unités/heure</strong></span>
                   <span>• Système automatisé: <strong>{capaciteTheoriqueAutomatisee.toFixed(1)} unités/heure</strong></span>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-700">Capacité réelle saisie:</p>
+                <div className="flex justify-between text-sm">
+                  <span>• Système actuel: <strong>{parametresSystemeActuel.capacite} unités/heure</strong></span>
+                  <span>• Système automatisé: <strong>{parametresSystemeAutomatise.capacite} unités/heure</strong></span>
                 </div>
               </div>
               
@@ -1123,9 +1232,9 @@ const CalculateurROI = () => {
               </div>
               
               <div>
-                <p className="text-sm font-medium text-gray-700">Revenus supplémentaires potentiels:</p>
+                <p className="text-sm font-medium text-gray-700">Amélioration de la production réelle:</p>
                 <p className="text-sm">
-                  <strong>{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(revenuSupplementairePotentiel)}</strong> par an si toute la capacité théorique était utilisée
+                  <strong>{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(revenuSupplementairePotentiel)}</strong> par an de revenus supplémentaires grâce à l'augmentation de capacité
                 </p>
               </div>
               
@@ -1358,7 +1467,7 @@ const CalculateurROI = () => {
                 <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Gain de flexibilité de production de <strong>{(gainFlexibiliteProduction - 1) * 100}%</strong></span>
+                <span>Gain de flexibilité de production de <strong>{((gainFlexibiliteProduction - 1) * 100).toFixed(1)}%</strong></span>
               </div>
             </div>
             <div className="space-y-2">
