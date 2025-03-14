@@ -2,6 +2,15 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { calculerTRI, calculerDelaiRecuperation, calculerFluxActualise, appliquerInflation } from '../utils/calculationHelpers';
 
+// Fonction de formatage personnalisée pour les tooltips
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('fr-FR', { 
+    style: 'currency', 
+    currency: 'USD',
+    maximumFractionDigits: 0 
+  }).format(value);
+};
+
 // Calculateur général pour l'automatisation industrielle avec structure comparative
 const CalculateurROI = () => {
   // État pour le type de système actuel
@@ -539,13 +548,128 @@ const CalculateurROI = () => {
   
   // Extraction des valeurs de l'UI
   const { afficherDetails, ongletActif, modeSynchronisation } = ui;
+
+  // Composant pour les graphiques verticaux comparatifs
+  const VerticalBarGraph = ({ data, title, tooltipLabel, yAxisWidth = 120, suffix = "", height = 300 }) => {
+    return (
+      <div className="h-auto mb-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">{title}</h3>
+        <div style={{ height: `${height}px` }} className="w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 5, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+              <XAxis type="number" tickFormatter={(value) => `${value}${suffix}`} />
+              <YAxis 
+                dataKey="name" 
+                type="category" 
+                width={yAxisWidth}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip 
+                formatter={(value) => [`${value}${suffix}`, tooltipLabel]}
+                contentStyle={{ fontSize: '12px' }}
+              />
+              <Bar 
+                dataKey="value" 
+                nameKey="name" 
+                fill={(entry) => entry.fill} 
+                label={{ 
+                  position: 'right', 
+                  formatter: (value) => `${value}${suffix}`,
+                  fontSize: 11,
+                  fill: '#666'
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  // Composant pour les graphiques horizontaux
+  const HorizontalBarGraph = ({ data, title, tooltipLabel, tooltipFormatter, dataKey = "value", height = 300 }) => {
+    return (
+      <div className="h-auto mb-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">{title}</h3>
+        <div style={{ height: `${height}px` }} className="w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="name" 
+                tick={{ fontSize: 12, angle: -45, textAnchor: 'end' }}
+                height={60}
+              />
+              <YAxis />
+              <Tooltip 
+                formatter={tooltipFormatter || ((value) => [value, tooltipLabel])}
+                contentStyle={{ fontSize: '12px' }}
+              />
+              <Bar 
+                dataKey={dataKey} 
+                fill="#22c55e" 
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  // Composant pour le graphique linéaire
+  const LineGraph = ({ data, title, tooltip, lineInfo, height = 300 }) => {
+    return (
+      <div className="h-auto mb-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">{title}</h3>
+        <div style={{ height: `${height}px` }} className="w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 30 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="annee" 
+                tick={{ fontSize: 12 }}
+                height={40}
+                angle={-30}
+                textAnchor="end"
+              />
+              <YAxis />
+              <Tooltip 
+                formatter={tooltip.formatter}
+                contentStyle={{ fontSize: '12px' }}
+              />
+              <Legend 
+                verticalAlign="top" 
+                height={36}
+                wrapperStyle={{ fontSize: '12px' }}
+              />
+              {lineInfo.map((line, index) => (
+                <Line
+                  key={index}
+                  type="monotone"
+                  dataKey={line.dataKey}
+                  name={line.name}
+                  stroke={line.color}
+                  strokeWidth={line.width || 2}
+                  strokeDasharray={line.dashed ? "5 5" : null}
+                  dot={line.dot || { r: 4 }}
+                  activeDot={line.activeDot || { r: 6 }}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
   
   return (
-    <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-blue-800 mb-6 text-center">Calculateur de Retour sur Investissement pour l'Automatisation Industrielle</h1>
+    <div className="bg-gray-50 p-4 md:p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
+      <h1 className="text-xl md:text-2xl font-bold text-blue-800 mb-6 text-center">Calculateur de Retour sur Investissement pour l'Automatisation Industrielle</h1>
       
       <div className="mb-8 bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h3 className="text-xl font-bold text-blue-800 mb-2">Pourquoi investir dans l'automatisation?</h3>
+        <h3 className="text-lg md:text-xl font-bold text-blue-800 mb-2">Pourquoi investir dans l'automatisation?</h3>
         <p className="mb-2">L'automatisation industrielle permet d'améliorer la productivité, la qualité et la rentabilité de vos opérations tout en réduisant les coûts opérationnels.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div className="bg-white p-3 rounded shadow">
@@ -565,12 +689,12 @@ const CalculateurROI = () => {
       
       {/* Option de synchronisation temps de cycle/capacité */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
           <div>
             <h3 className="font-semibold text-blue-800">Mode de saisie des données de production</h3>
             <p className="text-sm text-gray-600">La capacité et le temps de cycle sont liés par la formule: Capacité (unités/h) = 3600 / Temps de cycle (s)</p>
           </div>
-          <label className="inline-flex items-center cursor-pointer">
+          <label className="inline-flex items-center cursor-pointer mt-2 md:mt-0">
             <span className={`mr-3 text-sm font-medium ${modeSynchronisation ? 'text-green-700' : 'text-gray-500'}`}>
               Synchronisation Automatique
             </span>
@@ -1187,21 +1311,13 @@ const CalculateurROI = () => {
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="h-64">
-            <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Temps de cycle (secondes/unité)</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataGraphiques.dataComparaisonTempsCycle} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip formatter={(value) => [`${value} secondes`, 'Temps de cycle']} />
-                <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-center text-gray-500 mt-1">
-              Amélioration: -{ameliorationTempsCycle.toFixed(1)}% ({parametresSystemeActuel.tempsCycle - parametresSystemeAutomatise.tempsCycle} secondes)
-            </p>
-          </div>
+          <VerticalBarGraph 
+            data={dataGraphiques.dataComparaisonTempsCycle} 
+            title="Temps de cycle (secondes/unité)"
+            tooltipLabel="Temps de cycle"
+            suffix=" secondes"
+            yAxisWidth={150}
+          />
           
           <div className="bg-indigo-50 p-4 rounded-lg">
             <h3 className="text-md font-medium text-indigo-800 mb-3">Analyse d'impact du temps de cycle</h3>
@@ -1239,21 +1355,16 @@ const CalculateurROI = () => {
           </div>
         </div>
         
-        <div className="h-72">
-          <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Contribution des différents facteurs au ROI</h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dataGraphiques.contributionsFlux}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(value), 'Contribution']} />
-              <Bar dataKey="value" fill="#4F46E5" />
-            </BarChart>
-          </ResponsiveContainer>
-          <p className="text-xs text-center text-gray-500 mt-2">
-            * Ce graphique montre la contribution de chaque facteur au flux de trésorerie annuel, permettant d'identifier les principaux moteurs de rentabilité.
-          </p>
-        </div>
+        <HorizontalBarGraph 
+          data={dataGraphiques.contributionsFlux} 
+          title="Contribution des différents facteurs au ROI"
+          tooltipLabel="Contribution"
+          tooltipFormatter={(value) => [formatCurrency(value), 'Contribution']}
+          height={350}
+        />
+        <p className="text-xs text-center text-gray-500 mt-2">
+          * Ce graphique montre la contribution de chaque facteur au flux de trésorerie annuel, permettant d'identifier les principaux moteurs de rentabilité.
+        </p>
       </div>
       
       {/* Graphiques comparatifs */}
@@ -1261,85 +1372,48 @@ const CalculateurROI = () => {
         <h2 className="text-xl font-semibold mb-4 text-gray-700">Analyse comparative</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="h-64">
-            <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Capacité de production (unités/heure)</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataGraphiques.dataComparaisonCapacite} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip formatter={(value) => [`${value} unités/h`, 'Capacité']} />
-                <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-center text-gray-500 mt-1">
-              Amélioration: +{(((parametresSystemeAutomatise.capacite - parametresSystemeActuel.capacite) / parametresSystemeActuel.capacite) * 100).toFixed(1)}%
-            </p>
-          </div>
+          <VerticalBarGraph 
+            data={dataGraphiques.dataComparaisonCapacite} 
+            title="Capacité de production (unités/heure)"
+            tooltipLabel="Capacité"
+            suffix=" unités/h"
+            yAxisWidth={150}
+          />
           
-          <div className="h-64">
-            <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Taux de rejets (%)</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataGraphiques.dataComparaisonRejets} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip formatter={(value) => [`${value}%`, 'Taux de rejets']} />
-                <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-center text-gray-500 mt-1">
-              Réduction: -{(((parametresSystemeActuel.tauxRejets - parametresSystemeAutomatise.tauxRejets) / parametresSystemeActuel.tauxRejets) * 100).toFixed(1)}%
-            </p>
-          </div>
+          <VerticalBarGraph 
+            data={dataGraphiques.dataComparaisonRejets} 
+            title="Taux de rejets (%)"
+            tooltipLabel="Taux de rejets"
+            suffix="%"
+            yAxisWidth={150}
+          />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="h-64">
-            <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Main d'œuvre requise (ETP)</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataGraphiques.dataComparaisonEmployes} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip formatter={(value) => [`${value} ETP`, "Main d'œuvre"]} />
-                <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-center text-gray-500 mt-1">
-              Réduction: -{((parametresSystemeAutomatise.nbEmployesRemplaces / parametresSystemeActuel.nombreEmployes) * 100).toFixed(1)}%
-            </p>
-          </div>
+          <VerticalBarGraph 
+            data={dataGraphiques.dataComparaisonEmployes} 
+            title="Main d'œuvre requise (ETP)"
+            tooltipLabel="Main d'œuvre"
+            suffix=" ETP"
+            yAxisWidth={150}
+          />
           
-          <div className="h-64">
-            <h3 className="text-sm font-medium text-gray-700 mb-2 text-center">Fréquence d'accidents (par an)</h3>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dataGraphiques.dataComparaisonAccidents} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip formatter={(value) => [`${value.toFixed(1)} accidents/an`, 'Fréquence']} />
-                <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-center text-gray-500 mt-1">
-              Réduction: -{parametresSystemeAutomatise.reductionAccidents}%
-            </p>
-          </div>
+          <VerticalBarGraph 
+            data={dataGraphiques.dataComparaisonAccidents} 
+            title="Fréquence d'accidents (par an)"
+            tooltipLabel="Fréquence"
+            suffix=" accidents/an"
+            yAxisWidth={150}
+          />
         </div>
         
-        <div className="h-80">
-          <h3 className="font-medium text-gray-700 mb-4 text-center">Économies annuelles par catégorie</h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dataGraphiques.dataEconomies}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(value), 'Économie']} />
-              <Bar dataKey="value" fill="#22c55e" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <HorizontalBarGraph 
+          data={dataGraphiques.dataEconomies} 
+          title="Économies annuelles par catégorie"
+          tooltipLabel="Économie"
+          tooltipFormatter={(value) => [formatCurrency(value), 'Économie']}
+          height={350}
+        />
       </div>
       
       {/* Résultats financiers */}
@@ -1375,7 +1449,7 @@ const CalculateurROI = () => {
           </div>
         </div>
         
-        <div className="flex space-x-4 mb-6">
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-6">
           <div className="flex-1 bg-yellow-50 p-3 rounded">
             <h3 className="text-sm font-medium text-gray-700">Économie annuelle moyenne</h3>
             <p className="text-2xl font-bold text-yellow-700">
@@ -1397,36 +1471,33 @@ const CalculateurROI = () => {
         </div>
         
         <div className="mb-6">
-          <h3 className="font-medium text-gray-700 mb-2">Évolution du retour sur investissement</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dataGraphiques.dataCumulatif}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="annee" />
-                <YAxis />
-                <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value), 'Montant']} />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="cumulatif" 
-                  name="Flux cumulatif" 
-                  stroke="#22c55e" 
-                  strokeWidth={2} 
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="seuil" 
-                  name="Seuil d'investissement" 
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  strokeDasharray="5 5" 
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="text-xs text-gray-600 mt-1 italic">
+          <h3 className="font-medium text-gray-700 mb-2 text-center">Évolution du retour sur investissement</h3>
+          <LineGraph 
+            data={dataGraphiques.dataCumulatif} 
+            title=""
+            tooltip={{
+              formatter: (value) => [formatCurrency(value), 'Montant']
+            }}
+            lineInfo={[
+              {
+                dataKey: "cumulatif",
+                name: "Flux cumulatif",
+                color: "#22c55e",
+                width: 2,
+                dot: { r: 4 },
+                activeDot: { r: 6 }
+              },
+              {
+                dataKey: "seuil",
+                name: "Seuil d'investissement",
+                color: "#ef4444",
+                width: 2,
+                dashed: true
+              }
+            ]}
+            height={350}
+          />
+          <p className="text-xs text-gray-600 mt-1 italic text-center">
             * Le point d'intersection entre la courbe verte et la ligne rouge représente le délai de récupération de l'investissement.
           </p>
         </div>
