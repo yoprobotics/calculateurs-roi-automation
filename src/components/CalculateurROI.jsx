@@ -131,49 +131,7 @@ const CalculateurROI = () => {
     }
   }, [typeSystemeActuel]);
   
-  // Synchronisation du temps de cycle et de la capacité pour le système actuel
-  useEffect(() => {
-    // Ne mettre à jour que si la modification vient de la capacité (pour éviter boucle infinie)
-    if (parametresSystemeActuel.tempsCycle === 3600 / parametresSystemeActuel.capacite) return;
-    
-    setParametresSystemeActuel({
-      ...parametresSystemeActuel,
-      tempsCycle: Math.round(3600 / parametresSystemeActuel.capacite)
-    });
-  }, [parametresSystemeActuel.capacite]);
-  
-  // Synchronisation de la capacité et du temps de cycle pour le système actuel
-  useEffect(() => {
-    // Ne mettre à jour que si la modification vient du temps de cycle
-    if (parametresSystemeActuel.capacite === Math.round(3600 / parametresSystemeActuel.tempsCycle)) return;
-    
-    setParametresSystemeActuel({
-      ...parametresSystemeActuel,
-      capacite: Math.round(3600 / parametresSystemeActuel.tempsCycle)
-    });
-  }, [parametresSystemeActuel.tempsCycle]);
-  
-  // Synchronisation du temps de cycle et de la capacité pour le système automatisé
-  useEffect(() => {
-    // Ne mettre à jour que si la modification vient de la capacité
-    if (parametresSystemeAutomatise.tempsCycle === 3600 / parametresSystemeAutomatise.capacite) return;
-    
-    setParametresSystemeAutomatise({
-      ...parametresSystemeAutomatise,
-      tempsCycle: Math.round(3600 / parametresSystemeAutomatise.capacite)
-    });
-  }, [parametresSystemeAutomatise.capacite]);
-  
-  // Synchronisation de la capacité et du temps de cycle pour le système automatisé
-  useEffect(() => {
-    // Ne mettre à jour que si la modification vient du temps de cycle
-    if (parametresSystemeAutomatise.capacite === Math.round(3600 / parametresSystemeAutomatise.tempsCycle)) return;
-    
-    setParametresSystemeAutomatise({
-      ...parametresSystemeAutomatise,
-      capacite: Math.round(3600 / parametresSystemeAutomatise.tempsCycle)
-    });
-  }, [parametresSystemeAutomatise.tempsCycle]);
+  // Suppression des useEffect qui lient capacité et temps de cycle
   
   // Fonction de calcul des résultats
   const calculerROI = () => {
@@ -531,6 +489,7 @@ const CalculateurROI = () => {
                       })}
                       className="w-full p-2 border rounded"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Temps de cycle (sec)</label>
@@ -543,6 +502,7 @@ const CalculateurROI = () => {
                       })}
                       className="w-full p-2 border rounded"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
                   </div>
                 </div>
               </div>
@@ -715,6 +675,7 @@ const CalculateurROI = () => {
                       })}
                       className="w-full p-2 border rounded"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Temps de cycle (sec)</label>
@@ -727,6 +688,7 @@ const CalculateurROI = () => {
                       })}
                       className="w-full p-2 border rounded"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
                   </div>
                 </div>
               </div>
