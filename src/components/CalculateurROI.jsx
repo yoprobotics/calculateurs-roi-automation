@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { calculerTRI, calculerDelaiRecuperation, calculerFluxActualise, appliquerInflation } from '../utils/calculationHelpers';
+import { 
+  calculerInvestissementInitial, 
+  calculerCapacitesTheoriques,
+  calculerImpactsProduction,
+  calculerEconomiesSecurite,
+  calculerEconomiesOperationnelles,
+  calculerTousFluxTresorerie
+} from '../utils/roiCalculationHelpers';
 
 // Fonction de formatage personnalisée pour les tooltips
 const formatCurrency = (value) => {
@@ -192,222 +200,102 @@ const CalculateurROI = () => {
     }
   }, [typeSystemeActuel]);
   
-  // Fonction de calcul des résultats
+  // Fonction de calcul des résultats (refactorisée)
   const calculerROI = () => {
+    // 1. Calcul de l'investissement initial
+    const investissementInitial = calculerInvestissementInitial(parametresSystemeAutomatise);
+    
+    // 2. Calcul des capacités théoriques et efficacités
     const {
-      coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutFormationContinue,
-      coutMaintenance, coutEnergie, dureeVie, tauxAmortissement, capacite: capaciteAuto,
-      tempsCycle: tempsCycleAuto, coutMainOeuvre, nbEmployesRemplaces, reductionDechet, 
-      coutDechet, tauxRejets: tauxRejetsAuto, reductionAccidents, reductionTempsArret, 
-      augmentationProduction, coutErrorHumaine, tauxProblemeQualite, coutQualite, 
-      subventions, coutMiseAJourLogiciel, coutConsommables
-    } = parametresSystemeAutomatise;
+      capaciteTheoriqueActuelle,
+      capaciteTheoriqueAutomatisee,
+      efficaciteActuelle,
+      efficaciteAutomatisee
+    } = calculerCapacitesTheoriques(parametresSystemeActuel, parametresSystemeAutomatise);
+    
+    // 3. Calcul des impacts liés à la production et au temps de cycle
+    const {
+      heuresOperationAnnuelles,
+      ameliorationTempsCycle,
+      differenceProduction,
+      impactTempsCycle,
+      gainFlexibiliteProduction,
+      revenuSupplementairePotentiel
+    } = calculerImpactsProduction(parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux);
+    
+    // 4. Calcul des économies liées à la sécurité et aux temps d'arrêt
+    const {
+      economiesAccidents,
+      economiesTempsArretAccidents,
+      economiesTempsArretNonPlanifie,
+      economiesTempsArretTotal
+    } = calculerEconomiesSecurite(
+      parametresSystemeActuel, 
+      parametresSystemeAutomatise, 
+      parametresGeneraux, 
+      heuresOperationAnnuelles
+    );
+    
+    // 5. Calcul des économies opérationnelles (main d'œuvre, rejets, qualité)
+    const {
+      reductionMainOeuvre,
+      economiesRejets,
+      economieQualite
+    } = calculerEconomiesOperationnelles(parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux);
+    
+    // 6. Calcul des flux de trésorerie et indicateurs financiers
+    const parametresPourCalcul = {
+      parametresActuel: parametresSystemeActuel,
+      parametresAuto: parametresSystemeAutomatise,
+      parametresGeneraux,
+      economiesSecurite: {
+        economiesAccidents,
+        economiesTempsArretAccidents,
+        economiesTempsArretNonPlanifie
+      },
+      economiesOperationnelles: {
+        reductionMainOeuvre,
+        economiesRejets,
+        economieQualite
+      },
+      impactsProduction: {
+        differenceProduction,
+        impactTempsCycle
+      },
+      investissementInitial
+    };
     
     const {
-      capacite: capaciteActuelle, tempsCycle: tempsCycleActuel, nombreEmployes, 
-      maintenance: maintenanceActuelle, energie: energieActuelle, perteProduction, 
-      tauxRejets: tauxRejetsActuel, frequenceAccident, coutMoyenAccident, 
-      tempsArretAccident, tempsArretNonPlanifie
-    } = parametresSystemeActuel;
+      fluxTresorerie,
+      roi: roiCalcule,
+      delaiRecuperation: periodeRecuperation,
+      van: valeurActuelleNette,
+      tri: triApprox,
+      economieAnnuelle: economieAnnuelleCalc
+    } = calculerTousFluxTresorerie(parametresPourCalcul);
     
-    const {
-      production, margeUnitaire, tauxInflation, tauxActualisation,
-      heuresOperationParJour, joursOperationParAn
-    } = parametresGeneraux;
-    
-    // Calcul de l'investissement initial
-    const investissementInitial = coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions;
-    
-    // Initialisation des variables
-    let fluxTresorerie = [];
-    let cumulFluxTresorerie = 0;
-    let valeurActuelleNette = -investissementInitial;
-    let periodeRecuperation = dureeVie;
-    let recuperationAtteinte = false;
-    
-    // Calcul du nombre d'heures d'opération par an
-    const heuresOperationAnnuelles = heuresOperationParJour * joursOperationParAn;
-    
-    // Utilisation des capacités saisies par l'utilisateur pour la cohérence
-    // Tout en préservant le calcul théorique pour la comparaison
-    const capaciteTheoriqueActuelleCalc = Math.round((3600 / tempsCycleActuel) * 10) / 10;
-    const capaciteTheoriqueAutomatiseeCalc = Math.round((3600 / tempsCycleAuto) * 10) / 10;
-    
-    // Calcul des taux d'efficacité (capacité réelle vs théorique)
-    // Si les capacités sont synchronisées avec les temps de cycle, l'efficacité sera de 100%
-    const efficaciteActuelleCalc = Math.min(100, (capaciteActuelle / capaciteTheoriqueActuelleCalc) * 100);
-    const efficaciteAutomatiseeCalc = Math.min(100, (capaciteAuto / capaciteTheoriqueAutomatiseeCalc) * 100);
-    
-    // Calcul du pourcentage d'amélioration du temps de cycle
-    const ameliorationTempsCycleCalc = ((tempsCycleActuel - tempsCycleAuto) / tempsCycleActuel) * 100;
-    
-    // Calcul de la production annuelle (actuelle vs automatisée) basée sur les capacités réelles saisies
-    const productionActuelle = capaciteActuelle * heuresOperationAnnuelles * (1 - perteProduction / 100);
-    const productionAutomatisee = capaciteAuto * heuresOperationAnnuelles * (1 - (perteProduction * (1 - reductionTempsArret/100)) / 100);
-    const differenceProductionCalc = productionAutomatisee - productionActuelle;
-    
-    // Calcul de la production potentielle supplémentaire basée sur l'amélioration du temps de cycle
-    // En utilisant les capacités réelles (pas théoriques) pour la cohérence avec les entrées utilisateur
-    const potentielProductionParTempsCycle = (capaciteAuto - capaciteActuelle) * heuresOperationAnnuelles * (1 - perteProduction / 100);
-    const revenuSupplementairePotentielCalc = potentielProductionParTempsCycle * margeUnitaire;
-    
-    // Calcul du gain de flexibilité (basé sur le rapport des capacités réelles)
-    const gainFlexibiliteProductionCalc = capaciteAuto / capaciteActuelle;
-    
-    // Impact financier direct du temps de cycle (revenus supplémentaires dus à la production accrue)
-    // Utilisation d'une formule qui reflète mieux l'impact réel du changement de temps de cycle
-    const impactTempsCycleCalc = (capaciteAuto - capaciteActuelle) * heuresOperationAnnuelles * margeUnitaire * (1 - perteProduction / 100);
-    
-    // Calcul des économies d'accidents
-    const economiesAccidents = (frequenceAccident * coutMoyenAccident * reductionAccidents / 100);
-    
-    // Calcul des économies liées au temps d'arrêt dû aux accidents
-    const valeurProductionHoraire = (production * margeUnitaire) / heuresOperationAnnuelles;
-    const economiesTempsArretCalc = frequenceAccident * tempsArretAccident * valeurProductionHoraire * reductionAccidents / 100;
-    
-    // Calcul des économies liées au temps d'arrêt non planifié
-    const economiesTempsArretNonPlanifie = tempsArretNonPlanifie * 12 * valeurProductionHoraire * reductionTempsArret / 100;
-    
-    // Calcul de la réduction de main d'œuvre
-    const reductionMainOeuvreCalc = coutMainOeuvre * nbEmployesRemplaces;
-    
-    // Calcul des économies liées à la réduction des rejets
-    const economiesRejetsCalc = production * (tauxRejetsActuel - tauxRejetsAuto) / 100 * coutDechet;
-    
-    // Calcul de l'économie liée à la qualité (sans facteur d'inflation)
-    const economieQualiteBase = production * (tauxProblemeQualite / 100) * (coutQualite / production);
-    
-    // Calcul des économies et bénéfices annuels
-    for (let annee = 1; annee <= dureeVie; annee++) {
-      // Calcul des coûts ajustés avec l'inflation
-      const facteurInflation = Math.pow(1 + tauxInflation / 100, annee - 1);
-      const maintenanceAnnuelle = coutMaintenance * facteurInflation;
-      const maintenanceActuelleAjustee = maintenanceActuelle * facteurInflation;
-      const energieOperationAnnuelle = coutEnergie * facteurInflation;
-      const energieActuelleAjustee = energieActuelle * facteurInflation;
-      const formationContinueAnnuelle = coutFormationContinue * facteurInflation;
-      const miseAJourLogicielAnnuelle = coutMiseAJourLogiciel * facteurInflation;
-      const consommablesAnnuels = coutConsommables * facteurInflation;
-      
-      // Calcul des économies
-      const economiePersonnel = reductionMainOeuvreCalc * facteurInflation;
-      const economieMaintenance = maintenanceActuelleAjustee - maintenanceAnnuelle;
-      const economieEnergie = energieActuelleAjustee - energieOperationAnnuelle;
-      
-      // Économies liées à la réduction des erreurs humaines
-      const economieErreurs = coutErrorHumaine * facteurInflation;
-      
-      // Économies liées à la qualité
-      const economieQualite = economieQualiteBase * facteurInflation;
-      
-      // Économies liées à la réduction des rejets
-      const economieRejets = economiesRejetsCalc * facteurInflation;
-      
-      // Bénéfices liés à l'augmentation de la production (incluant impact du temps de cycle)
-      const beneficeSupplementaire = differenceProductionCalc * margeUnitaire * facteurInflation;
-      
-      // Bénéfices spécifiquement liés à l'amélioration du temps de cycle
-      const beneficeTempsCycle = impactTempsCycleCalc * facteurInflation;
-      
-      // Économies liées à la sécurité
-      const economieSecuriteAjustee = economiesAccidents * facteurInflation;
-      const economieTempsArretAjustee = economiesTempsArretCalc * facteurInflation;
-      const economieTempsArretNonPlanifieAjustee = economiesTempsArretNonPlanifie * facteurInflation;
-      
-      // Amortissement
-      const amortissement = (investissementInitial / dureeVie) * (tauxAmortissement / 100);
-      
-      // Calcul du flux de trésorerie annuel
-      const fluxAnnuel = economiePersonnel + economieErreurs + economieQualite + beneficeSupplementaire + 
-                       beneficeTempsCycle + economieMaintenance + economieEnergie + economieRejets +
-                       economieSecuriteAjustee + economieTempsArretAjustee + economieTempsArretNonPlanifieAjustee - 
-                       maintenanceAnnuelle - energieOperationAnnuelle - formationContinueAnnuelle - 
-                       miseAJourLogicielAnnuelle - consommablesAnnuels + amortissement;
-      
-      // Calcul du flux de trésorerie actualisé
-      const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
-      const fluxActualise = fluxAnnuel / facteurActualisation;
-      
-      // Mise à jour de la VAN
-      valeurActuelleNette += fluxActualise;
-      
-      // Calcul du délai de récupération
-      cumulFluxTresorerie += fluxAnnuel;
-      if (cumulFluxTresorerie >= investissementInitial && !recuperationAtteinte) {
-        const cumulPrecedent = cumulFluxTresorerie - fluxAnnuel;
-        const fractionAnnee = (investissementInitial - cumulPrecedent) / fluxAnnuel;
-        periodeRecuperation = annee - 1 + fractionAnnee;
-        recuperationAtteinte = true;
-      }
-      
-      // Ajout des résultats annuels
-      fluxTresorerie.push({
-        annee,
-        fluxAnnuel,
-        fluxActualise,
-        cumulFluxTresorerie,
-        economiePersonnel,
-        economieErreurs,
-        economieQualite,
-        beneficeSupplementaire,
-        beneficeTempsCycle,
-        economieMaintenance,
-        economieEnergie,
-        economieRejets,
-        economieSecuriteAjustee,
-        economieTempsArretAjustee,
-        economieTempsArretNonPlanifieAjustee,
-        maintenanceAnnuelle,
-        energieOperationAnnuelle,
-        formationContinueAnnuelle,
-        miseAJourLogicielAnnuelle,
-        consommablesAnnuels,
-        amortissement
-      });
-    }
-    
-    // Calcul du ROI
-    const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
-    const roiCalcule = (totalBenefices / investissementInitial) * 100;
-    
-    // Calcul du TRI (approximation simplifiée)
-    let triApprox = 0;
-    for (let r = 1; r <= 100; r++) {
-      let npv = -investissementInitial;
-      for (let t = 0; t < fluxTresorerie.length; t++) {
-        npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + r / 100, t + 1);
-      }
-      if (npv <= 0) {
-        triApprox = r - 1;
-        break;
-      }
-    }
-    
-    // Calcul de l'économie annuelle moyenne
-    const economieAnnuelleCalc = totalBenefices / dureeVie;
-    
-    // Mise à jour des résultats
+    // 7. Mise à jour des résultats
     setResultats({
       fluxTresorerie,
       roi: roiCalcule,
       delaiRecuperation: periodeRecuperation,
       van: valeurActuelleNette,
       tri: triApprox,
-      differenceProduction: differenceProductionCalc,
+      differenceProduction,
       economieAnnuelle: economieAnnuelleCalc,
-      reductionMainOeuvre: reductionMainOeuvreCalc,
+      reductionMainOeuvre,
       economiesSecurite: economiesAccidents,
-      economiesQualite: economieQualiteBase,
-      economiesTempsArret: economiesTempsArretCalc + economiesTempsArretNonPlanifie,
-      economiesRejets: economiesRejetsCalc,
-      ameliorationTempsCycle: ameliorationTempsCycleCalc,
-      impactTempsCycle: impactTempsCycleCalc,
-      capaciteTheoriqueActuelle: capaciteTheoriqueActuelleCalc,
-      capaciteTheoriqueAutomatisee: capaciteTheoriqueAutomatiseeCalc,
-      efficaciteActuelle: efficaciteActuelleCalc,
-      efficaciteAutomatisee: efficaciteAutomatiseeCalc,
-      revenuSupplementairePotentiel: revenuSupplementairePotentielCalc,
-      gainFlexibiliteProduction: gainFlexibiliteProductionCalc
+      economiesQualite: economieQualite,
+      economiesTempsArret: economiesTempsArretTotal,
+      economiesRejets,
+      ameliorationTempsCycle,
+      impactTempsCycle,
+      capaciteTheoriqueActuelle,
+      capaciteTheoriqueAutomatisee,
+      efficaciteActuelle,
+      efficaciteAutomatisee,
+      revenuSupplementairePotentiel,
+      gainFlexibiliteProduction
     });
   };
   
