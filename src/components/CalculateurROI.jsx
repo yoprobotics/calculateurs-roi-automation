@@ -56,7 +56,7 @@ const CalculateurROI = () => {
     coutMainOeuvre: 45000,
     nbEmployesRemplaces: 2,
     reductionDechet: 60,
-    coutDechet: 500, // Coût par unité rejetée
+    coutDechet: 50, // Coût par unité rejetée - VALEUR CORRIGÉE
     tauxRejets: 2, // % de rejets
     reductionAccidents: 90, // % de réduction des accidents
     reductionTempsArret: 75, // % de réduction du temps d'arrêt non planifié
@@ -72,7 +72,7 @@ const CalculateurROI = () => {
   // États pour les paramètres généraux
   const [parametresGeneraux, setParametresGeneraux] = useState({
     production: 100000, // unités par an
-    margeUnitaire: 0.2, // $ par unité
+    margeUnitaire: 10, // $ par unité - VALEUR CORRIGÉE
     tauxInflation: 2,
     tauxActualisation: 5,
     heuresOperationParJour: 8,
@@ -100,7 +100,8 @@ const CalculateurROI = () => {
     efficaciteActuelle: 0,
     efficaciteAutomatisee: 0,
     revenuSupplementairePotentiel: 0,
-    gainFlexibiliteProduction: 0
+    gainFlexibiliteProduction: 0,
+    totalBenefices: 0 // Nouveau champ pour stocker les bénéfices totaux
   });
   
   // États pour l'interface utilisateur
@@ -271,7 +272,8 @@ const CalculateurROI = () => {
       delaiRecuperation: periodeRecuperation,
       van: valeurActuelleNette,
       tri: triApprox,
-      economieAnnuelle: economieAnnuelleCalc
+      economieAnnuelle: economieAnnuelleCalc,
+      totalBenefices
     } = calculerTousFluxTresorerie(parametresPourCalcul);
     
     // 7. Mise à jour des résultats
@@ -295,7 +297,8 @@ const CalculateurROI = () => {
       efficaciteActuelle,
       efficaciteAutomatisee,
       revenuSupplementairePotentiel,
-      gainFlexibiliteProduction
+      gainFlexibiliteProduction,
+      totalBenefices
     });
   };
   
@@ -311,7 +314,7 @@ const CalculateurROI = () => {
     economiesQualite, economiesTempsArret, economiesRejets, fluxTresorerie,
     ameliorationTempsCycle, impactTempsCycle, capaciteTheoriqueActuelle,
     capaciteTheoriqueAutomatisee, efficaciteActuelle, efficaciteAutomatisee,
-    revenuSupplementairePotentiel, gainFlexibiliteProduction
+    revenuSupplementairePotentiel, gainFlexibiliteProduction, totalBenefices
   } = resultats;
   
   // Données pour les graphiques mémorisées pour éviter les recalculs inutiles
@@ -1459,7 +1462,8 @@ const CalculateurROI = () => {
         
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <h3 className="font-medium text-blue-800 mb-2">Recommandation</h3>
-          {van > 0 && tri > parametresGeneraux.tauxActualisation ? (
+          {/* CORRECTION: Logique de recommandation améliorée */}
+          {(van > 0 && tri > parametresGeneraux.tauxActualisation) || (van > 0 && totalBenefices > 0) ? (
             <p className="text-green-700">
               <span className="font-bold">✓ Projet recommandé</span> - Cet investissement en automatisation semble financièrement viable avec un ROI positif et un délai de récupération raisonnable.
             </p>
