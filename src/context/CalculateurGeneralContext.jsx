@@ -156,15 +156,65 @@ export const CalculateurGeneralProvider = ({ children }) => {
       // Mettre à jour le paramètre concerné
       systemeAutomatiseModifie[parametreSensibilite] = valeurModifiee;
       
-      // Calculer les résultats avec les paramètres modifiés
-      const resultatsModifies = useCalculROI(systemeActuel, systemeAutomatiseModifie, parametresGeneraux);
+      // Calcul manuel des résultats au lieu d'utiliser le hook
+      const investissementInitial = systemeAutomatiseModifie.coutSysteme + 
+                                   systemeAutomatiseModifie.coutInstallation + 
+                                   systemeAutomatiseModifie.coutIngenierie + 
+                                   systemeAutomatiseModifie.coutFormation - 
+                                   systemeAutomatiseModifie.subventions;
+      
+      // Calcul simplifié du ROI, VAN et délai de récupération pour l'analyse de sensibilité
+      let fluxTresorerie = [];
+      let cumulFluxTresorerie = 0;
+      let valeurActuelleNette = -investissementInitial;
+      let periodeRecuperation = parametresGeneraux.dureeVie;
+      let recuperationAtteinte = false;
+      
+      // Facteur d'économie basé sur la modification du paramètre
+      const facteurEconomie = 1 + (variation / 200); // Simplifié pour l'exemple
+      
+      // Calcul simplifié des flux de trésorerie pour l'analyse de sensibilité
+      for (let annee = 1; annee <= systemeAutomatiseModifie.dureeVie; annee++) {
+        // Calcul des économies annuelles (simplifié)
+        const economiePersonnel = systemeAutomatiseModifie.coutMainOeuvre * systemeAutomatiseModifie.nbEmployesRemplaces;
+        const economieQualite = parametresGeneraux.tonnageAnnuel * 0.05 * 0.1 * parametresGeneraux.margeBrute;
+        const economieTempsArret = (systemeActuel.frequenceAccident * systemeActuel.tempsArretAccident * 
+                                  (parametresGeneraux.tonnageAnnuel * parametresGeneraux.margeBrute) / 
+                                  (parametresGeneraux.heuresOperationParJour * parametresGeneraux.joursOperationParAn)) * 
+                                  (systemeAutomatiseModifie.reductionAccidents / 100);
+        
+        // Flux de trésorerie annuel simplifié
+        const fluxAnnuel = (economiePersonnel + economieQualite + economieTempsArret) * facteurEconomie;
+        
+        // Actualisation
+        const facteurActualisation = Math.pow(1 + parametresGeneraux.tauxActualisation / 100, annee);
+        const fluxActualise = fluxAnnuel / facteurActualisation;
+        
+        // Mise à jour de la VAN
+        valeurActuelleNette += fluxActualise;
+        
+        // Calcul du délai de récupération
+        cumulFluxTresorerie += fluxAnnuel;
+        if (cumulFluxTresorerie >= investissementInitial && !recuperationAtteinte) {
+          const cumulPrecedent = cumulFluxTresorerie - fluxAnnuel;
+          const fractionAnnee = (investissementInitial - cumulPrecedent) / fluxAnnuel;
+          periodeRecuperation = annee - 1 + fractionAnnee;
+          recuperationAtteinte = true;
+        }
+        
+        fluxTresorerie.push({ annee, fluxAnnuel, fluxActualise, cumulFluxTresorerie });
+      }
+      
+      // Calcul du ROI simplifié
+      const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
+      const roiCalcule = (totalBenefices / investissementInitial) * 100;
       
       // Ajouter les résultats à notre tableau
       resultats.push({
         variation,
-        roi: resultatsModifies.roi,
-        delaiRecuperation: resultatsModifies.delaiRecuperation,
-        van: resultatsModifies.van
+        roi: roiCalcule,
+        delaiRecuperation: periodeRecuperation,
+        van: valeurActuelleNette
       });
     }
     
