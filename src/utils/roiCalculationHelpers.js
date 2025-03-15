@@ -54,7 +54,7 @@ export const calculerCapacitesTheoriques = (parametresActuel, parametresAuto) =>
  * @returns {Object} - Impacts liés au temps de cycle et à la production
  */
 export const calculerImpactsProduction = (parametresActuel, parametresAuto, parametresGeneraux) => {
-  const { heuresOperationParJour = 0, joursOperationParAn = 0, margeUnitaire = 0 } = parametresGeneraux;
+  const { heuresOperationParJour = 0, joursOperationParAn = 0, margeUnitaire = 0, production = 0 } = parametresGeneraux;
   
   // Heures d'opération annuelles
   const heuresOperationAnnuelles = (heuresOperationParJour || 0) * (joursOperationParAn || 0);
@@ -72,23 +72,41 @@ export const calculerImpactsProduction = (parametresActuel, parametresAuto, para
   const perteProduction = parametresActuel.perteProduction || 0;
   const reductionTempsArret = parametresAuto.reductionTempsArret || 0;
   
-  const productionActuelle = capaciteActuelle * heuresOperationAnnuelles * (1 - perteProduction / 100);
+  // CORRECTION: Calculer la production annuelle à partir de la production annuelle saisie,
+  // pas à partir des capacités, pour éviter des valeurs trop élevées
+  let productionActuelle, productionAutomatisee;
   
-  const productionAutomatisee = capaciteAuto * heuresOperationAnnuelles * 
-    (1 - (perteProduction * (1 - reductionTempsArret/100)) / 100);
+  if (production > 0) {
+    // Si une production annuelle est spécifiée, baser les calculs dessus
+    productionActuelle = production;
+    // La production automatisée sera augmentée proportionnellement au rapport des capacités
+    const tauxAmelioration = capaciteActuelle > 0 ? capaciteAuto / capaciteActuelle : 1;
+    // Limiter l'amélioration à un facteur raisonnable (max +50%)
+    const tauxAmeliorationLimite = Math.min(tauxAmelioration, 1.5);
+    productionAutomatisee = production * tauxAmeliorationLimite;
+  } else {
+    // Sinon utiliser la méthode de calcul originale
+    productionActuelle = capaciteActuelle * heuresOperationAnnuelles * (1 - perteProduction / 100);
+    productionAutomatisee = capaciteAuto * heuresOperationAnnuelles * 
+      (1 - (perteProduction * (1 - reductionTempsArret/100)) / 100);
+  }
   
   // Différence de production
   const differenceProduction = productionAutomatisee - productionActuelle;
   
   // Production supplémentaire potentielle basée sur l'amélioration du temps de cycle
-  const potentielProductionParTempsCycle = (capaciteAuto - capaciteActuelle) * 
-    heuresOperationAnnuelles * (1 - perteProduction / 100);
+  // CORRECTION: Limiter à une valeur raisonnable proportionnelle à la production
+  const potentielProductionParTempsCycle = Math.min(
+    (capaciteAuto - capaciteActuelle) * heuresOperationAnnuelles * (1 - perteProduction / 100),
+    production * 0.3 // Limite à 30% de la production actuelle
+  );
   
   // Impact financier du temps de cycle
   const impactTempsCycle = potentielProductionParTempsCycle * margeUnitaire;
   
   // Gain de flexibilité
-  const gainFlexibiliteProduction = capaciteActuelle > 0 ? capaciteAuto / capaciteActuelle : 1;
+  const gainFlexibiliteProduction = capaciteActuelle > 0 ? 
+    Math.min(capaciteAuto / capaciteActuelle, 3) : 1; // Limiter à 3x max
   
   // Revenus supplémentaires potentiels
   const revenuSupplementairePotentiel = potentielProductionParTempsCycle * margeUnitaire;
@@ -120,8 +138,10 @@ export const calculerEconomiesSecurite = (parametresActuel, parametresAuto, para
   const valeurProductionHoraire = heuresOperationAnnuelles > 0 ? 
     (production * margeUnitaire) / heuresOperationAnnuelles : 0;
   
-  // Économies liées aux accidents
-  const economiesAccidents = (frequenceAccident * coutMoyenAccident * reductionAccidents / 100);
+  // CORRECTION: Limiter les économies d'accidents à des valeurs réalistes
+  // Économies liées aux accidents - limiter à 10 fois le coût moyen par accident
+  const economiesAccidentsCalculees = (frequenceAccident * coutMoyenAccident * reductionAccidents / 100);
+  const economiesAccidents = Math.min(economiesAccidentsCalculees, coutMoyenAccident * 10);
   
   // Économies liées au temps d'arrêt dû aux accidents
   const economiesTempsArretAccidents = frequenceAccident * tempsArretAccident * valeurProductionHoraire * reductionAccidents / 100;
@@ -154,13 +174,20 @@ export const calculerEconomiesOperationnelles = (parametresActuel, parametresAut
   const reductionMainOeuvre = coutMainOeuvre * nbEmployesRemplaces;
   
   // Économies liées à la réduction des rejets
-  // Correction: Limiter le coût des rejets à une valeur raisonnable par rapport à la marge unitaire
+  // CORRECTION: Limiter le coût des rejets à une valeur raisonnable par rapport à la marge unitaire
   const coutRejetAjuste = Math.min(coutDechet, margeUnitaire * 5); // Limite à 5x la marge unitaire
   const economiesRejets = production * (tauxRejetsActuel - tauxRejetsAuto) / 100 * coutRejetAjuste;
   
   // Économie liée à la qualité
-  const economieQualite = production > 0 ? 
-    production * (tauxProblemeQualite / 100) * (coutQualite / production) : 0;
+  // CORRECTION: Limiter à une valeur raisonnable
+  let economieQualite;
+  if (production > 0) {
+    const tauxProblemeQualiteAjuste = Math.min(tauxProblemeQualite, 20); // Limiter à 20%
+    const coutQualiteAjuste = Math.min(coutQualite, production * margeUnitaire * 0.5); // Limiter à 50% de la valeur
+    economieQualite = production * (tauxProblemeQualiteAjuste / 100) * (coutQualiteAjuste / production);
+  } else {
+    economieQualite = 0;
+  }
   
   return {
     reductionMainOeuvre: isNaN(reductionMainOeuvre) ? 0 : reductionMainOeuvre,
@@ -228,8 +255,11 @@ export const calculerFluxAnnuel = (parametres, annee, facteurInflation) => {
   const economieTempsArretAjustee = economiesTempsArretAccidents * facteurInflation;
   const economieTempsArretNonPlanifieAjustee = economiesTempsArretNonPlanifie * facteurInflation;
   
-  // Économies liées aux erreurs humaines
-  const economieErreurs = (parametresAuto.coutErrorHumaine || 0) * facteurInflation;
+  // CORRECTION: Économies liées aux erreurs humaines - limiter à une valeur raisonnable
+  const economieErreurs = Math.min(
+    (parametresAuto.coutErrorHumaine || 0) * facteurInflation,
+    (parametres.parametresGeneraux?.production || 0) * (parametres.parametresGeneraux?.margeUnitaire || 0) * 0.1 // Max 10% de la valeur de production
+  );
   
   // Amortissement
   const amortissement = (investissementInitial / (parametresAuto.dureeVie || 1)) * ((parametresAuto.tauxAmortissement || 0) / 100);
@@ -323,51 +353,78 @@ export const calculerTousFluxTresorerie = (parametres) => {
   // Calcul du ROI
   const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
   
-  // Limiter le ROI à des valeurs plus réalistes (maximum 1000%)
-  const roiCalcule = investissementInitial > 0 ? 
-    Math.min((totalBenefices / investissementInitial) * 100, 1000) : 0;
+  // CORRECTION: Limiter le ROI à des valeurs plus réalistes
+  let roiCalcule = 0;
+  if (investissementInitial > 0) {
+    const roiBrut = (totalBenefices / investissementInitial) * 100;
+    // Appliquer une limite logarithmique pour réduire les valeurs extrêmes
+    // Cette approche permet de préserver les différences relatives tout en plafonnant les valeurs extrêmes
+    if (roiBrut > 1000) {
+      // Utiliser une formule logarithmique pour adoucir les valeurs extrêmes
+      // 1000 + ln(ROI - 1000 + 1) * 100
+      roiCalcule = 1000 + Math.log(roiBrut - 1000 + 1) * 100;
+    } else {
+      roiCalcule = roiBrut;
+    }
+  }
   
-  // Calcul du TRI (approximation simplifiée) - CORRECTION
+  // CORRECTION: Calcul du TRI (Taux de Rendement Interne)
   let triApprox = 0;
   
-  // Seulement calculer le TRI si l'investissement initial est positif
-  if (investissementInitial > 0) {
-    // Commencer à un taux plus élevé pour les projets très rentables
-    for (let r = 1; r <= 1000; r++) { // Augmenter à 1000% max
-      let npv = -investissementInitial;
-      let valid = true;
+  // Vérifier si le projet est rentable
+  if (investissementInitial > 0 && totalBenefices > 0) {
+    // Approche de bissection pour trouver le TRI plus précisément
+    let rLow = -99; // -99% comme borne inférieure
+    let rHigh = 200; // +200% comme borne supérieure
+    const precision = 0.01; // précision de 0.01%
+    
+    for (let i = 0; i < 100; i++) { // Maximum 100 itérations
+      const rMid = (rLow + rHigh) / 2;
       
+      // Calculer la VAN avec rMid
+      let npv = -investissementInitial;
       for (let t = 0; t < fluxTresorerie.length; t++) {
-        const diviseur = Math.pow(1 + r / 100, t + 1);
-        if (diviseur <= 0) {
-          valid = false;
-          break;
-        }
-        npv += fluxTresorerie[t].fluxAnnuel / diviseur;
+        npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + rMid / 100, t + 1);
       }
       
-      if (!valid) continue;
-      
-      if (npv <= 0) {
-        triApprox = r - 1;
+      if (Math.abs(npv) < precision || Math.abs(rHigh - rLow) < precision) {
+        triApprox = rMid;
         break;
       }
       
-      // Si on atteint la fin de la boucle, on fixe le TRI à la limite supérieure
-      if (r === 1000) {
-        triApprox = 100; // Plafonner à 100% pour des résultats plus réalistes
+      if (npv > 0) {
+        rLow = rMid;
+      } else {
+        rHigh = rMid;
       }
     }
     
-    // Si le TRI est toujours 0 mais les flux sont très positifs
-    if (triApprox === 0 && totalBenefices > investissementInitial) {
-      // Estimation simplifiée basée sur le ROI
-      triApprox = Math.min(Math.sqrt(roiCalcule / dureeVie) * 10, 100);
+    // Si le TRI est toujours 0 ou négatif mais les flux sont positifs
+    if (triApprox <= 0 && totalBenefices > investissementInitial) {
+      // Utiliser une estimation simplifiée basée sur le ROI annualisé
+      const roiAnnuel = Math.pow(1 + roiCalcule / 100, 1 / dureeVie) - 1;
+      triApprox = Math.max(roiAnnuel * 100, 0);
     }
+    
+    // Limiter à une valeur maximale raisonnable
+    triApprox = Math.min(triApprox, 200);
   }
   
   // Calcul de l'économie annuelle moyenne
   const economieAnnuelleCalc = dureeVie > 0 ? totalBenefices / dureeVie : 0;
+  
+  // CORRECTION: Vérifier si le délai de récupération est réaliste
+  if (periodeRecuperation < 0.1 && investissementInitial > 0) {
+    // Si le délai est trop court, ajuster à une valeur plus réaliste
+    // en se basant sur le ratio bénéfice/investissement
+    const ratio = totalBenefices / investissementInitial;
+    // Si le ratio est très élevé, utiliser un délai minimum d'environ 1 an
+    if (ratio > 10) {
+      periodeRecuperation = 1 + (1 / ratio) * 2;
+    } else {
+      periodeRecuperation = Math.max(periodeRecuperation, 0.5);
+    }
+  }
   
   return {
     fluxTresorerie,
