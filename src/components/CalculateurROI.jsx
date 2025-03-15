@@ -56,7 +56,7 @@ const CalculateurROI = () => {
     coutMainOeuvre: 45000,
     nbEmployesRemplaces: 2,
     reductionDechet: 60,
-    coutDechet: 50, // Coût par unité rejetée - VALEUR CORRIGÉE
+    coutDechet: 50, // Coût par unité rejetée
     tauxRejets: 2, // % de rejets
     reductionAccidents: 90, // % de réduction des accidents
     reductionTempsArret: 75, // % de réduction du temps d'arrêt non planifié
@@ -72,7 +72,7 @@ const CalculateurROI = () => {
   // États pour les paramètres généraux
   const [parametresGeneraux, setParametresGeneraux] = useState({
     production: 100000, // unités par an
-    margeUnitaire: 10, // $ par unité - VALEUR CORRIGÉE
+    margeUnitaire: 10, // $ par unité
     tauxInflation: 2,
     tauxActualisation: 5,
     heuresOperationParJour: 8,
@@ -554,6 +554,18 @@ const CalculateurROI = () => {
       </div>
     );
   };
+
+  // Déterminer si le projet est recommandé
+  const projetRecommande = () => {
+    // Un projet est recommandé si:
+    // 1. La VAN est positive ET
+    // 2. Soit le TRI > taux d'actualisation, soit le délai de récupération < durée vie / 2
+    const vanPositive = van > 0;
+    const triAcceptable = tri > parametresGeneraux.tauxActualisation;
+    const delaiAcceptable = delaiRecuperation < (parametresSystemeAutomatise.dureeVie / 2);
+    
+    return vanPositive && (triAcceptable || delaiAcceptable);
+  };
   
   return (
     <div className="bg-gray-50 p-4 md:p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
@@ -945,7 +957,7 @@ const CalculateurROI = () => {
                       value={parametresSystemeAutomatise.nbEmployesRemplaces}
                       onChange={(e) => setParametresSystemeAutomatise({
                         ...parametresSystemeAutomatise,
-                        nbEmployesRemplaces: Number(e.target.value)
+                        nbEmployesRemplaces: Math.min(Number(e.target.value), parametresSystemeActuel.nombreEmployes)
                       })}
                       className="w-full p-2 border rounded"
                     />
@@ -992,10 +1004,11 @@ const CalculateurROI = () => {
                     <input
                       type="number"
                       step="1"
+                      max="100"
                       value={parametresSystemeAutomatise.reductionAccidents}
                       onChange={(e) => setParametresSystemeAutomatise({
                         ...parametresSystemeAutomatise,
-                        reductionAccidents: Number(e.target.value)
+                        reductionAccidents: Math.min(Number(e.target.value), 100)
                       })}
                       className="w-full p-2 border rounded"
                     />
@@ -1005,10 +1018,11 @@ const CalculateurROI = () => {
                     <input
                       type="number"
                       step="1"
+                      max="100"
                       value={parametresSystemeAutomatise.reductionTempsArret}
                       onChange={(e) => setParametresSystemeAutomatise({
                         ...parametresSystemeAutomatise,
-                        reductionTempsArret: Number(e.target.value)
+                        reductionTempsArret: Math.min(Number(e.target.value), 100)
                       })}
                       className="w-full p-2 border rounded"
                     />
@@ -1135,10 +1149,11 @@ const CalculateurROI = () => {
                 <label className="block text-sm font-medium mb-1">Heures par jour</label>
                 <input
                   type="number"
+                  max="24"
                   value={parametresGeneraux.heuresOperationParJour}
                   onChange={(e) => setParametresGeneraux({
                     ...parametresGeneraux,
-                    heuresOperationParJour: Number(e.target.value)
+                    heuresOperationParJour: Math.min(Number(e.target.value), 24)
                   })}
                   className="w-full p-2 border rounded"
                 />
@@ -1147,10 +1162,11 @@ const CalculateurROI = () => {
                 <label className="block text-sm font-medium mb-1">Jours par an</label>
                 <input
                   type="number"
+                  max="365"
                   value={parametresGeneraux.joursOperationParAn}
                   onChange={(e) => setParametresGeneraux({
                     ...parametresGeneraux,
-                    joursOperationParAn: Number(e.target.value)
+                    joursOperationParAn: Math.min(Number(e.target.value), 365)
                   })}
                   className="w-full p-2 border rounded"
                 />
@@ -1462,14 +1478,13 @@ const CalculateurROI = () => {
         
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <h3 className="font-medium text-blue-800 mb-2">Recommandation</h3>
-          {/* CORRECTION: Logique de recommandation améliorée */}
-          {(van > 0 && tri > parametresGeneraux.tauxActualisation) || (van > 0 && totalBenefices > 0) ? (
+          {projetRecommande() ? (
             <p className="text-green-700">
-              <span className="font-bold">✓ Projet recommandé</span> - Cet investissement en automatisation semble financièrement viable avec un ROI positif et un délai de récupération raisonnable.
+              <span className="font-bold">✓ Projet recommandé</span> - Cet investissement en automatisation est financièrement viable avec un ROI de {roi.toFixed(2)}% et un délai de récupération de {delaiRecuperation.toFixed(2)} ans.
             </p>
           ) : (
             <p className="text-yellow-700">
-              <span className="font-bold">⚠ À réévaluer</span> - Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives.
+              <span className="font-bold">⚠ À réévaluer</span> - Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables (réduction coûts, augmentation capacité) ou envisagez des alternatives.
             </p>
           )}
         </div>
