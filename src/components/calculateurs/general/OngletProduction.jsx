@@ -189,7 +189,7 @@ const OngletProduction = () => {
             L'augmentation de la capacité de production et la réduction des rejets se traduisent par une augmentation de la production annuelle de <span className="font-bold">{Math.round(pourcentageAugmentation)}%</span>, soit environ <span className="font-bold">{Math.round(differenceProduction).toLocaleString()}</span> unités supplémentaires par an.
           </p>
           <p className="text-sm">
-            <span className="font-bold">Impact économique estimé :</span> {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(differenceProduction * (parametresGeneraux.margeBrute / parametresGeneraux.tonnageAnnuel))} par an
+            <span className="font-bold">Impact économique estimé :</span> {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(differenceProduction * (parametresGeneraux.margeBrute / parametresGeneraux.tonnageAnnuel))} par an
           </p>
         </div>
       </div>
