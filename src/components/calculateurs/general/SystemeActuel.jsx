@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
 import { TYPES_SYSTEME } from '../../../utils/constants';
+import { validateParams } from '../../../utils/validationService';
 
 /**
  * Composant pour les paramètres du système actuel
@@ -13,13 +14,38 @@ const SystemeActuel = () => {
     setSystemeActuel 
   } = useCalculateurGeneral();
   
+  // État local pour les erreurs de validation
+  const [erreurs, setErreurs] = useState({});
+  
   // Fonction pour mettre à jour un paramètre spécifique
   const updateParametre = (param, value) => {
-    setSystemeActuel({
+    const newValue = Number(value);
+    
+    // Validation du nouveau paramètre
+    const newSystemeActuel = {
       ...systemeActuel,
-      [param]: Number(value)
-    });
+      [param]: newValue
+    };
+    
+    // Validation du paramètre spécifique
+    const parametreAValider = { [param]: newValue };
+    const erreurs = validateParams(parametreAValider, systemeActuel);
+    
+    // Mise à jour des erreurs
+    setErreurs(prevErreurs => ({
+      ...prevErreurs,
+      [param]: erreurs[param] || null
+    }));
+    
+    // Si le paramètre est valide ou si c'est juste une erreur non bloquante, mettre à jour l'état
+    setSystemeActuel(newSystemeActuel);
   };
+  
+  // Validation complète lors du changement de type de système
+  useEffect(() => {
+    const erreurs = validateParams(systemeActuel);
+    setErreurs(erreurs);
+  }, [typeSystemeActuel, systemeActuel]);
 
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -75,8 +101,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.capacite}
               onChange={(e) => updateParametre('capacite', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.capacite ? 'border-red-500' : ''}`}
             />
+            {erreurs.capacite && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.capacite}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
           </div>
           <div>
@@ -85,8 +114,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.tempsCycle}
               onChange={(e) => updateParametre('tempsCycle', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.tempsCycle ? 'border-red-500' : ''}`}
             />
+            {erreurs.tempsCycle && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tempsCycle}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
           </div>
         </div>
@@ -107,8 +139,11 @@ const SystemeActuel = () => {
             step="0.1"
             value={systemeActuel.nombreEmployes}
             onChange={(e) => updateParametre('nombreEmployes', e.target.value)}
-            className="w-full p-2 border rounded"
+            className={`w-full p-2 border rounded ${erreurs.nombreEmployes ? 'border-red-500' : ''}`}
           />
+          {erreurs.nombreEmployes && (
+            <p className="text-xs text-red-500 mt-1">{erreurs.nombreEmployes}</p>
+          )}
           <p className="text-xs text-gray-500 mt-1">Équivalent temps plein</p>
         </div>
       </div>
@@ -123,8 +158,11 @@ const SystemeActuel = () => {
               step="0.1"
               value={systemeActuel.tauxRejets}
               onChange={(e) => updateParametre('tauxRejets', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.tauxRejets ? 'border-red-500' : ''}`}
             />
+            {erreurs.tauxRejets && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tauxRejets}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Pertes production (%)</label>
@@ -133,8 +171,11 @@ const SystemeActuel = () => {
               step="0.1"
               value={systemeActuel.perteProduction}
               onChange={(e) => updateParametre('perteProduction', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.perteProduction ? 'border-red-500' : ''}`}
             />
+            {erreurs.perteProduction && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.perteProduction}</p>
+            )}
           </div>
         </div>
       </div>
@@ -149,8 +190,11 @@ const SystemeActuel = () => {
               step="0.1"
               value={systemeActuel.frequenceAccident}
               onChange={(e) => updateParametre('frequenceAccident', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.frequenceAccident ? 'border-red-500' : ''}`}
             />
+            {erreurs.frequenceAccident && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.frequenceAccident}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Coût/accident ($)</label>
@@ -158,8 +202,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.coutMoyenAccident}
               onChange={(e) => updateParametre('coutMoyenAccident', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutMoyenAccident ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutMoyenAccident && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutMoyenAccident}</p>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -170,8 +217,11 @@ const SystemeActuel = () => {
               step="0.5"
               value={systemeActuel.tempsArretAccident}
               onChange={(e) => updateParametre('tempsArretAccident', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.tempsArretAccident ? 'border-red-500' : ''}`}
             />
+            {erreurs.tempsArretAccident && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tempsArretAccident}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Arrêt non planifié (h/mois)</label>
@@ -180,8 +230,11 @@ const SystemeActuel = () => {
               step="0.5"
               value={systemeActuel.arretNonPlanifie}
               onChange={(e) => updateParametre('arretNonPlanifie', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.arretNonPlanifie ? 'border-red-500' : ''}`}
             />
+            {erreurs.arretNonPlanifie && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.arretNonPlanifie}</p>
+            )}
           </div>
         </div>
       </div>
@@ -195,8 +248,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.maintenance}
               onChange={(e) => updateParametre('maintenance', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.maintenance ? 'border-red-500' : ''}`}
             />
+            {erreurs.maintenance && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.maintenance}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Énergie/an ($)</label>
@@ -204,8 +260,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.energie}
               onChange={(e) => updateParametre('energie', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.energie ? 'border-red-500' : ''}`}
             />
+            {erreurs.energie && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.energie}</p>
+            )}
           </div>
         </div>
       </div>
@@ -226,8 +285,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.consommationEau}
               onChange={(e) => updateParametre('consommationEau', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.consommationEau ? 'border-red-500' : ''}`}
             />
+            {erreurs.consommationEau && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.consommationEau}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Coût de l'eau ($/m³)</label>
@@ -236,8 +298,11 @@ const SystemeActuel = () => {
               step="0.01"
               value={systemeActuel.coutEau}
               onChange={(e) => updateParametre('coutEau', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutEau ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutEau && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutEau}</p>
+            )}
           </div>
         </div>
         
@@ -248,8 +313,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.consommationAirComprime}
               onChange={(e) => updateParametre('consommationAirComprime', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.consommationAirComprime ? 'border-red-500' : ''}`}
             />
+            {erreurs.consommationAirComprime && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.consommationAirComprime}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Coût air comprimé ($/m³)</label>
@@ -258,8 +326,11 @@ const SystemeActuel = () => {
               step="0.01"
               value={systemeActuel.coutAirComprime}
               onChange={(e) => updateParametre('coutAirComprime', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutAirComprime ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutAirComprime && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutAirComprime}</p>
+            )}
           </div>
         </div>
         
@@ -270,8 +341,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.emissionCO2}
               onChange={(e) => updateParametre('emissionCO2', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.emissionCO2 ? 'border-red-500' : ''}`}
             />
+            {erreurs.emissionCO2 && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.emissionCO2}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Émissions directes et indirectes</p>
           </div>
           <div>
@@ -280,8 +354,11 @@ const SystemeActuel = () => {
               type="number"
               value={systemeActuel.consommationHydraulique}
               onChange={(e) => updateParametre('consommationHydraulique', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.consommationHydraulique ? 'border-red-500' : ''}`}
             />
+            {erreurs.consommationHydraulique && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.consommationHydraulique}</p>
+            )}
           </div>
         </div>
         
@@ -292,6 +369,18 @@ const SystemeActuel = () => {
           </div>
         </div>
       </div>
+
+      {/* Affichage d'erreurs globales si nécessaire */}
+      {Object.keys(erreurs).length > 0 && (
+        <div className="p-3 mt-4 bg-red-50 border border-red-200 rounded-md">
+          <h4 className="text-sm font-medium text-red-700 mb-1">Des erreurs de validation ont été détectées :</h4>
+          <ul className="text-xs text-red-600 list-disc list-inside">
+            {Object.entries(erreurs).map(([key, value]) => (
+              <li key={key}>{value}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
