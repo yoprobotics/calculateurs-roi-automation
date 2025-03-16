@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Composant réutilisable pour lier vers la documentation
@@ -14,9 +15,13 @@ const DocumentationLink = ({
   className = '',
   showIcon = true
 }) => {
+  // Utiliser le chemin absolu GitHub vers le fichier markdown dans le repo 
+  // Cela ouvrira directement le fichier dans GitHub où il peut être visualisé
+  const githubDocsUrl = `https://github.com/yoprobotics/calculateurs-roi-automation/blob/main/docs/${document}`;
+  
   return (
     <a 
-      href={`/docs/${document}`}
+      href={githubDocsUrl}
       target="_blank"
       rel="noopener noreferrer"
       className={`text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center ${className}`}
