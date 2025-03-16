@@ -17,12 +17,6 @@ const CalculateurROI = () => {
   // État pour le type de système actuel
   const [typeSystemeActuel, setTypeSystemeActuel] = useState('manuel');
   
-  // État pour le mode d'affichage (basique, avancé)
-  const [viewMode, setViewMode] = useState('basique');
-  
-  // État pour l'onglet actif
-  const [ongletActif, setOngletActif] = useState('general');
-  
   // États pour les paramètres du système actuel
   const [parametresSystemeActuel, setParametresSystemeActuel] = useState({
     capacite: 30, // unités/heure
@@ -148,11 +142,6 @@ const CalculateurROI = () => {
   useEffect(() => {
     calculerResultats();
   }, [parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux]);
-  
-  // Handler pour changer l'onglet actif
-  const changerOnglet = (onglet) => {
-    setOngletActif(onglet);
-  };
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
@@ -177,107 +166,40 @@ const CalculateurROI = () => {
         </div>
       </div>
       
-      {/* Options de mode d'affichage */}
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
-        <div className="flex space-x-4 mb-4 md:mb-0">
-          <button
-            onClick={() => setViewMode('basique')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              viewMode === 'basique'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Mode Basique
-          </button>
-          <button
-            onClick={() => setViewMode('avance')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              viewMode === 'avance'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Mode Avancé
-          </button>
-        </div>
-      </div>
+      {/* Paramètres généraux */}
+      <ParametresGeneraux 
+        parametresGeneraux={parametresGeneraux}
+        setParametresGeneraux={setParametresGeneraux}
+      />
       
-      {/* Navigation par onglets */}
-      <div className="flex flex-wrap mb-6 bg-white rounded-lg shadow-md">
-        <button
-          onClick={() => changerOnglet('general')}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'general'
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Vue générale
-        </button>
-        <button
-          onClick={() => changerOnglet('comparatif')}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'comparatif'
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Analyse comparative
-        </button>
-        <button
-          onClick={() => changerOnglet('financier')}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'financier'
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Résultats financiers
-        </button>
-      </div>
-      
-      {/* Vue générale - Premier onglet */}
-      {ongletActif === 'general' && (
-        <>
-          <ParametresGeneraux 
-            parametresGeneraux={parametresGeneraux}
-            setParametresGeneraux={setParametresGeneraux}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <ParametresSystemeActuel
-              parametresSystemeActuel={parametresSystemeActuel}
-              setParametresSystemeActuel={setParametresSystemeActuel}
-              typeSystemeActuel={typeSystemeActuel}
-              setTypeSystemeActuel={setTypeSystemeActuel}
-            />
-            
-            <ParametresSystemeAutomatise
-              parametresSystemeAutomatise={parametresSystemeAutomatise}
-              setParametresSystemeAutomatise={setParametresSystemeAutomatise}
-            />
-          </div>
-        </>
-      )}
-      
-      {/* Analyse comparative - Deuxième onglet */}
-      {ongletActif === 'comparatif' && (
-        <AnalyseComparative 
+      {/* Vue comparative des systèmes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <ParametresSystemeActuel
           parametresSystemeActuel={parametresSystemeActuel}
-          parametresSystemeAutomatise={parametresSystemeAutomatise}
-          resultats={resultats}
-          parametresGeneraux={parametresGeneraux}
+          setParametresSystemeActuel={setParametresSystemeActuel}
+          typeSystemeActuel={typeSystemeActuel}
+          setTypeSystemeActuel={setTypeSystemeActuel}
         />
-      )}
+        
+        <ParametresSystemeAutomatise
+          parametresSystemeAutomatise={parametresSystemeAutomatise}
+          setParametresSystemeAutomatise={setParametresSystemeAutomatise}
+        />
+      </div>
       
-      {/* Résultats financiers - Troisième onglet */}
-      {ongletActif === 'financier' && (
-        <ResultatsFinanciers 
-          resultats={resultats}
-          parametresSystemeAutomatise={parametresSystemeAutomatise}
-        />
-      )}
+      {/* Résultats financiers */}
+      <ResultatsFinanciers 
+        resultats={resultats}
+        parametresSystemeAutomatise={parametresSystemeAutomatise}
+      />
+      
+      {/* Analyse comparative */}
+      <AnalyseComparative 
+        parametresSystemeActuel={parametresSystemeActuel}
+        parametresSystemeAutomatise={parametresSystemeAutomatise}
+        resultats={resultats}
+        parametresGeneraux={parametresGeneraux}
+      />
       
       <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-600 text-center">
         <p>Les résultats de ce calculateur sont fournis à titre indicatif seulement. Une analyse approfondie est recommandée pour toute décision d'investissement.</p>
