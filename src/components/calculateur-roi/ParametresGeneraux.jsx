@@ -80,7 +80,7 @@ const ParametresGeneraux = ({ parametresGeneraux, setParametresGeneraux }) => {
               className="w-full p-2 border rounded"
             />
           </div>
-          <div>
+          <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Taux d'actualisation (%)</label>
             <input
               type="number"
@@ -90,7 +90,27 @@ const ParametresGeneraux = ({ parametresGeneraux, setParametresGeneraux }) => {
               className="w-full p-2 border rounded"
             />
           </div>
+          {/* Ajout du taux d'imposition pour le calcul correct de l'amortissement */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Taux d'imposition (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresGeneraux.tauxImposition || 25}
+              onChange={(e) => updateParametre('tauxImposition', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+            <p className="text-xs text-gray-500 mt-1">Taux d'impôt sur les bénéfices applicable à votre entreprise</p>
+          </div>
         </div>
+      </div>
+      
+      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+        <h3 className="font-medium text-blue-800 mb-1">À propos de l'amortissement et du taux d'imposition</h3>
+        <p className="text-sm text-gray-700">
+          Le taux d'imposition est utilisé pour calculer les avantages fiscaux liés à l'amortissement. 
+          L'amortissement lui-même n'est pas un flux de trésorerie, mais l'économie d'impôt qu'il génère en est un.
+        </p>
       </div>
     </div>
   );
