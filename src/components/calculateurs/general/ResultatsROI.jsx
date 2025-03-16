@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 /**
  * Composant pour afficher les résultats financiers du ROI
@@ -13,6 +13,9 @@ const ResultatsROI = () => {
     parametresGeneraux
   } = useCalculateurGeneral();
   
+  // État local pour l'affichage du détail des coûts cachés
+  const [afficherDetailCoutsCache, setAfficherDetailCoutsCache] = useState(false);
+  
   // Extraction des valeurs pertinentes
   const {
     roi,
@@ -22,7 +25,8 @@ const ResultatsROI = () => {
     economieAnnuelle,
     fluxTresorerie,
     ameliorationEfficacite,
-    investissementInitial
+    investissementInitial,
+    coutsCaches
   } = resultats;
   
   const { dureeVie, coutFormationContinue, coutMisesAJour, coutConsommables } = systemeAutomatise;
@@ -33,6 +37,13 @@ const ResultatsROI = () => {
     fluxCumulatif: item.cumulFluxTresorerie,
     seuil: investissementInitial
   }));
+  
+  // Données pour le graphique des coûts cachés
+  const dataCoutsCache = [
+    { name: 'Formation continue', value: coutFormationContinue || 0 },
+    { name: 'Mises à jour', value: coutMisesAJour || 0 },
+    { name: 'Consommables', value: coutConsommables || 0 }
+  ];
   
   // Calculer le total des coûts cachés
   const totalCoutsCache = (coutFormationContinue || 0) + (coutMisesAJour || 0) + (coutConsommables || 0);
@@ -79,11 +90,16 @@ const ResultatsROI = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-yellow-50 p-3 rounded">
-          <h3 className="text-sm font-medium text-gray-700">Économie annuelle moyenne</h3>
-          <p className="text-2xl font-bold text-yellow-700">
-            {formatMontant(economieAnnuelle)}
-          </p>
+        <div className="bg-yellow-50 p-3 rounded flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-gray-700">Économie annuelle moyenne</h3>
+            <p className="text-2xl font-bold text-yellow-700">
+              {formatMontant(economieAnnuelle)}
+            </p>
+          </div>
+          <div className="text-xs text-gray-600 mt-1">
+            <span className="font-medium">Hors coûts cachés :</span> {formatMontant(economieAnnuelle + totalCoutsCache)}
+          </div>
         </div>
         
         <div className="bg-red-50 p-3 rounded">
@@ -91,6 +107,9 @@ const ResultatsROI = () => {
           <p className="text-2xl font-bold text-red-700">
             {formatMontant(investissementInitial)}
           </p>
+          <div className="text-xs text-gray-600 mt-1">
+            <span className="font-medium">Inclut :</span> Système, installation, ingénierie et formation
+          </div>
         </div>
       </div>
       
@@ -180,28 +199,81 @@ const ResultatsROI = () => {
       </div>
 
       <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-        <h3 className="font-medium text-amber-800 mb-2">Attention aux coûts cachés</h3>
+        <h3 className="font-medium text-amber-800 mb-2 flex items-center justify-between">
+          <div className="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Attention aux coûts cachés</span>
+          </div>
+          <button 
+            onClick={() => setAfficherDetailCoutsCache(!afficherDetailCoutsCache)} 
+            className="text-sm text-amber-700 hover:text-amber-800"
+          >
+            {afficherDetailCoutsCache ? 'Masquer le détail' : 'Voir le détail'}
+          </button>
+        </h3>
+        
         <p className="text-sm mb-2">L'automatisation implique des coûts supplémentaires souvent négligés dans l'analyse initiale:</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-2 bg-white rounded shadow-sm">
-            <p className="font-medium">Formation continue</p>
-            <p className="text-sm">{formatMontant(coutFormationContinue || 0)}/an</p>
+        
+        {afficherDetailCoutsCache ? (
+          <>
+            <div className="h-64 mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dataCoutsCache}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [formatMontant(value), 'Coût annuel']} />
+                  <Bar dataKey="value" fill="#f59e0b" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-2 bg-white rounded shadow-sm">
+                <p className="font-medium">Formation continue</p>
+                <p className="text-sm">{formatMontant(coutFormationContinue || 0)}/an</p>
+                <p className="text-xs text-gray-500">Formation récurrente des opérateurs et maintenance</p>
+              </div>
+              <div className="p-2 bg-white rounded shadow-sm">
+                <p className="font-medium">Mises à jour logicielles</p>
+                <p className="text-sm">{formatMontant(coutMisesAJour || 0)}/an</p>
+                <p className="text-xs text-gray-500">Licences et maintenance logicielle</p>
+              </div>
+              <div className="p-2 bg-white rounded shadow-sm">
+                <p className="font-medium">Consommables spécifiques</p>
+                <p className="text-sm">{formatMontant(coutConsommables || 0)}/an</p>
+                <p className="text-xs text-gray-500">Pièces d'usure et consommables spécifiques</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-2 bg-white rounded shadow-sm">
+              <p className="font-medium">Formation continue</p>
+              <p className="text-sm">{formatMontant(coutFormationContinue || 0)}/an</p>
+            </div>
+            <div className="p-2 bg-white rounded shadow-sm">
+              <p className="font-medium">Mises à jour logicielles</p>
+              <p className="text-sm">{formatMontant(coutMisesAJour || 0)}/an</p>
+            </div>
+            <div className="p-2 bg-white rounded shadow-sm">
+              <p className="font-medium">Consommables spécifiques</p>
+              <p className="text-sm">{formatMontant(coutConsommables || 0)}/an</p>
+            </div>
           </div>
-          <div className="p-2 bg-white rounded shadow-sm">
-            <p className="font-medium">Mises à jour logicielles</p>
-            <p className="text-sm">{formatMontant(coutMisesAJour || 0)}/an</p>
-          </div>
-          <div className="p-2 bg-white rounded shadow-sm">
-            <p className="font-medium">Consommables spécifiques</p>
-            <p className="text-sm">{formatMontant(coutConsommables || 0)}/an</p>
-          </div>
-        </div>
-        <div className="mt-3">
-          <p className="text-sm">
-            <span className="font-semibold">Impact total annuel:</span> {formatMontant(totalCoutsCache)} 
+        )}
+        
+        <div className="mt-4 p-3 bg-white rounded-lg border border-amber-200">
+          <p className="text-sm font-semibold text-amber-800">
+            Impact total des coûts cachés: {formatMontant(totalCoutsCache)}/an
             {totalCoutsCache > 0 && economieAnnuelle > 0 && (
               <span className="ml-2">({Math.round((totalCoutsCache / economieAnnuelle) * 100)}% de l'économie annuelle)</span>
             )}
+          </p>
+          <p className="text-xs text-gray-600 mt-1">
+            Sur {dureeVie} ans, ces coûts représentent un total de {formatMontant(totalCoutsCache * dureeVie)}, soit {Math.round((totalCoutsCache * dureeVie / investissementInitial) * 100)}% de l'investissement initial.
           </p>
         </div>
       </div>
