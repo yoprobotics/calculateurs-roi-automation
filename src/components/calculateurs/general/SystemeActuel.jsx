@@ -1,50 +1,68 @@
 import React from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
-import FormInput from '../../common/FormInput';
-import Tooltip from '../../common/Tooltip';
 import { TYPES_SYSTEME } from '../../../utils/constants';
 
 /**
- * Composant de formulaire pour les paramètres du système actuel
- * @returns {JSX.Element} - Formulaire du système actuel
+ * Composant pour les paramètres du système actuel
  */
 const SystemeActuel = () => {
   const { 
     typeSystemeActuel, 
-    setTypeSystemeActuel,
-    systemeActuel,
-    setSystemeActuel,
-    ui
+    setTypeSystemeActuel, 
+    systemeActuel, 
+    setSystemeActuel 
   } = useCalculateurGeneral();
   
-  const { afficherDetails } = ui;
-  
-  // Gestion du changement de valeur des champs
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  // Fonction pour mettre à jour un paramètre spécifique
+  const updateParametre = (param, value) => {
     setSystemeActuel({
       ...systemeActuel,
-      [name]: Number(value)
+      [param]: Number(value)
     });
   };
   
+  // Calculer le temps de cycle basé sur la capacité
+  const calculerTempsCycle = (capacite) => {
+    if (!capacite || capacite <= 0) return 0;
+    return Math.round((3600 / capacite) * 10) / 10; // Convertir capacité/heure en secondes/unité
+  };
+  
+  // Calculer la capacité basée sur le temps de cycle
+  const calculerCapacite = (tempsCycle) => {
+    if (!tempsCycle || tempsCycle <= 0) return 0;
+    return Math.round((3600 / tempsCycle) * 10) / 10; // Convertir secondes/unité en capacité/heure
+  };
+  
+  // Synchroniser temps de cycle et capacité
+  const updateCapacite = (value) => {
+    const capacite = Number(value);
+    updateParametre('capacite', capacite);
+    updateParametre('tempsCycle', calculerTempsCycle(capacite));
+  };
+  
+  const updateTempsCycle = (value) => {
+    const tempsCycle = Number(value);
+    updateParametre('tempsCycle', tempsCycle);
+    updateParametre('capacite', calculerCapacite(tempsCycle));
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4 text-blue-700 flex items-center">
+      <h2 className="text-xl font-semibold mb-4 text-red-700 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+          <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
         </svg>
         Système Actuel
       </h2>
       
       <div className="mb-6">
-        <label className="block text-sm font-medium mb-1">Type de système actuel</label>
+        <h3 className="font-medium text-gray-700 mb-2">Type de système actuel</h3>
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setTypeSystemeActuel(TYPES_SYSTEME.MANUEL)}
             className={`py-2 text-sm rounded-md transition-all ${
               typeSystemeActuel === TYPES_SYSTEME.MANUEL
-                ? 'bg-blue-100 text-blue-800 font-medium'
+                ? 'bg-red-100 text-red-800 font-medium'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -54,7 +72,7 @@ const SystemeActuel = () => {
             onClick={() => setTypeSystemeActuel(TYPES_SYSTEME.SEMI_AUTO)}
             className={`py-2 text-sm rounded-md transition-all ${
               typeSystemeActuel === TYPES_SYSTEME.SEMI_AUTO
-                ? 'bg-blue-100 text-blue-800 font-medium'
+                ? 'bg-red-100 text-red-800 font-medium'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -64,7 +82,7 @@ const SystemeActuel = () => {
             onClick={() => setTypeSystemeActuel(TYPES_SYSTEME.AUTO_ANCIEN)}
             className={`py-2 text-sm rounded-md transition-all ${
               typeSystemeActuel === TYPES_SYSTEME.AUTO_ANCIEN
-                ? 'bg-blue-100 text-blue-800 font-medium'
+                ? 'bg-red-100 text-red-800 font-medium'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -73,127 +91,148 @@ const SystemeActuel = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormInput
-          id="capacite"
-          name="capacite"
-          label="Capacité de production (unités/heure)"
-          type="number"
-          value={systemeActuel.capacite}
-          onChange={handleChange}
-          helper="Nombre d'unités produites par heure"
-        />
-        
-        <FormInput
-          id="tempsCycle"
-          name="tempsCycle"
-          label="Temps de cycle (secondes/unité)"
-          type="number"
-          value={systemeActuel.tempsCycle}
-          onChange={handleChange}
-          helper="Temps nécessaire pour traiter une unité"
-        />
-        
-        <FormInput
-          id="nombreEmployes"
-          name="nombreEmployes"
-          label="Nombre d'employés (ETP)"
-          type="number"
-          step="0.1"
-          value={systemeActuel.nombreEmployes}
-          onChange={handleChange}
-          helper="Équivalent temps plein nécessaire"
-        />
-        
-        <FormInput
-          id="tauxRejets"
-          name="tauxRejets"
-          label="Taux de rejets (%)"
-          type="number"
-          step="0.1"
-          value={systemeActuel.tauxRejets}
-          onChange={handleChange}
-          helper="Pourcentage de production non conforme"
-        />
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Performance</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Capacité (unités/heure)</label>
+            <input
+              type="number"
+              value={systemeActuel.capacite}
+              onChange={(e) => updateCapacite(e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+            <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Temps de cycle (sec)</label>
+            <input
+              type="number"
+              value={systemeActuel.tempsCycle}
+              onChange={(e) => updateTempsCycle(e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+            <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
+          </div>
+        </div>
+        <div className="mt-2 p-2 bg-blue-50 rounded-md text-sm text-blue-800">
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-blue-600 mr-2"></div>
+            <p>La capacité réelle correspond à 100% de la capacité théorique maximum.</p>
+          </div>
+        </div>
       </div>
       
-      {/* Paramètres additionnels */}
-      <div className="mt-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">Paramètres additionnels</span>
-          <button 
-            onClick={() => {}}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            {afficherDetails ? 'Masquer' : 'Afficher'}
-          </button>
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Main d'œuvre</h3>
+        <div>
+          <label className="block text-sm font-medium mb-1">Nombre d'employés (ETP)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={systemeActuel.nombreEmployes}
+            onChange={(e) => updateParametre('nombreEmployes', e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+          <p className="text-xs text-gray-500 mt-1">Équivalent temps plein</p>
         </div>
-        
-        {afficherDetails && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 p-3 bg-gray-50 rounded-md">
-            <FormInput
-              id="perteProduction"
-              name="perteProduction"
-              label="Perte de production (%)"
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Qualité et problèmes</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Taux de rejets (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={systemeActuel.tauxRejets}
+              onChange={(e) => updateParametre('tauxRejets', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Pertes production (%)</label>
+            <input
               type="number"
               step="0.1"
               value={systemeActuel.perteProduction}
-              onChange={handleChange}
-              helper="Pourcentage de temps d'arrêt et retards"
+              onChange={(e) => updateParametre('perteProduction', e.target.value)}
+              className="w-full p-2 border rounded"
             />
-            
-            <FormInput
-              id="frequenceAccident"
-              name="frequenceAccident"
-              label="Fréquence d'accidents (par an)"
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Sécurité</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Accidents/an</label>
+            <input
               type="number"
               step="0.1"
               value={systemeActuel.frequenceAccident}
-              onChange={handleChange}
-              helper="Nombre d'accidents par an"
-            />
-            
-            <FormInput
-              id="coutMoyenAccident"
-              name="coutMoyenAccident"
-              label="Coût moyen par accident ($)"
-              type="number"
-              value={systemeActuel.coutMoyenAccident}
-              onChange={handleChange}
-              helper="Coût directs et indirects par accident"
-            />
-            
-            <FormInput
-              id="tempsArretAccident"
-              name="tempsArretAccident"
-              label="Temps d'arrêt par accident (h)"
-              type="number"
-              value={systemeActuel.tempsArretAccident}
-              onChange={handleChange}
-              helper="Durée d'interruption causée par un accident"
-            />
-            
-            <FormInput
-              id="maintenance"
-              name="maintenance"
-              label="Coût de maintenance annuel ($)"
-              type="number"
-              value={systemeActuel.maintenance}
-              onChange={handleChange}
-              helper="Coût annuel de maintenance et réparations"
-            />
-            
-            <FormInput
-              id="energie"
-              name="energie"
-              label="Coût d'énergie annuel ($)"
-              type="number"
-              value={systemeActuel.energie}
-              onChange={handleChange}
-              helper="Consommation énergétique annuelle"
+              onChange={(e) => updateParametre('frequenceAccident', e.target.value)}
+              className="w-full p-2 border rounded"
             />
           </div>
-        )}
+          <div>
+            <label className="block text-sm font-medium mb-1">Coût/accident ($)</label>
+            <input
+              type="number"
+              value={systemeActuel.coutMoyenAccident}
+              onChange={(e) => updateParametre('coutMoyenAccident', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Arrêt/accident (h)</label>
+            <input
+              type="number"
+              step="0.5"
+              value={systemeActuel.tempsArretAccident}
+              onChange={(e) => updateParametre('tempsArretAccident', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Arrêt non planifié (h/mois)</label>
+            <input
+              type="number"
+              step="0.5"
+              value={systemeActuel.arretNonPlanifie}
+              onChange={(e) => updateParametre('arretNonPlanifie', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Coûts opérationnels</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Maintenance/an ($)</label>
+            <input
+              type="number"
+              value={systemeActuel.maintenance}
+              onChange={(e) => updateParametre('maintenance', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Énergie/an ($)</label>
+            <input
+              type="number"
+              value={systemeActuel.energie}
+              onChange={(e) => updateParametre('energie', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
