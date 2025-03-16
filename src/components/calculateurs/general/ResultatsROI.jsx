@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import InfoBulle from '../../communs/InfoBulle';
+import DocumentationLink from '../../communs/DocumentationLink';
 
 /**
  * Composant pour afficher les résultats financiers du ROI
@@ -63,16 +64,10 @@ const ResultatsROI = () => {
           </svg>
           Résultats financiers
         </h2>
-        <a 
-          href="/docs/formules-calculateur-general.md" 
-          target="_blank"
-          className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Documentation des formules
-        </a>
+        <DocumentationLink 
+          document="formules-calculateur-general.md" 
+          label="Documentation des formules"
+        />
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
