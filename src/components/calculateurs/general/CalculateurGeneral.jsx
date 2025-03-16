@@ -46,62 +46,90 @@ const CalculateurGeneralContent = () => {
       <NavigationParAncres sectionActive={sectionActive} setSectionActive={setSectionActive} />
       
       {/* Vue comparative côte à côte des systèmes */}
-      <div id="parametres" className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 scroll-mt-24">
-        <div className="flex flex-col space-y-8">
-          <SystemeActuel />
+      <section id="parametres" className="scroll-mt-20 mb-12 pt-2">
+        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
+          <h2 className="font-bold text-lg text-blue-800">Paramètres des systèmes à comparer</h2>
+          <p className="text-sm text-blue-700">Configurez les caractéristiques de votre système actuel et de la solution automatisée envisagée.</p>
         </div>
-        <div className="flex flex-col space-y-8">
-          <SystemeAutomatise />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex flex-col space-y-8">
+            <SystemeActuel />
+          </div>
+          <div className="flex flex-col space-y-8">
+            <SystemeAutomatise />
+          </div>
         </div>
-      </div>
+      </section>
       
       {/* Section relative à la production */}
-      <div id="production" className="mb-8 scroll-mt-24">
+      <section id="production" className="scroll-mt-20 mb-12 pt-2">
+        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
+          <h2 className="font-bold text-lg text-blue-800">Analyse détaillée de la production</h2>
+          <p className="text-sm text-blue-700">Visualisez l'impact de l'automatisation sur vos capacités et votre efficacité de production.</p>
+        </div>
         <OngletProduction />
-      </div>
+      </section>
       
       {/* Résultats financiers */}
-      <div id="resultats" className="mb-8 scroll-mt-24">
+      <section id="resultats" className="scroll-mt-20 mb-12 pt-2">
+        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
+          <h2 className="font-bold text-lg text-blue-800">Résultats financiers</h2>
+          <p className="text-sm text-blue-700">Examinez les indicateurs de rentabilité et le retour sur investissement projeté.</p>
+        </div>
         <ResultatsROI />
-      </div>
+      </section>
       
       {/* Graphiques comparatifs */}
-      <div id="graphiques" className="mb-8 scroll-mt-24">
+      <section id="graphiques" className="scroll-mt-20 mb-12 pt-2">
+        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
+          <h2 className="font-bold text-lg text-blue-800">Graphiques comparatifs</h2>
+          <p className="text-sm text-blue-700">Visualisez les écarts de performance et les économies générées par catégorie.</p>
+        </div>
         <GraphiquesROI />
-      </div>
+      </section>
       
       {/* Section sécurité et environnement */}
-      <div id="securite" className="mb-8 scroll-mt-24">
+      <section id="securite" className="scroll-mt-20 mb-12 pt-2">
+        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
+          <h2 className="font-bold text-lg text-blue-800">Sécurité & Environnement</h2>
+          <p className="text-sm text-blue-700">Évaluez les bénéfices en termes de sécurité des opérateurs et d'impact environnemental.</p>
+        </div>
         <OngletSecurite />
-      </div>
+      </section>
       
       {/* Recommandation - Visible sur tous les onglets */}
-      <div id="recommandation" className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 scroll-mt-24">
-        <h3 className="font-medium text-blue-800 mb-2">Recommandation</h3>
-        {projetRecommandable ? (
-          <div className="flex items-start">
-            <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <p className="font-bold text-green-700">Projet recommandé</p>
-              <p className="text-sm">Cet investissement en automatisation est financièrement viable avec un ROI positif et un délai de récupération raisonnable.</p>
+      <section id="recommandation" className="scroll-mt-20 mb-6 pt-2">
+        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
+          <h2 className="font-bold text-lg text-blue-800">Recommandation</h2>
+          <p className="text-sm text-blue-700">Conclusion et recommandation basées sur l'analyse globale.</p>
+        </div>
+        <div className="p-4 bg-white rounded-lg shadow">
+          <h3 className="font-medium text-blue-800 mb-2">Notre recommandation</h3>
+          {projetRecommandable ? (
+            <div className="flex items-start">
+              <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="font-bold text-green-700">Projet recommandé</p>
+                <p className="text-sm">Cet investissement en automatisation est financièrement viable avec un ROI positif et un délai de récupération raisonnable.</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex items-start">
-            <svg className="h-5 w-5 text-amber-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <p className="font-bold text-amber-700">À réévaluer</p>
-              <p className="text-sm">Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives.</p>
+          ) : (
+            <div className="flex items-start">
+              <svg className="h-5 w-5 text-amber-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div>
+                <p className="font-bold text-amber-700">À réévaluer</p>
+                <p className="text-sm">Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives.</p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
       
-      <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-600 text-center">
+      <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm text-gray-600 text-center">
         <p>Les résultats de ce calculateur sont fournis à titre indicatif seulement. Une analyse approfondie est recommandée pour toute décision d'investissement.</p>
       </div>
     </div>
