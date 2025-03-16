@@ -19,10 +19,14 @@ const CalculateurGeneralContent = () => {
     ui, 
     changerOnglet, 
     changerModeAffichage, 
-    changerModeAnalyse
+    changerModeAnalyse,
+    resultats
   } = useCalculateurGeneral();
 
   const { ongletActif, modeAffichage, modeAnalyse } = ui;
+
+  // Déterminer si le projet est recommandable
+  const projetRecommandable = resultats.van > 0 && resultats.delaiRecuperation < resultats.dureeVie;
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
@@ -46,6 +50,65 @@ const CalculateurGeneralContent = () => {
           </div>
         </div>
       </div>
+      
+      {/* Navigation par onglets */}
+      <div className="flex flex-wrap mb-6 bg-white rounded-lg shadow-md">
+        <button
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.GENERAL)}
+          className={`px-4 py-3 font-medium transition-all ${
+            ongletActif === ONGLETS_CALCULATEUR.GENERAL
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Vue générale
+        </button>
+        <button
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.COMPARATIF)}
+          className={`px-4 py-3 font-medium transition-all ${
+            ongletActif === ONGLETS_CALCULATEUR.COMPARATIF
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Analyse comparative
+        </button>
+        <button
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.FINANCIER)}
+          className={`px-4 py-3 font-medium transition-all ${
+            ongletActif === ONGLETS_CALCULATEUR.FINANCIER
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Détails financiers
+        </button>
+        <button
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.PRODUCTION)}
+          className={`px-4 py-3 font-medium transition-all ${
+            ongletActif === ONGLETS_CALCULATEUR.PRODUCTION
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Production
+        </button>
+        <button
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.SECURITE)}
+          className={`px-4 py-3 font-medium transition-all ${
+            ongletActif === ONGLETS_CALCULATEUR.SECURITE
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Sécurité & Environnement
+        </button>
+      </div>
+      
+      {/* Gestion des scénarios - Visible sur tous les onglets */}
+      {modeAffichage === MODES_AFFICHAGE.AVANCE && (
+        <GestionScenarios />
+      )}
       
       {/* Options de mode d'affichage */}
       <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
@@ -108,86 +171,21 @@ const CalculateurGeneralContent = () => {
         )}
       </div>
       
-      {/* Gestion des scénarios - Mode Avancé */}
-      {modeAffichage === MODES_AFFICHAGE.AVANCE && (
-        <GestionScenarios />
-      )}
-      
       {/* Analyse de sensibilité - Mode Avancé */}
       {modeAffichage === MODES_AFFICHAGE.AVANCE && modeAnalyse === MODES_ANALYSE.SENSIBILITE && (
         <AnalyseSensibilite />
       )}
-      
-      {/* Navigation par onglets */}
-      <div className="flex flex-wrap mb-6 bg-white rounded-lg shadow-md">
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.GENERAL)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.GENERAL
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Vue générale
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.PRODUCTION)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.PRODUCTION
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Production
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.COMPARATIF)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.COMPARATIF
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Analyse comparative
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.FINANCIER)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.FINANCIER
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Détails financiers
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.SECURITE)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.SECURITE
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Sécurité & Environnement
-        </button>
-      </div>
       
       {/* Vue générale - Premier onglet */}
       {ongletActif === ONGLETS_CALCULATEUR.GENERAL && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="flex flex-col space-y-8">
             <SystemeActuel />
-            <SystemeAutomatise />
           </div>
           <div className="flex flex-col space-y-8">
-            <ResultatsROI />
+            <SystemeAutomatise />
           </div>
         </div>
-      )}
-      
-      {/* Onglet Production */}
-      {ongletActif === ONGLETS_CALCULATEUR.PRODUCTION && (
-        <OngletProduction />
       )}
       
       {/* Analyse comparative - Deuxième onglet */}
@@ -195,26 +193,50 @@ const CalculateurGeneralContent = () => {
         <GraphiquesROI />
       )}
       
+      {/* Résultats financiers - Troisième onglet */}
+      {ongletActif === ONGLETS_CALCULATEUR.FINANCIER && (
+        <ResultatsROI />
+      )}
+      
+      {/* Onglet Production */}
+      {ongletActif === ONGLETS_CALCULATEUR.PRODUCTION && (
+        <OngletProduction />
+      )}
+      
       {/* Onglet Sécurité & Environnement */}
       {ongletActif === ONGLETS_CALCULATEUR.SECURITE && (
         <OngletSecurite />
       )}
       
-      {/* Note: L'onglet financier sera implémenté ultérieurement */}
-      {ongletActif === ONGLETS_CALCULATEUR.FINANCIER && (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4 text-blue-700">Détails financiers</h2>
-          <p className="text-gray-600">Cet onglet présentera une analyse financière détaillée du projet d'automatisation.</p>
-          <div className="mt-4 p-4 bg-yellow-50 rounded border border-yellow-200">
-            <p className="flex items-center text-yellow-800">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              Cette fonctionnalité sera disponible dans une prochaine mise à jour.
-            </p>
+      {/* Recommandation - Visible sur tous les onglets */}
+      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <h3 className="font-medium text-blue-800 mb-2">Recommandation</h3>
+        {projetRecommandable ? (
+          <div className="flex items-start">
+            <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="font-bold text-green-700">Projet recommandé</p>
+              <p className="text-sm">Cet investissement en automatisation est financièrement viable avec un ROI positif et un délai de récupération raisonnable.</p>
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-start">
+            <svg className="h-5 w-5 text-amber-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="font-bold text-amber-700">À réévaluer</p>
+              <p className="text-sm">Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives.</p>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm text-gray-600 text-center">
+        <p>Les résultats de ce calculateur sont fournis à titre indicatif seulement. Une analyse approfondie est recommandée pour toute décision d'investissement.</p>
+      </div>
     </div>
   );
 };
