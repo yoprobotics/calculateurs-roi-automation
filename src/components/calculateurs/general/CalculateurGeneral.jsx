@@ -6,6 +6,8 @@ import ResultatsROI from './ResultatsROI';
 import GraphiquesROI from './GraphiquesROI';
 import AnalyseSensibilite from './AnalyseSensibilite';
 import GestionScenarios from './GestionScenarios';
+import OngletProduction from './OngletProduction';
+import OngletSecurite from './OngletSecurite';
 import { MODES_AFFICHAGE, MODES_ANALYSE } from '../../../utils/constants';
 
 /**
@@ -129,6 +131,16 @@ const CalculateurGeneralContent = () => {
           Vue générale
         </button>
         <button
+          onClick={() => changerOnglet('production')}
+          className={`px-4 py-3 font-medium transition-all ${
+            ongletActif === 'production'
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Production
+        </button>
+        <button
           onClick={() => changerOnglet('comparatif')}
           className={`px-4 py-3 font-medium transition-all ${
             ongletActif === 'comparatif'
@@ -173,12 +185,36 @@ const CalculateurGeneralContent = () => {
         </div>
       )}
       
+      {/* Onglet Production */}
+      {ongletActif === 'production' && (
+        <OngletProduction />
+      )}
+      
       {/* Analyse comparative - Deuxième onglet */}
       {ongletActif === 'comparatif' && (
         <GraphiquesROI />
       )}
       
-      {/* Détails financiers et autres onglets seront implémentés dans des composants séparés */}
+      {/* Onglet Sécurité & Environnement */}
+      {ongletActif === 'securite' && (
+        <OngletSecurite />
+      )}
+      
+      {/* Note: L'onglet financier sera implémenté ultérieurement */}
+      {ongletActif === 'financier' && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-blue-700">Détails financiers</h2>
+          <p className="text-gray-600">Cet onglet présentera une analyse financière détaillée du projet d'automatisation.</p>
+          <div className="mt-4 p-4 bg-yellow-50 rounded border border-yellow-200">
+            <p className="flex items-center text-yellow-800">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              Cette fonctionnalité sera disponible dans une prochaine mise à jour.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
