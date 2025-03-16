@@ -4,6 +4,7 @@ import { TYPES_SYSTEME } from '../../../utils/constants';
 import { validateParams } from '../../../utils/validationService';
 import InfoBulle from '../../communs/InfoBulle';
 import { descriptionSystemeActuel } from '../../../utils/parametresDescriptions';
+import FormulasModal from '../../FormulasModal';
 
 /**
  * Composant pour les paramètres du système actuel
@@ -18,6 +19,9 @@ const SystemeActuel = () => {
   
   // État local pour les erreurs de validation
   const [erreurs, setErreurs] = useState({});
+  
+  // État pour le modal de formules
+  const [isFormulasModalOpen, setIsFormulasModalOpen] = useState(false);
   
   // Fonction pour mettre à jour un paramètre spécifique
   const updateParametre = (param, value) => {
@@ -482,17 +486,23 @@ const SystemeActuel = () => {
 
       {/* Lien vers la documentation des formules */}
       <div className="mt-6 text-center">
-        <a 
-          href="/docs/formules-calculateur-general.md" 
-          target="_blank"
-          className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center"
+        <button 
+          onClick={() => setIsFormulasModalOpen(true)}
+          className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center mx-auto"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Consulter la documentation détaillée des formules utilisées
-        </a>
+        </button>
       </div>
+
+      {/* Modal des formules */}
+      <FormulasModal 
+        isOpen={isFormulasModalOpen} 
+        onClose={() => setIsFormulasModalOpen(false)} 
+        document="formules-calculateur-general.md"
+      />
 
       {/* Affichage d'erreurs globales si nécessaire */}
       {Object.keys(erreurs).length > 0 && (
