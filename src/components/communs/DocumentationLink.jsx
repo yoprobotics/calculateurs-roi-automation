@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 /**
  * Composant réutilisable pour lier vers la documentation
