@@ -144,7 +144,11 @@ export const PARAMETRES_DEFAUT_SYSTEME_AUTOMATISE = {
   coutHydraulique: 8, // coût par litre
   reductionConsommationHydraulique: 18, // en %
   arretNonPlanifie: 8, // heures par mois
-  reductionTempsArret: 30 // en %
+  reductionTempsArret: 30, // en %
+
+  // Nouveaux coûts cachés
+  coutMisesAJour: 3500, // coût annuel des mises à jour logicielles
+  coutConsommables: 4200 // coût annuel des consommables spécifiques
 };
 
 // Paramètres généraux par défaut
