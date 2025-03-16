@@ -25,12 +25,13 @@ export const calculerROI = (parametresSystemeActuel, parametresSystemeAutomatise
     coutDechet, augmentationProduction, ameliorationQualite,
     capaciteTraitement, tauxRejets: tauxRejetsAutomatise, 
     reductionAccidents, subventions, reductionTempsArret, tempsCycle,
-    coutFormationContinue, coutMisesAJour, coutConsommables
+    coutFormationContinue, coutMisesAJour, coutConsommables,
+    reductionEmissionsCO2 = 0 // Nouveau paramètre avec valeur par défaut
   } = parametresSystemeAutomatise;
 
   const {
     production, margeUnitaire, tauxInflation, tauxActualisation,
-    heuresOperationParJour, joursOperationParAn
+    heuresOperationParJour, joursOperationParAn, tauxImposition = 25 // Ajout du taux d'imposition
   } = parametresGeneraux;
 
   // Calcul de l'investissement initial
@@ -42,6 +43,7 @@ export const calculerROI = (parametresSystemeActuel, parametresSystemeAutomatise
   let valeurActuelleNette = -investissementInitial;
   let periodeRecuperation = dureeVie;
   let recuperationAtteinte = false;
+  let totalEconomiesCO2 = 0; // Pour suivre les économies totales de CO2
   
   // Calcul du nombre d'heures d'opération par an
   const heuresOperationAnnuelles = heuresOperationParJour * joursOperationParAn;
@@ -105,14 +107,23 @@ export const calculerROI = (parametresSystemeActuel, parametresSystemeAutomatise
     const economieSecuriteAjustee = economiesAccidents * facteurInflation;
     const economieTempsArretAjustee = economiesTempsArretCalc * facteurInflation;
     
-    // Amortissement
-    const amortissement = (investissementInitial / dureeVie) * (tauxAmortissement / 100);
+    // Calcul des économies d'émissions de CO2 (en tonnes)
+    // Basé sur la réduction d'énergie, la production et autres facteurs
+    const economiesCO2Annuelles = production * (reductionEmissionsCO2 / 100);
+    totalEconomiesCO2 += economiesCO2Annuelles;
     
-    // Calcul du flux de trésorerie annuel
+    // CORRECTION: Amortissement correct (avantage fiscal)
+    // L'amortissement n'est pas un flux de trésorerie, mais l'économie d'impôt associée l'est
+    const amortissementAnnuel = investissementInitial / dureeVie;
+    // L'avantage fiscal est l'économie d'impôt liée à l'amortissement
+    const avantageFiscalAmortissement = amortissementAnnuel * (tauxImposition / 100);
+    
+    // Calcul du flux de trésorerie annuel (CORRIGÉ)
+    // Ne plus ajouter l'amortissement mais l'avantage fiscal
     const fluxAnnuel = economiePersonnel + economieRejets + economieMaintenance + economieEnergie +
                       beneficeSupplementaire + beneficeQualite + economieArretNonPlanifie +
                       economieSecuriteAjustee + economieTempsArretAjustee - 
-                      coutsCachesAnnuels - maintenanceAnnuelle - energieOperationAnnuelle + amortissement;
+                      coutsCachesAnnuels - maintenanceAnnuelle - energieOperationAnnuelle + avantageFiscalAmortissement;
     
     // Calcul du flux de trésorerie actualisé
     const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
@@ -148,7 +159,8 @@ export const calculerROI = (parametresSystemeActuel, parametresSystemeAutomatise
       maintenanceAnnuelle,
       energieOperationAnnuelle,
       coutsCachesAnnuels,
-      amortissement
+      avantageFiscalAmortissement,
+      economiesCO2Annuelles
     });
   }
   
@@ -196,6 +208,7 @@ export const calculerROI = (parametresSystemeActuel, parametresSystemeAutomatise
     economiesQualite: dernierBeneficeQualite,
     economiesTempsArret: economiesTempsArretCalc,
     reductionTempsCycle: reductionTempsCyclePourcentage,
-    gainFlexibilite: gainFlexibilite
+    gainFlexibilite: gainFlexibilite,
+    economiesCO2: totalEconomiesCO2 // Ajout des économies totales de CO2
   };
 };
