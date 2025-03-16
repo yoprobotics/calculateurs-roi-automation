@@ -9,7 +9,7 @@ import React from 'react';
  * @returns {JSX.Element} - Lien vers la documentation
  */
 const DocumentationLink = ({ 
-  document = 'formules-calculateur-general.md', 
+  document = 'formules-financieres.md', 
   label = 'Documentation des formules',
   className = '',
   showIcon = true

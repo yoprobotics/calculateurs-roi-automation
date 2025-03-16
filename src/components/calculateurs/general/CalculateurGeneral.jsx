@@ -34,7 +34,7 @@ const CalculateurGeneralContent = () => {
           </div>
           <div className="flex flex-col space-y-2">
             <DocumentationLink 
-              document="formules-calculateur-general.md" 
+              document="formules-financieres.md" 
               label="Documentation des formules" 
               className="font-medium"
             />
@@ -198,7 +198,7 @@ const CalculateurGeneralContent = () => {
       <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm text-gray-600 text-center">
         <p>Les résultats de ce calculateur sont fournis à titre indicatif seulement. Une analyse approfondie est recommandée pour toute décision d'investissement.</p>
         <DocumentationLink 
-          document="formules-calculateur-general.md" 
+          document="formules-financieres.md" 
           label="Consultez la documentation détaillée des formules utilisées" 
           className="mt-2 justify-center"
         />
