@@ -28,24 +28,32 @@ const OngletSecurite = () => {
   // Eau
   const consommationEauActuel = systemeActuel.consommationEau;
   const coutEauActuel = systemeActuel.coutEau;
-  const consommationEauAutomatise = systemeAutomatise.consommationEau;
   const reductionConsommationEau = systemeAutomatise.reductionConsommationEau;
+  // Calculer la consommation d'eau du système automatisé en fonction du pourcentage de réduction
+  const consommationEauAutomatise = consommationEauActuel * (1 - reductionConsommationEau / 100);
   
   // Air comprimé
   const consommationAirActuel = systemeActuel.consommationAirComprime;
   const coutAirComprime = systemeActuel.coutAirComprime;
-  const consommationAirAutomatise = systemeAutomatise.consommationAirComprime;
   const reductionConsommationAir = systemeAutomatise.reductionConsommationAirComprime;
+  // Calculer la consommation d'air du système automatisé en fonction du pourcentage de réduction
+  const consommationAirAutomatise = consommationAirActuel * (1 - reductionConsommationAir / 100);
   
   // Hydraulique
   const consommationHydrauliqueActuel = systemeActuel.consommationHydraulique;
   const coutHydraulique = systemeActuel.coutHydraulique;
-  const consommationHydrauliqueAutomatise = systemeAutomatise.consommationHydraulique;
   const reductionConsommationHydraulique = systemeAutomatise.reductionConsommationHydraulique;
+  // Calculer la consommation hydraulique du système automatisé en fonction du pourcentage de réduction
+  const consommationHydrauliqueAutomatise = consommationHydrauliqueActuel * (1 - reductionConsommationHydraulique / 100);
   
-  // Autres paramètres
+  // Énergie
+  const coutEnergieActuel = systemeActuel.energie;
+  const coutEnergieAutomatise = systemeAutomatise.coutEnergie;
   const reductionEnergie = systemeAutomatise.reductionEnergie;
   const tonnageAnnuel = parametresGeneraux.tonnageAnnuel;
+  const coutEnergieTonne = systemeAutomatise.coutEnergieTonne || 40; // Valeur par défaut si non définie
+  
+  // Autres paramètres
   const heuresOperationParJour = parametresGeneraux.heuresOperationParJour;
   const joursOperationParAn = parametresGeneraux.joursOperationParAn;
 
@@ -85,12 +93,13 @@ const OngletSecurite = () => {
   const reductionHydrauliqueL = consommationHydrauliqueActuel * (reductionConsommationHydraulique / 100);
   const economieHydraulique = reductionHydrauliqueL * coutHydraulique;
   
-  // Calcul des économies d'énergie (déjà dans le composant d'origine)
-  const energieEconomisee = tonnageAnnuel * (reductionEnergie / 100) * systemeAutomatise.coutEnergieTonne;
+  // Calcul des économies d'énergie liées au processus de production
+  // C'est différent du coût énergétique direct du système
+  const economieEnergieProcessus = tonnageAnnuel * (reductionEnergie / 100) * coutEnergieTonne;
   
   // Total des économies
   const totalEconomiesSecurite = economieAnnuelleAccidents + economieArretAccidents;
-  const totalEconomiesEnvironnement = economieEau + economieAirComprime + economieHydraulique + energieEconomisee;
+  const totalEconomiesEnvironnement = economieEau + economieAirComprime + economieHydraulique + economieEnergieProcessus;
 
   // Données pour les graphiques
   const dataComparaisonAccidents = [
@@ -104,7 +113,7 @@ const OngletSecurite = () => {
   ];
 
   const dataEconomiesEnvironnement = [
-    { name: 'Énergie', value: energieEconomisee, fill: '#0ea5e9' },
+    { name: 'Énergie', value: economieEnergieProcessus, fill: '#0ea5e9' },
     { name: 'Eau', value: economieEau, fill: '#14b8a6' },
     { name: 'Air comprimé', value: economieAirComprime, fill: '#4f46e5' },
     { name: 'Fluide hydraulique', value: economieHydraulique, fill: '#7c3aed' }
@@ -126,11 +135,10 @@ const OngletSecurite = () => {
     { name: 'Solution Automatisée', value: consommationHydrauliqueAutomatise, fill: '#22c55e' }
   ];
 
-  // Données pour le graphique d'empreinte carbone
-  const COLORS = ['#ef4444', '#22c55e'];
+  // Données pour le graphique d'empreinte carbone  
   const dataCO2 = [
-    { name: 'Système Actuel', value: emissionCO2Actuel },
-    { name: 'Solution Automatisée', value: emissionCO2Automatise }
+    { name: 'Système Actuel', value: emissionCO2Actuel, fill: '#ef4444' },
+    { name: 'Solution Automatisée', value: emissionCO2Automatise, fill: '#22c55e' }
   ];
   
   // Projection des accidents sur 5 ans
@@ -208,7 +216,7 @@ const OngletSecurite = () => {
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={150} />
                   <Tooltip formatter={(value) => [`${value.toFixed(1)} tonnes CO₂/an`, 'Émissions']} />
-                  <Bar dataKey="value" fill={(index) => COLORS[index % COLORS.length]} />
+                  <Bar dataKey="value" fill={(entry) => entry.fill} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -233,7 +241,7 @@ const OngletSecurite = () => {
           
           <div className="p-3 bg-green-50 rounded border border-green-200">
             <h4 className="text-sm font-medium text-green-800 mb-1">Impact économique environnemental</h4>
-            <p className="text-sm">Économie d'énergie: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(energieEconomisee)}</span> ({reductionEnergie}%)</p>
+            <p className="text-sm">Économie d'énergie (processus): <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieEnergieProcessus)}</span> ({reductionEnergie}%)</p>
             <p className="text-sm">Économie d'eau: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieEau)}</span> ({reductionConsommationEau}%)</p>
             <p className="text-sm">Économie air comprimé: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieAirComprime)}</span> ({reductionConsommationAir}%)</p>
             <p className="text-sm">Économie fluide hydraulique: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieHydraulique)}</span> ({reductionConsommationHydraulique}%)</p>
