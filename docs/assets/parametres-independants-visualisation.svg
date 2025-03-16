@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+    <!-- Définition des styles -->
+    <style>
+        .title { font-family: Arial; font-size: 24px; font-weight: bold; fill: #333; }
+        .subtitle { font-family: Arial; font-size: 16px; fill: #666; }
+        .axis-label { font-family: Arial; font-size: 14px; fill: #555; }
+        .data-label { font-family: Arial; font-size: 12px; fill: #333; }
+        .old-approach { fill: #ef4444; }
+        .new-approach { fill: #22c55e; }
+        .legend-text { font-family: Arial; font-size: 14px; fill: #555; }
+        .small-text { font-family: Arial; font-size: 10px; fill: #777; }
+        .example-title { font-family: Arial; font-size: 14px; font-weight: bold; fill: #444; }
+        .example-text { font-family: Arial; font-size: 12px; fill: #555; }
+        .note { font-family: Arial; font-size: 12px; font-style: italic; fill: #777; }
+    </style>
+
+    <!-- Titre et description -->
+    <text x="400" y="40" class="title" text-anchor="middle">Impact de l'indépendance des paramètres</text>
+    <text x="400" y="65" class="subtitle" text-anchor="middle">Comparaison entre l'approche liée et indépendante</text>
+
+    <!-- Légende -->
+    <rect x="600" y="90" width="20" height="20" class="old-approach" rx="4" />
+    <text x="630" y="105" class="legend-text">Approche liée (avant)</text>
+    <rect x="600" y="120" width="20" height="20" class="new-approach" rx="4" />
+    <text x="630" y="135" class="legend-text">Approche indépendante (après)</text>
+
+    <!-- Example 1: Emballage -->
+    <g transform="translate(50, 150)">
+        <text x="0" y="0" class="example-title">1. Industrie de l'emballage</text>
+        <text x="0" y="20" class="example-text">Temps de cycle: 2 sec</text>
+        <text x="0" y="40" class="example-text">Capacité théorique: 1800 unités/h</text>
+        <text x="0" y="60" class="example-text">Capacité réelle: 1400 unités/h</text>
+        
+        <!-- Visualisation -->
+        <rect x="200" y="0" width="150" height="25" class="old-approach" rx="4" />
+        <text x="270" y="17" class="data-label" text-anchor="middle" fill="white">Temps de cycle ajusté à 2,57s</text>
+        
+        <rect x="200" y="35" width="150" height="25" class="new-approach" rx="4" />
+        <text x="270" y="52" class="data-label" text-anchor="middle" fill="white">Temps de cycle réel: 2s</text>
+        
+        <text x="380" y="17" class="small-text">Capacité: 1400 u/h</text>
+        <text x="380" y="52" class="small-text">Capacité indépendante: 1400 u/h</text>
+    </g>
+
+    <!-- Example 2: Automobile -->
+    <g transform="translate(50, 240)">
+        <text x="0" y="0" class="example-title">2. Industrie automobile</text>
+        <text x="0" y="20" class="example-text">Temps de cycle: 60 sec</text>
+        <text x="0" y="40" class="example-text">Capacité théorique: 60 unités/h</text>
+        <text x="0" y="60" class="example-text">Capacité réelle: 52 unités/h</text>
+        
+        <!-- Visualisation -->
+        <rect x="200" y="0" width="150" height="25" class="old-approach" rx="4" />
+        <text x="270" y="17" class="data-label" text-anchor="middle" fill="white">Temps de cycle ajusté à 69s</text>
+        
+        <rect x="200" y="35" width="150" height="25" class="new-approach" rx="4" />
+        <text x="270" y="52" class="data-label" text-anchor="middle" fill="white">Temps de cycle réel: 60s</text>
+        
+        <text x="380" y="17" class="small-text">Capacité: 52 u/h</text>
+        <text x="380" y="52" class="small-text">Capacité indépendante: 52 u/h</text>
+    </g>
+
+    <!-- Example 3: Pharmaceutique -->
+    <g transform="translate(50, 330)">
+        <text x="0" y="0" class="example-title">3. Industrie pharmaceutique</text>
+        <text x="0" y="20" class="example-text">Temps de cycle: 0,5 sec</text>
+        <text x="0" y="40" class="example-text">Capacité théorique: 7200 unités/h</text>
+        <text x="0" y="60" class="example-text">Capacité réelle: 4000 unités/h</text>
+        
+        <!-- Visualisation -->
+        <rect x="200" y="0" width="150" height="25" class="old-approach" rx="4" />
+        <text x="270" y="17" class="data-label" text-anchor="middle" fill="white">Temps de cycle ajusté à 0,9s</text>
+        
+        <rect x="200" y="35" width="150" height="25" class="new-approach" rx="4" />
+        <text x="270" y="52" class="data-label" text-anchor="middle" fill="white">Temps de cycle réel: 0,5s</text>
+        
+        <text x="380" y="17" class="small-text">Capacité: 4000 u/h</text>
+        <text x="380" y="52" class="small-text">Capacité indépendante: 4000 u/h</text>
+    </g>
+
+    <!-- Example 4: Agroalimentaire -->
+    <g transform="translate(50, 420)">
+        <text x="0" y="0" class="example-title">4. Industrie agroalimentaire</text>
+        <text x="0" y="20" class="example-text">Temps de cycle: Variable (2-6 sec)</text>
+        <text x="0" y="40" class="example-text">Capacité théorique: Variable</text>
+        <text x="0" y="60" class="example-text">Capacité réelle: 1000 unités/h constante</text>
+        
+        <!-- Visualisation -->
+        <rect x="200" y="0" width="150" height="25" class="old-approach" rx="4" />
+        <text x="270" y="17" class="data-label" text-anchor="middle" fill="white">Temps de cycle fixe requis</text>
+        
+        <rect x="200" y="35" width="150" height="25" class="new-approach" rx="4" />
+        <text x="270" y="52" class="data-label" text-anchor="middle" fill="white">Temps de cycle variable</text>
+        
+        <text x="380" y="17" class="small-text">Impossible à modéliser correctement</text>
+        <text x="380" y="52" class="small-text">Capacité constante: 1000 u/h</text>
+    </g>
+
+    <!-- Note de bas de page -->
+    <text x="400" y="480" class="note" text-anchor="middle">
+        Dans tous ces exemples, la nouvelle approche permet de représenter fidèlement la réalité industrielle sans distorsion des paramètres.
+    </text>
+</svg>

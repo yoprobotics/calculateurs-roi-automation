@@ -27,31 +27,6 @@ const SystemeAutomatise = () => {
       [param]: Number(value)
     });
   };
-  
-  // Calculer le temps de cycle basé sur la capacité
-  const calculerTempsCycle = (capacite) => {
-    if (!capacite || capacite <= 0) return 0;
-    return Math.round((3600 / capacite) * 10) / 10; // Convertir capacité/heure en secondes/unité
-  };
-  
-  // Calculer la capacité basée sur le temps de cycle
-  const calculerCapacite = (tempsCycle) => {
-    if (!tempsCycle || tempsCycle <= 0) return 0;
-    return Math.round((3600 / tempsCycle) * 10) / 10; // Convertir secondes/unité en capacité/heure
-  };
-  
-  // Synchroniser temps de cycle et capacité
-  const updateCapacite = (value) => {
-    const capacite = Number(value);
-    updateParametre('capaciteTraitement', capacite);
-    updateParametre('tempsCycle', calculerTempsCycle(capacite));
-  };
-  
-  const updateTempsCycle = (value) => {
-    const tempsCycle = Number(value);
-    updateParametre('tempsCycle', tempsCycle);
-    updateParametre('capaciteTraitement', calculerCapacite(tempsCycle));
-  };
 
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -70,7 +45,7 @@ const SystemeAutomatise = () => {
             <input
               type="number"
               value={systemeAutomatise.capaciteTraitement}
-              onChange={(e) => updateCapacite(e.target.value)}
+              onChange={(e) => updateParametre('capaciteTraitement', e.target.value)}
               className="w-full p-2 border rounded"
             />
             <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
@@ -80,7 +55,7 @@ const SystemeAutomatise = () => {
             <input
               type="number"
               value={systemeAutomatise.tempsCycle}
-              onChange={(e) => updateTempsCycle(e.target.value)}
+              onChange={(e) => updateParametre('tempsCycle', e.target.value)}
               className="w-full p-2 border rounded"
             />
             <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
@@ -89,7 +64,7 @@ const SystemeAutomatise = () => {
         <div className="mt-2 p-2 bg-green-50 rounded-md text-sm text-green-800">
           <div className="flex items-center">
             <div className="w-2 h-2 rounded-full bg-green-600 mr-2"></div>
-            <p>La capacité réelle correspond à 100% de la capacité théorique maximum.</p>
+            <p>La capacité et le temps de cycle peuvent être définis indépendamment selon le contexte de votre production.</p>
           </div>
         </div>
       </div>
