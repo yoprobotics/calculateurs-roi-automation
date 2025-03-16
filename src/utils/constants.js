@@ -45,7 +45,16 @@ export const PARAMETRES_DEFAUT_SYSTEME_ACTUEL = {
     frequenceAccident: 5.2,
     coutMoyenAccident: 12500,
     tempsArretAccident: 24,
-    tempsCycle: 80 // secondes par unité
+    tempsCycle: 80, // secondes par unité
+    // Nouveaux paramètres environnementaux
+    consommationEau: 15000, // m³/an
+    coutEau: 4.5, // coût par m³
+    consommationAirComprime: 12000, // m³/an
+    coutAirComprime: 0.25, // coût par m³
+    emissionCO2: 180, // tonnes/an
+    consommationHydraulique: 2500, // litres/an
+    coutHydraulique: 8, // coût par litre
+    arretNonPlanifie: 24 // heures par mois
   },
   'semi-auto': {
     capacite: 80,
@@ -58,7 +67,16 @@ export const PARAMETRES_DEFAUT_SYSTEME_ACTUEL = {
     frequenceAccident: 3.8,
     coutMoyenAccident: 12500,
     tempsArretAccident: 24,
-    tempsCycle: 45 // secondes par unité
+    tempsCycle: 45, // secondes par unité
+    // Nouveaux paramètres environnementaux
+    consommationEau: 13000, // m³/an
+    coutEau: 4.5, // coût par m³
+    consommationAirComprime: 14000, // m³/an
+    coutAirComprime: 0.25, // coût par m³
+    emissionCO2: 150, // tonnes/an
+    consommationHydraulique: 3200, // litres/an
+    coutHydraulique: 8, // coût par litre
+    arretNonPlanifie: 18 // heures par mois
   },
   'auto-ancien': {
     capacite: 100,
@@ -71,7 +89,16 @@ export const PARAMETRES_DEFAUT_SYSTEME_ACTUEL = {
     frequenceAccident: 1.5,
     coutMoyenAccident: 12500,
     tempsArretAccident: 16,
-    tempsCycle: 36 // secondes par unité
+    tempsCycle: 36, // secondes par unité
+    // Nouveaux paramètres environnementaux
+    consommationEau: 12000, // m³/an
+    coutEau: 4.5, // coût par m³
+    consommationAirComprime: 16000, // m³/an
+    coutAirComprime: 0.25, // coût par m³
+    emissionCO2: 130, // tonnes/an
+    consommationHydraulique: 3800, // litres/an
+    coutHydraulique: 8, // coût par litre
+    arretNonPlanifie: 12 // heures par mois
   }
 };
 
@@ -101,7 +128,21 @@ export const PARAMETRES_DEFAUT_SYSTEME_AUTOMATISE = {
   tauxRejets: 3.5,
   reductionAccidents: 85,
   subventions: 40000,
-  tempsCycle: 30 // secondes par unité
+  tempsCycle: 30, // secondes par unité
+  
+  // Nouveaux paramètres environnementaux
+  consommationEau: 10000, // m³/an
+  coutEau: 4.5, // coût par m³
+  reductionConsommationEau: 15, // en %
+  consommationAirComprime: 13000, // m³/an
+  coutAirComprime: 0.25, // coût par m³
+  reductionConsommationAirComprime: 10, // en %
+  emissionCO2: 110, // tonnes/an
+  consommationHydraulique: 2800, // litres/an
+  coutHydraulique: 8, // coût par litre
+  reductionConsommationHydraulique: 18, // en %
+  arretNonPlanifie: 8, // heures par mois
+  reductionTempsArret: 30 // en %
 };
 
 // Paramètres généraux par défaut

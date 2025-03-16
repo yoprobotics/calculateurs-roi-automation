@@ -14,14 +14,37 @@ const OngletSecurite = () => {
     resultats
   } = useCalculateurGeneral();
 
-  // Extraction des valeurs pertinentes
+  // Extraction des valeurs pertinentes pour la sécurité
   const frequenceAccidentActuel = systemeActuel.frequenceAccident;
   const coutMoyenAccident = systemeActuel.coutMoyenAccident;
   const tempsArretAccident = systemeActuel.tempsArretAccident;
   const reductionAccidents = systemeAutomatise.reductionAccidents;
+  
+  // Extraction des valeurs environnementales
+  const emissionCO2Actuel = systemeActuel.emissionCO2;
+  const emissionCO2Automatise = systemeAutomatise.emissionCO2;
   const reductionEmpreinteCO2 = systemeAutomatise.reductionEmpreinteCO2;
+  
+  // Eau
+  const consommationEauActuel = systemeActuel.consommationEau;
+  const coutEauActuel = systemeActuel.coutEau;
+  const consommationEauAutomatise = systemeAutomatise.consommationEau;
+  const reductionConsommationEau = systemeAutomatise.reductionConsommationEau;
+  
+  // Air comprimé
+  const consommationAirActuel = systemeActuel.consommationAirComprime;
+  const coutAirComprime = systemeActuel.coutAirComprime;
+  const consommationAirAutomatise = systemeAutomatise.consommationAirComprime;
+  const reductionConsommationAir = systemeAutomatise.reductionConsommationAirComprime;
+  
+  // Hydraulique
+  const consommationHydrauliqueActuel = systemeActuel.consommationHydraulique;
+  const coutHydraulique = systemeActuel.coutHydraulique;
+  const consommationHydrauliqueAutomatise = systemeAutomatise.consommationHydraulique;
+  const reductionConsommationHydraulique = systemeAutomatise.reductionConsommationHydraulique;
+  
+  // Autres paramètres
   const reductionEnergie = systemeAutomatise.reductionEnergie;
-  const reductionEau = systemeAutomatise.reductionEau;
   const tonnageAnnuel = parametresGeneraux.tonnageAnnuel;
   const heuresOperationParJour = parametresGeneraux.heuresOperationParJour;
   const joursOperationParAn = parametresGeneraux.joursOperationParAn;
@@ -47,13 +70,27 @@ const OngletSecurite = () => {
   const economieArretAccidents = coutArretAccidents - coutArretAccidentsAutomatise;
 
   // Calculs environnement
-  const tonnesCO2Economisees = tonnageAnnuel * (reductionEmpreinteCO2 / 100);
+  // Calcul des réductions de CO2 et coûts associés
+  const reductionCO2Tonnes = emissionCO2Actuel - emissionCO2Automatise;
+  
+  // Calcul des économies d'eau
+  const reductionEauM3 = consommationEauActuel * (reductionConsommationEau / 100);
+  const economieEau = reductionEauM3 * coutEauActuel;
+  
+  // Calcul des économies d'air comprimé
+  const reductionAirM3 = consommationAirActuel * (reductionConsommationAir / 100);
+  const economieAirComprime = reductionAirM3 * coutAirComprime;
+  
+  // Calcul des économies de fluide hydraulique
+  const reductionHydrauliqueL = consommationHydrauliqueActuel * (reductionConsommationHydraulique / 100);
+  const economieHydraulique = reductionHydrauliqueL * coutHydraulique;
+  
+  // Calcul des économies d'énergie (déjà dans le composant d'origine)
   const energieEconomisee = tonnageAnnuel * (reductionEnergie / 100) * systemeAutomatise.coutEnergieTonne;
-  const eauEconomisee = tonnageAnnuel * (reductionEau / 100) * systemeAutomatise.coutEauTonne;
   
   // Total des économies
   const totalEconomiesSecurite = economieAnnuelleAccidents + economieArretAccidents;
-  const totalEconomiesEnvironnement = energieEconomisee + eauEconomisee;
+  const totalEconomiesEnvironnement = economieEau + economieAirComprime + economieHydraulique + energieEconomisee;
 
   // Données pour les graphiques
   const dataComparaisonAccidents = [
@@ -68,14 +105,32 @@ const OngletSecurite = () => {
 
   const dataEconomiesEnvironnement = [
     { name: 'Énergie', value: energieEconomisee, fill: '#0ea5e9' },
-    { name: 'Eau', value: eauEconomisee, fill: '#14b8a6' }
+    { name: 'Eau', value: economieEau, fill: '#14b8a6' },
+    { name: 'Air comprimé', value: economieAirComprime, fill: '#4f46e5' },
+    { name: 'Fluide hydraulique', value: economieHydraulique, fill: '#7c3aed' }
+  ];
+
+  // Données pour la comparaison des ressources
+  const dataComparaisonEau = [
+    { name: 'Système Actuel', value: consommationEauActuel, fill: '#ef4444' },
+    { name: 'Solution Automatisée', value: consommationEauAutomatise, fill: '#22c55e' }
+  ];
+  
+  const dataComparaisonAir = [
+    { name: 'Système Actuel', value: consommationAirActuel, fill: '#ef4444' },
+    { name: 'Solution Automatisée', value: consommationAirAutomatise, fill: '#22c55e' }
+  ];
+  
+  const dataComparaisonHydraulique = [
+    { name: 'Système Actuel', value: consommationHydrauliqueActuel, fill: '#ef4444' },
+    { name: 'Solution Automatisée', value: consommationHydrauliqueAutomatise, fill: '#22c55e' }
   ];
 
   // Données pour le graphique d'empreinte carbone
   const COLORS = ['#ef4444', '#22c55e'];
   const dataCO2 = [
-    { name: 'Émissions actuelles', value: tonnageAnnuel * 1 }, // 1 est une valeur de référence (100%)
-    { name: 'Réduction prévue', value: tonnesCO2Economisees }
+    { name: 'Système Actuel', value: emissionCO2Actuel },
+    { name: 'Solution Automatisée', value: emissionCO2Automatise }
   ];
   
   // Projection des accidents sur 5 ans
@@ -145,44 +200,32 @@ const OngletSecurite = () => {
           </h3>
           
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-gray-600 mb-2">Réduction de l'empreinte écologique</h4>
+            <h4 className="text-sm font-medium text-gray-600 mb-2">Émissions de CO₂ (tonnes/an)</h4>
             <div className="h-60">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={dataCO2}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {dataCO2.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [value.toFixed(0), 'Tonnes CO2']} />
-                  <Legend />
-                </PieChart>
+                <BarChart data={dataCO2} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={150} />
+                  <Tooltip formatter={(value) => [`${value.toFixed(1)} tonnes CO₂/an`, 'Émissions']} />
+                  <Bar dataKey="value" fill={(index) => COLORS[index % COLORS.length]} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
             
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="p-3 bg-green-50 rounded">
-                <p className="text-xs text-gray-500">Réduction des émissions de CO2</p>
+                <p className="text-xs text-gray-500">Réduction des émissions de CO₂</p>
                 <p className="flex justify-between">
                   <span className="text-xl font-bold text-green-600">{reductionEmpreinteCO2}%</span>
-                  <span className="text-sm font-medium text-green-700">{tonnesCO2Economisees.toFixed(0)} tonnes/an</span>
+                  <span className="text-sm font-medium text-green-700">{reductionCO2Tonnes.toFixed(0)} tonnes/an</span>
                 </p>
               </div>
               <div className="p-3 bg-green-50 rounded">
-                <p className="text-xs text-gray-500">Réduction d'énergie et d'eau</p>
+                <p className="text-xs text-gray-500">Consommation d'eau</p>
                 <p className="flex justify-between">
-                  <span className="text-xl font-bold text-green-600">{Math.round((reductionEnergie + reductionEau)/2)}%</span>
-                  <span className="text-sm font-medium text-green-700">Moyenne</span>
+                  <span className="text-xl font-bold text-green-600">-{reductionConsommationEau}%</span>
+                  <span className="text-sm font-medium text-green-700">{reductionEauM3.toFixed(0)} m³/an</span>
                 </p>
               </div>
             </div>
@@ -191,8 +234,60 @@ const OngletSecurite = () => {
           <div className="p-3 bg-green-50 rounded border border-green-200">
             <h4 className="text-sm font-medium text-green-800 mb-1">Impact économique environnemental</h4>
             <p className="text-sm">Économie d'énergie: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(energieEconomisee)}</span> ({reductionEnergie}%)</p>
-            <p className="text-sm">Économie d'eau: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(eauEconomisee)}</span> ({reductionEau}%)</p>
+            <p className="text-sm">Économie d'eau: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieEau)}</span> ({reductionConsommationEau}%)</p>
+            <p className="text-sm">Économie air comprimé: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieAirComprime)}</span> ({reductionConsommationAir}%)</p>
+            <p className="text-sm">Économie fluide hydraulique: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieHydraulique)}</span> ({reductionConsommationHydraulique}%)</p>
             <p className="text-sm font-bold mt-2">Total: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalEconomiesEnvironnement)}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-8">
+        <h3 className="font-medium text-gray-700 mb-3">Économies de ressources</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <h4 className="text-sm font-medium text-gray-600 mb-2 text-center">Consommation d'eau (m³/an)</h4>
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dataComparaisonEau}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value.toFixed(0)} m³/an`, 'Consommation']} />
+                  <Bar dataKey="value" fill={(entry) => entry.fill} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-sm font-medium text-gray-600 mb-2 text-center">Air comprimé (m³/an)</h4>
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dataComparaisonAir}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value.toFixed(0)} m³/an`, 'Consommation']} />
+                  <Bar dataKey="value" fill={(entry) => entry.fill} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="text-sm font-medium text-gray-600 mb-2 text-center">Fluide hydraulique (L/an)</h4>
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dataComparaisonHydraulique}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value.toFixed(0)} L/an`, 'Consommation']} />
+                  <Bar dataKey="value" fill={(entry) => entry.fill} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>
@@ -279,7 +374,16 @@ const OngletSecurite = () => {
             <span className="font-bold">Économies environnementales :</span> {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalEconomiesEnvironnement * 5)}
           </p>
           <p className="text-sm mb-1">
-            <span className="font-bold">Réduction totale des émissions CO2 :</span> {(tonnesCO2Economisees * 5).toFixed(0)} tonnes
+            <span className="font-bold">Réduction totale des émissions CO2 :</span> {(reductionCO2Tonnes * 5).toFixed(0)} tonnes
+          </p>
+          <p className="text-sm mb-1">
+            <span className="font-bold">Économie d'eau sur 5 ans :</span> {(reductionEauM3 * 5).toFixed(0)} m³
+          </p>
+          <p className="text-sm mb-1">
+            <span className="font-bold">Économie d'air comprimé sur 5 ans :</span> {(reductionAirM3 * 5).toFixed(0)} m³
+          </p>
+          <p className="text-sm mb-1">
+            <span className="font-bold">Économie de fluide hydraulique sur 5 ans :</span> {(reductionHydrauliqueL * 5).toFixed(0)} L
           </p>
           <p className="text-sm font-bold text-green-700 mt-2">
             Impact financier total : {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format((totalEconomiesSecurite + totalEconomiesEnvironnement) * 5)}
