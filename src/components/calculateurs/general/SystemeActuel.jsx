@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
 import { TYPES_SYSTEME } from '../../../utils/constants';
 import { validateParams } from '../../../utils/validationService';
+import InfoBulle from '../../communs/InfoBulle';
+import { descriptionSystemeActuel } from '../../../utils/parametresDescriptions';
 
 /**
  * Composant pour les paramètres du système actuel
@@ -57,7 +59,13 @@ const SystemeActuel = () => {
       </h2>
       
       <div className="mb-6">
-        <h3 className="font-medium text-gray-700 mb-2">Type de système actuel</h3>
+        <h3 className="font-medium text-gray-700 mb-2 flex items-center">
+          Type de système actuel
+          <InfoBulle 
+            titre="Type de système actuel" 
+            texte="Sélectionnez la catégorie qui correspond le mieux à votre système actuel. Cette sélection ajustera automatiquement certains paramètres par défaut pour faciliter votre analyse."
+          />
+        </h3>
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setTypeSystemeActuel(TYPES_SYSTEME.MANUEL)}
@@ -96,7 +104,13 @@ const SystemeActuel = () => {
         <h3 className="font-medium text-gray-700 mb-2">Performance</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Capacité (unités/heure)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Capacité (unités/heure)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.capacite.titre}
+                texte={descriptionSystemeActuel.capacite.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.capacite}
@@ -109,7 +123,13 @@ const SystemeActuel = () => {
             <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Temps de cycle (sec)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Temps de cycle (sec)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.tempsCycle.titre}
+                texte={descriptionSystemeActuel.tempsCycle.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.tempsCycle}
@@ -133,7 +153,13 @@ const SystemeActuel = () => {
       <div className="mb-6">
         <h3 className="font-medium text-gray-700 mb-2">Main d'œuvre</h3>
         <div>
-          <label className="block text-sm font-medium mb-1">Nombre d'employés (ETP)</label>
+          <label className="block text-sm font-medium mb-1 flex items-center">
+            Nombre d'employés (ETP)
+            <InfoBulle 
+              titre={descriptionSystemeActuel.nombreEmployes.titre}
+              texte={descriptionSystemeActuel.nombreEmployes.description}
+            />
+          </label>
           <input
             type="number"
             step="0.1"
@@ -152,7 +178,13 @@ const SystemeActuel = () => {
         <h3 className="font-medium text-gray-700 mb-2">Qualité et problèmes</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Taux de rejets (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Taux de rejets (%)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.tauxRejets.titre}
+                texte={descriptionSystemeActuel.tauxRejets.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -165,7 +197,13 @@ const SystemeActuel = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Pertes production (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Pertes production (%)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.perteProduction.titre}
+                texte={descriptionSystemeActuel.perteProduction.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -184,7 +222,13 @@ const SystemeActuel = () => {
         <h3 className="font-medium text-gray-700 mb-2">Sécurité</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Accidents/an</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Accidents/an
+              <InfoBulle 
+                titre={descriptionSystemeActuel.frequenceAccident.titre}
+                texte={descriptionSystemeActuel.frequenceAccident.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -197,7 +241,13 @@ const SystemeActuel = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût/accident ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût/accident ($)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.coutMoyenAccident.titre}
+                texte={descriptionSystemeActuel.coutMoyenAccident.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.coutMoyenAccident}
@@ -211,7 +261,13 @@ const SystemeActuel = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Arrêt/accident (h)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Arrêt/accident (h)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.tempsArretAccident.titre}
+                texte={descriptionSystemeActuel.tempsArretAccident.description}
+              />
+            </label>
             <input
               type="number"
               step="0.5"
@@ -224,7 +280,13 @@ const SystemeActuel = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Arrêt non planifié (h/mois)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Arrêt non planifié (h/mois)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.arretNonPlanifie.titre}
+                texte={descriptionSystemeActuel.arretNonPlanifie.description}
+              />
+            </label>
             <input
               type="number"
               step="0.5"
@@ -243,7 +305,13 @@ const SystemeActuel = () => {
         <h3 className="font-medium text-gray-700 mb-2">Coûts opérationnels</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Maintenance/an ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Maintenance/an ($)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.maintenance.titre}
+                texte={descriptionSystemeActuel.maintenance.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.maintenance}
@@ -255,7 +323,13 @@ const SystemeActuel = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Énergie/an ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Énergie/an ($)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.energie.titre}
+                texte={descriptionSystemeActuel.energie.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.energie}
@@ -280,7 +354,13 @@ const SystemeActuel = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Consommation d'eau (m³/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Consommation d'eau (m³/an)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.consommationEau.titre}
+                texte={descriptionSystemeActuel.consommationEau.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.consommationEau}
@@ -292,7 +372,13 @@ const SystemeActuel = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût de l'eau ($/m³)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût de l'eau ($/m³)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.coutEau.titre}
+                texte={descriptionSystemeActuel.coutEau.description}
+              />
+            </label>
             <input
               type="number"
               step="0.01"
@@ -308,7 +394,13 @@ const SystemeActuel = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Air comprimé (m³/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Air comprimé (m³/an)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.consommationAirComprime.titre}
+                texte={descriptionSystemeActuel.consommationAirComprime.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.consommationAirComprime}
@@ -320,7 +412,13 @@ const SystemeActuel = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût air comprimé ($/m³)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût air comprimé ($/m³)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.coutAirComprime.titre}
+                texte={descriptionSystemeActuel.coutAirComprime.description}
+              />
+            </label>
             <input
               type="number"
               step="0.01"
@@ -336,7 +434,13 @@ const SystemeActuel = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Émissions CO₂ (tonnes/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Émissions CO₂ (tonnes/an)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.emissionCO2.titre}
+                texte={descriptionSystemeActuel.emissionCO2.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.emissionCO2}
@@ -349,7 +453,13 @@ const SystemeActuel = () => {
             <p className="text-xs text-gray-500 mt-1">Émissions directes et indirectes</p>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Fluide hydraulique (L/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Fluide hydraulique (L/an)
+              <InfoBulle 
+                titre={descriptionSystemeActuel.consommationHydraulique.titre}
+                texte={descriptionSystemeActuel.consommationHydraulique.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeActuel.consommationHydraulique}
@@ -368,6 +478,20 @@ const SystemeActuel = () => {
             <p>Ces données permettront d'évaluer l'impact environnemental et les économies potentielles.</p>
           </div>
         </div>
+      </div>
+
+      {/* Lien vers la documentation des formules */}
+      <div className="mt-6 text-center">
+        <a 
+          href="/docs/formules-calculateur-general.md" 
+          target="_blank"
+          className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Consulter la documentation détaillée des formules utilisées
+        </a>
       </div>
 
       {/* Affichage d'erreurs globales si nécessaire */}
