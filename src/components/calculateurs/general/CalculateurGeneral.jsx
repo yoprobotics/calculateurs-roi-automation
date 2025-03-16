@@ -4,26 +4,15 @@ import SystemeActuel from './SystemeActuel';
 import SystemeAutomatise from './SystemeAutomatise';
 import ResultatsROI from './ResultatsROI';
 import GraphiquesROI from './GraphiquesROI';
-import AnalyseSensibilite from './AnalyseSensibilite';
-import GestionScenarios from './GestionScenarios';
 import OngletProduction from './OngletProduction';
 import OngletSecurite from './OngletSecurite';
-import { MODES_AFFICHAGE, MODES_ANALYSE, ONGLETS_CALCULATEUR } from '../../../utils/constants';
 
 /**
- * Conteneur interne du calculateur général
+ * Conteneur interne du calculateur général - Vue unique et comparative
  * @returns {JSX.Element} - Contenu du calculateur
  */
 const CalculateurGeneralContent = () => {
-  const { 
-    ui, 
-    changerOnglet, 
-    changerModeAffichage, 
-    changerModeAnalyse,
-    resultats
-  } = useCalculateurGeneral();
-
-  const { ongletActif, modeAffichage, modeAnalyse } = ui;
+  const { resultats } = useCalculateurGeneral();
 
   // Déterminer si le projet est recommandable
   const projetRecommandable = resultats.van > 0 && resultats.delaiRecuperation < resultats.dureeVie;
@@ -51,162 +40,35 @@ const CalculateurGeneralContent = () => {
         </div>
       </div>
       
-      {/* Navigation par onglets */}
-      <div className="flex flex-wrap mb-6 bg-white rounded-lg shadow-md">
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.GENERAL)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.GENERAL
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Vue générale
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.COMPARATIF)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.COMPARATIF
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Analyse comparative
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.FINANCIER)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.FINANCIER
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Détails financiers
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.PRODUCTION)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.PRODUCTION
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Production
-        </button>
-        <button
-          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.SECURITE)}
-          className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === ONGLETS_CALCULATEUR.SECURITE
-              ? 'text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-blue-600'
-          }`}
-        >
-          Sécurité & Environnement
-        </button>
-      </div>
-      
-      {/* Gestion des scénarios - Visible sur tous les onglets */}
-      {modeAffichage === MODES_AFFICHAGE.AVANCE && (
-        <GestionScenarios />
-      )}
-      
-      {/* Options de mode d'affichage */}
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
-        <div className="flex space-x-4 mb-4 md:mb-0">
-          <button
-            onClick={() => changerModeAffichage(MODES_AFFICHAGE.BASIQUE)}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              modeAffichage === MODES_AFFICHAGE.BASIQUE
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Mode Basique
-          </button>
-          <button
-            onClick={() => changerModeAffichage(MODES_AFFICHAGE.AVANCE)}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              modeAffichage === MODES_AFFICHAGE.AVANCE
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Mode Avancé
-          </button>
-        </div>
-        
-        {modeAffichage === MODES_AFFICHAGE.AVANCE && (
-          <div className="flex space-x-4">
-            <button
-              onClick={() => changerModeAnalyse(MODES_ANALYSE.STANDARD)}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                modeAnalyse === MODES_ANALYSE.STANDARD
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Analyse Standard
-            </button>
-            <button
-              onClick={() => changerModeAnalyse(MODES_ANALYSE.COMPARAISON)}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                modeAnalyse === MODES_ANALYSE.COMPARAISON
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Comparer Scénarios
-            </button>
-            <button
-              onClick={() => changerModeAnalyse(MODES_ANALYSE.SENSIBILITE)}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                modeAnalyse === MODES_ANALYSE.SENSIBILITE
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Analyse Sensibilité
-            </button>
-          </div>
-        )}
-      </div>
-      
-      {/* Analyse de sensibilité - Mode Avancé */}
-      {modeAffichage === MODES_AFFICHAGE.AVANCE && modeAnalyse === MODES_ANALYSE.SENSIBILITE && (
-        <AnalyseSensibilite />
-      )}
-      
-      {/* Vue générale - Premier onglet */}
-      {ongletActif === ONGLETS_CALCULATEUR.GENERAL && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="flex flex-col space-y-8">
-            <SystemeActuel />
-          </div>
-          <div className="flex flex-col space-y-8">
-            <SystemeAutomatise />
-          </div>
-        </div>
-      )}
-      
-      {/* Analyse comparative - Deuxième onglet */}
-      {ongletActif === ONGLETS_CALCULATEUR.COMPARATIF && (
-        <GraphiquesROI />
-      )}
-      
-      {/* Résultats financiers - Troisième onglet */}
-      {ongletActif === ONGLETS_CALCULATEUR.FINANCIER && (
-        <ResultatsROI />
-      )}
-      
-      {/* Onglet Production */}
-      {ongletActif === ONGLETS_CALCULATEUR.PRODUCTION && (
+      {/* Section relative à la production */}
+      <div className="mb-8">
         <OngletProduction />
-      )}
+      </div>
       
-      {/* Onglet Sécurité & Environnement */}
-      {ongletActif === ONGLETS_CALCULATEUR.SECURITE && (
+      {/* Vue comparative côte à côte des systèmes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="flex flex-col space-y-8">
+          <SystemeActuel />
+        </div>
+        <div className="flex flex-col space-y-8">
+          <SystemeAutomatise />
+        </div>
+      </div>
+      
+      {/* Résultats financiers */}
+      <div className="mb-8">
+        <ResultatsROI />
+      </div>
+      
+      {/* Graphiques comparatifs */}
+      <div className="mb-8">
+        <GraphiquesROI />
+      </div>
+      
+      {/* Section sécurité et environnement */}
+      <div className="mb-8">
         <OngletSecurite />
-      )}
+      </div>
       
       {/* Recommandation - Visible sur tous les onglets */}
       <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
