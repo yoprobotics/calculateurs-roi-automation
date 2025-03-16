@@ -118,10 +118,12 @@ export const PARAMETRES_DEFAUT_SYSTEME_AUTOMATISE = {
   reductionDechet: 14,
   coutDechet: 230,
   augmentationProduction: 10,
-  reductionEnergie: 12,
-  coutEnergieTonne: 40,
-  reductionEau: 8,
-  coutEauTonne: 4.5,
+  // Paramètres énergétiques
+  reductionEnergie: 12, // % d'économie d'énergie dans le processus de production
+  coutEnergieTonne: 40, // coût d'énergie par tonne produite
+  // Paramètres d'eau
+  reductionEau: 8, // % d'économie d'eau dans le processus
+  coutEauTonne: 4.5, // coût d'eau par tonne produite
   ameliorationQualite: 5,
   reductionEmpreinteCO2: 7,
   capaciteTraitement: 120,
@@ -134,11 +136,11 @@ export const PARAMETRES_DEFAUT_SYSTEME_AUTOMATISE = {
   consommationEau: 10000, // m³/an
   coutEau: 4.5, // coût par m³
   reductionConsommationEau: 15, // en %
-  consommationAirComprime: 13000, // m³/an
+  consommationAirComprime: 13000, // m³/an - Cette valeur sera ajustée par le calcul
   coutAirComprime: 0.25, // coût par m³
   reductionConsommationAirComprime: 10, // en %
   emissionCO2: 110, // tonnes/an
-  consommationHydraulique: 2800, // litres/an
+  consommationHydraulique: 2800, // litres/an - Cette valeur sera ajustée par le calcul
   coutHydraulique: 8, // coût par litre
   reductionConsommationHydraulique: 18, // en %
   arretNonPlanifie: 8, // heures par mois
