@@ -6,7 +6,9 @@ import ResultatsROI from './ResultatsROI';
 import GraphiquesROI from './GraphiquesROI';
 import AnalyseSensibilite from './AnalyseSensibilite';
 import GestionScenarios from './GestionScenarios';
-import { MODES_AFFICHAGE, MODES_ANALYSE } from '../../../utils/constants';
+import OngletProduction from './OngletProduction';
+import OngletSecurite from './OngletSecurite';
+import { MODES_AFFICHAGE, MODES_ANALYSE, ONGLETS_CALCULATEUR } from '../../../utils/constants';
 
 /**
  * Conteneur interne du calculateur général
@@ -119,9 +121,9 @@ const CalculateurGeneralContent = () => {
       {/* Navigation par onglets */}
       <div className="flex flex-wrap mb-6 bg-white rounded-lg shadow-md">
         <button
-          onClick={() => changerOnglet('general')}
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.GENERAL)}
           className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'general'
+            ongletActif === ONGLETS_CALCULATEUR.GENERAL
               ? 'text-blue-700 border-b-2 border-blue-500'
               : 'text-gray-600 hover:text-blue-600'
           }`}
@@ -129,9 +131,19 @@ const CalculateurGeneralContent = () => {
           Vue générale
         </button>
         <button
-          onClick={() => changerOnglet('comparatif')}
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.PRODUCTION)}
           className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'comparatif'
+            ongletActif === ONGLETS_CALCULATEUR.PRODUCTION
+              ? 'text-blue-700 border-b-2 border-blue-500'
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+        >
+          Production
+        </button>
+        <button
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.COMPARATIF)}
+          className={`px-4 py-3 font-medium transition-all ${
+            ongletActif === ONGLETS_CALCULATEUR.COMPARATIF
               ? 'text-blue-700 border-b-2 border-blue-500'
               : 'text-gray-600 hover:text-blue-600'
           }`}
@@ -139,9 +151,9 @@ const CalculateurGeneralContent = () => {
           Analyse comparative
         </button>
         <button
-          onClick={() => changerOnglet('financier')}
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.FINANCIER)}
           className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'financier'
+            ongletActif === ONGLETS_CALCULATEUR.FINANCIER
               ? 'text-blue-700 border-b-2 border-blue-500'
               : 'text-gray-600 hover:text-blue-600'
           }`}
@@ -149,9 +161,9 @@ const CalculateurGeneralContent = () => {
           Détails financiers
         </button>
         <button
-          onClick={() => changerOnglet('securite')}
+          onClick={() => changerOnglet(ONGLETS_CALCULATEUR.SECURITE)}
           className={`px-4 py-3 font-medium transition-all ${
-            ongletActif === 'securite'
+            ongletActif === ONGLETS_CALCULATEUR.SECURITE
               ? 'text-blue-700 border-b-2 border-blue-500'
               : 'text-gray-600 hover:text-blue-600'
           }`}
@@ -161,7 +173,7 @@ const CalculateurGeneralContent = () => {
       </div>
       
       {/* Vue générale - Premier onglet */}
-      {ongletActif === 'general' && (
+      {ongletActif === ONGLETS_CALCULATEUR.GENERAL && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="flex flex-col space-y-8">
             <SystemeActuel />
@@ -173,12 +185,36 @@ const CalculateurGeneralContent = () => {
         </div>
       )}
       
+      {/* Onglet Production */}
+      {ongletActif === ONGLETS_CALCULATEUR.PRODUCTION && (
+        <OngletProduction />
+      )}
+      
       {/* Analyse comparative - Deuxième onglet */}
-      {ongletActif === 'comparatif' && (
+      {ongletActif === ONGLETS_CALCULATEUR.COMPARATIF && (
         <GraphiquesROI />
       )}
       
-      {/* Détails financiers et autres onglets seront implémentés dans des composants séparés */}
+      {/* Onglet Sécurité & Environnement */}
+      {ongletActif === ONGLETS_CALCULATEUR.SECURITE && (
+        <OngletSecurite />
+      )}
+      
+      {/* Note: L'onglet financier sera implémenté ultérieurement */}
+      {ongletActif === ONGLETS_CALCULATEUR.FINANCIER && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-blue-700">Détails financiers</h2>
+          <p className="text-gray-600">Cet onglet présentera une analyse financière détaillée du projet d'automatisation.</p>
+          <div className="mt-4 p-4 bg-yellow-50 rounded border border-yellow-200">
+            <p className="flex items-center text-yellow-800">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              Cette fonctionnalité sera disponible dans une prochaine mise à jour.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
