@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
+import { validateParams, validateEmployeeReplacement } from '../../../utils/validationService';
 
 /**
  * Composant pour les paramètres du système automatisé
@@ -9,48 +10,84 @@ const SystemeAutomatise = () => {
     systemeAutomatise, 
     setSystemeAutomatise,
     parametresGeneraux,
-    setParametresGeneraux 
+    setParametresGeneraux,
+    systemeActuel
   } = useCalculateurGeneral();
   
   // État local pour les erreurs de validation
-  const [validationErrors, setValidationErrors] = useState({});
+  const [erreurs, setErreurs] = useState({});
   
   // Fonction pour mettre à jour un paramètre spécifique
   const updateParametre = (param, value) => {
     // Conversion en nombre
     const numValue = Number(value);
     
-    // Validation pour les pourcentages
-    if (param.includes('reduction') || param.includes('augmentation') || param === 'ameliorationQualite' || param === 'tauxRejets' || param === 'tauxAmortissement') {
-      // Si c'est un pourcentage, vérifions qu'il est dans des limites raisonnables
-      if (numValue < 0) {
-        setValidationErrors(prev => ({...prev, [param]: "La valeur ne peut pas être négative"}));
-        return;
-      } else if (numValue > 100) {
-        setValidationErrors(prev => ({...prev, [param]: "La valeur ne peut pas dépasser 100%"}));
-      } else {
-        // Si la valeur est maintenant valide, supprimons l'erreur associée
-        setValidationErrors(prev => {
-          const newErrors = {...prev};
-          delete newErrors[param];
-          return newErrors;
-        });
+    // Création du nouvel état
+    const nouveauSystemeAutomatise = {
+      ...systemeAutomatise,
+      [param]: numValue
+    };
+    
+    // Validation spécifique pour le paramètre mis à jour
+    const parametreAValider = { [param]: numValue };
+    const erreursParam = validateParams(parametreAValider);
+    
+    // Validation croisée pour le nombre d'employés remplacés
+    if (param === 'nbEmployesRemplaces') {
+      const erreurEmployes = validateEmployeeReplacement(numValue, systemeActuel.nombreEmployes);
+      if (erreurEmployes) {
+        erreursParam.nbEmployesRemplaces = erreurEmployes;
       }
     }
     
-    setSystemeAutomatise({
-      ...systemeAutomatise,
-      [param]: numValue
-    });
+    // Mise à jour des erreurs
+    setErreurs(prev => ({
+      ...prev,
+      [param]: erreursParam[param] || null
+    }));
+    
+    // Mise à jour de l'état
+    setSystemeAutomatise(nouveauSystemeAutomatise);
   };
   
   // Fonction pour mettre à jour un paramètre général
   const updateParametreGeneral = (param, value) => {
+    const numValue = Number(value);
+    
+    // Validation du paramètre
+    const parametreAValider = { [param]: numValue };
+    const erreursParam = validateParams(parametreAValider);
+    
+    // Mise à jour des erreurs
+    setErreurs(prev => ({
+      ...prev,
+      [param]: erreursParam[param] || null
+    }));
+    
+    // Mise à jour de l'état
     setParametresGeneraux({
       ...parametresGeneraux,
-      [param]: Number(value)
+      [param]: numValue
     });
   };
+  
+  // Validation complète lors des changements majeurs
+  useEffect(() => {
+    // Validation générale
+    const erreursSysteme = validateParams(systemeAutomatise);
+    
+    // Validation croisée spécifique pour le nombre d'employés
+    const erreurEmployes = validateEmployeeReplacement(
+      systemeAutomatise.nbEmployesRemplaces, 
+      systemeActuel.nombreEmployes
+    );
+    
+    if (erreurEmployes) {
+      erreursSysteme.nbEmployesRemplaces = erreurEmployes;
+    }
+    
+    setErreurs(erreursSysteme);
+  }, [systemeAutomatise, systemeActuel]);
 
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -70,8 +107,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.capaciteTraitement}
               onChange={(e) => updateParametre('capaciteTraitement', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.capaciteTraitement ? 'border-red-500' : ''}`}
             />
+            {erreurs.capaciteTraitement && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.capaciteTraitement}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
           </div>
           <div>
@@ -80,8 +120,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.tempsCycle}
               onChange={(e) => updateParametre('tempsCycle', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.tempsCycle ? 'border-red-500' : ''}`}
             />
+            {erreurs.tempsCycle && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tempsCycle}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">Temps de traitement par unité</p>
           </div>
         </div>
@@ -102,8 +145,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutSysteme}
               onChange={(e) => updateParametre('coutSysteme', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutSysteme ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutSysteme && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutSysteme}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Coût d'installation ($)</label>
@@ -111,8 +157,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutInstallation}
               onChange={(e) => updateParametre('coutInstallation', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutInstallation ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutInstallation && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutInstallation}</p>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -122,8 +171,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutIngenierie}
               onChange={(e) => updateParametre('coutIngenierie', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutIngenierie ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutIngenierie && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutIngenierie}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Coût de formation ($)</label>
@@ -131,8 +183,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutFormation}
               onChange={(e) => updateParametre('coutFormation', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutFormation ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutFormation && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutFormation}</p>
+            )}
           </div>
         </div>
         <div className="mt-4">
@@ -141,8 +196,11 @@ const SystemeAutomatise = () => {
             type="number"
             value={systemeAutomatise.subventions}
             onChange={(e) => updateParametre('subventions', e.target.value)}
-            className="w-full p-2 border rounded"
+            className={`w-full p-2 border rounded ${erreurs.subventions ? 'border-red-500' : ''}`}
           />
+          {erreurs.subventions && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.subventions}</p>
+            )}
           <p className="text-xs text-gray-500 mt-1">Subventions, crédits d'impôt ou autres aides financières</p>
         </div>
       </div>
@@ -156,8 +214,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutMainOeuvre}
               onChange={(e) => updateParametre('coutMainOeuvre', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutMainOeuvre ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutMainOeuvre && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutMainOeuvre}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Employés remplacés (ETP)</label>
@@ -166,8 +227,16 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.nbEmployesRemplaces}
               onChange={(e) => updateParametre('nbEmployesRemplaces', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.nbEmployesRemplaces ? 'border-red-500' : ''}`}
             />
+            {erreurs.nbEmployesRemplaces && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.nbEmployesRemplaces}</p>
+            )}
+            {!erreurs.nbEmployesRemplaces && (
+              <p className="text-xs text-gray-500 mt-1">
+                Maximum: {systemeActuel.nombreEmployes} ETP (nombre actuel d'employés)
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -182,10 +251,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.tauxRejets}
               onChange={(e) => updateParametre('tauxRejets', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.tauxRejets ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.tauxRejets ? 'border-red-500' : ''}`}
             />
-            {validationErrors.tauxRejets && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.tauxRejets}</p>
+            {erreurs.tauxRejets && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tauxRejets}</p>
             )}
           </div>
           <div>
@@ -194,8 +263,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutDechet}
               onChange={(e) => updateParametre('coutDechet', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutDechet ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutDechet && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutDechet}</p>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -206,10 +278,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.augmentationProduction}
               onChange={(e) => updateParametre('augmentationProduction', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.augmentationProduction ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.augmentationProduction ? 'border-red-500' : ''}`}
             />
-            {validationErrors.augmentationProduction && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.augmentationProduction}</p>
+            {erreurs.augmentationProduction && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.augmentationProduction}</p>
             )}
           </div>
           <div>
@@ -219,10 +291,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.ameliorationQualite}
               onChange={(e) => updateParametre('ameliorationQualite', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.ameliorationQualite ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.ameliorationQualite ? 'border-red-500' : ''}`}
             />
-            {validationErrors.ameliorationQualite && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.ameliorationQualite}</p>
+            {erreurs.ameliorationQualite && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.ameliorationQualite}</p>
             )}
           </div>
         </div>
@@ -238,10 +310,10 @@ const SystemeAutomatise = () => {
               step="1"
               value={systemeAutomatise.reductionAccidents}
               onChange={(e) => updateParametre('reductionAccidents', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.reductionAccidents ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.reductionAccidents ? 'border-red-500' : ''}`}
             />
-            {validationErrors.reductionAccidents && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.reductionAccidents}</p>
+            {erreurs.reductionAccidents && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.reductionAccidents}</p>
             )}
           </div>
           <div>
@@ -251,10 +323,10 @@ const SystemeAutomatise = () => {
               step="1"
               value={systemeAutomatise.reductionTempsArret}
               onChange={(e) => updateParametre('reductionTempsArret', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.reductionTempsArret ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.reductionTempsArret ? 'border-red-500' : ''}`}
             />
-            {validationErrors.reductionTempsArret && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.reductionTempsArret}</p>
+            {erreurs.reductionTempsArret && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.reductionTempsArret}</p>
             )}
           </div>
         </div>
@@ -269,8 +341,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutMaintenance}
               onChange={(e) => updateParametre('coutMaintenance', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutMaintenance ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutMaintenance && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutMaintenance}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Énergie/an ($)</label>
@@ -278,8 +353,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutEnergie}
               onChange={(e) => updateParametre('coutEnergie', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutEnergie ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutEnergie && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutEnergie}</p>
+            )}
           </div>
         </div>
       </div>
@@ -300,8 +378,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={parametresGeneraux.tonnageAnnuel}
               onChange={(e) => updateParametreGeneral('tonnageAnnuel', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.tonnageAnnuel ? 'border-red-500' : ''}`}
             />
+            {erreurs.tonnageAnnuel && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tonnageAnnuel}</p>
+            )}
             <p className="text-xs text-gray-600 mt-1">Volume total de production annuelle</p>
           </div>
           <div>
@@ -311,10 +392,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.reductionEnergie}
               onChange={(e) => updateParametre('reductionEnergie', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.reductionEnergie ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.reductionEnergie ? 'border-red-500' : ''}`}
             />
-            {validationErrors.reductionEnergie && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.reductionEnergie}</p>
+            {erreurs.reductionEnergie && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.reductionEnergie}</p>
             )}
             <p className="text-xs text-gray-600 mt-1">Réduction énergétique par tonne produite</p>
           </div>
@@ -327,8 +408,11 @@ const SystemeAutomatise = () => {
             step="0.01"
             value={systemeAutomatise.coutEnergieTonne}
             onChange={(e) => updateParametre('coutEnergieTonne', e.target.value)}
-            className="w-full p-2 border rounded"
+            className={`w-full p-2 border rounded ${erreurs.coutEnergieTonne ? 'border-red-500' : ''}`}
           />
+          {erreurs.coutEnergieTonne && (
+            <p className="text-xs text-red-500 mt-1">{erreurs.coutEnergieTonne}</p>
+          )}
           <p className="text-xs text-gray-600 mt-1">Coût moyen de l'énergie pour produire une tonne</p>
         </div>
         
@@ -356,8 +440,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.consommationEau}
               onChange={(e) => updateParametre('consommationEau', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.consommationEau ? 'border-red-500' : ''}`}
             />
+            {erreurs.consommationEau && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.consommationEau}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Réduction consommation eau (%)</label>
@@ -366,10 +453,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.reductionConsommationEau}
               onChange={(e) => updateParametre('reductionConsommationEau', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.reductionConsommationEau ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.reductionConsommationEau ? 'border-red-500' : ''}`}
             />
-            {validationErrors.reductionConsommationEau && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.reductionConsommationEau}</p>
+            {erreurs.reductionConsommationEau && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.reductionConsommationEau}</p>
             )}
             <p className="text-xs text-gray-500 mt-1">Réduction par rapport au système actuel</p>
           </div>
@@ -382,8 +469,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.consommationAirComprime}
               onChange={(e) => updateParametre('consommationAirComprime', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.consommationAirComprime ? 'border-red-500' : ''}`}
             />
+            {erreurs.consommationAirComprime && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.consommationAirComprime}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Réduction air comprimé (%)</label>
@@ -392,10 +482,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.reductionConsommationAirComprime}
               onChange={(e) => updateParametre('reductionConsommationAirComprime', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.reductionConsommationAirComprime ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.reductionConsommationAirComprime ? 'border-red-500' : ''}`}
             />
-            {validationErrors.reductionConsommationAirComprime && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.reductionConsommationAirComprime}</p>
+            {erreurs.reductionConsommationAirComprime && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.reductionConsommationAirComprime}</p>
             )}
           </div>
         </div>
@@ -407,8 +497,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.emissionCO2}
               onChange={(e) => updateParametre('emissionCO2', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.emissionCO2 ? 'border-red-500' : ''}`}
             />
+            {erreurs.emissionCO2 && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.emissionCO2}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Réduction empreinte CO₂ (%)</label>
@@ -417,10 +510,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.reductionEmpreinteCO2}
               onChange={(e) => updateParametre('reductionEmpreinteCO2', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.reductionEmpreinteCO2 ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.reductionEmpreinteCO2 ? 'border-red-500' : ''}`}
             />
-            {validationErrors.reductionEmpreinteCO2 && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.reductionEmpreinteCO2}</p>
+            {erreurs.reductionEmpreinteCO2 && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.reductionEmpreinteCO2}</p>
             )}
           </div>
         </div>
@@ -432,8 +525,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.consommationHydraulique}
               onChange={(e) => updateParametre('consommationHydraulique', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.consommationHydraulique ? 'border-red-500' : ''}`}
             />
+            {erreurs.consommationHydraulique && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.consommationHydraulique}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Réduction hydraulique (%)</label>
@@ -442,10 +538,10 @@ const SystemeAutomatise = () => {
               step="0.1"
               value={systemeAutomatise.reductionConsommationHydraulique}
               onChange={(e) => updateParametre('reductionConsommationHydraulique', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.reductionConsommationHydraulique ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.reductionConsommationHydraulique ? 'border-red-500' : ''}`}
             />
-            {validationErrors.reductionConsommationHydraulique && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.reductionConsommationHydraulique}</p>
+            {erreurs.reductionConsommationHydraulique && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.reductionConsommationHydraulique}</p>
             )}
           </div>
         </div>
@@ -467,8 +563,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutFormationContinue}
               onChange={(e) => updateParametre('coutFormationContinue', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutFormationContinue ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutFormationContinue && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutFormationContinue}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Mises à jour logicielles</label>
@@ -476,8 +575,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutMisesAJour || 0}
               onChange={(e) => updateParametre('coutMisesAJour', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutMisesAJour ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutMisesAJour && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutMisesAJour}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Consommables spécifiques</label>
@@ -485,8 +587,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.coutConsommables || 0}
               onChange={(e) => updateParametre('coutConsommables', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.coutConsommables ? 'border-red-500' : ''}`}
             />
+            {erreurs.coutConsommables && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.coutConsommables}</p>
+            )}
           </div>
         </div>
       </div>
@@ -500,8 +605,11 @@ const SystemeAutomatise = () => {
               type="number"
               value={systemeAutomatise.dureeVie}
               onChange={(e) => updateParametre('dureeVie', e.target.value)}
-              className="w-full p-2 border rounded"
+              className={`w-full p-2 border rounded ${erreurs.dureeVie ? 'border-red-500' : ''}`}
             />
+            {erreurs.dureeVie && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.dureeVie}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Taux d'amortissement (%)</label>
@@ -510,14 +618,26 @@ const SystemeAutomatise = () => {
               step="1"
               value={systemeAutomatise.tauxAmortissement}
               onChange={(e) => updateParametre('tauxAmortissement', e.target.value)}
-              className={`w-full p-2 border rounded ${validationErrors.tauxAmortissement ? 'border-red-500' : ''}`}
+              className={`w-full p-2 border rounded ${erreurs.tauxAmortissement ? 'border-red-500' : ''}`}
             />
-            {validationErrors.tauxAmortissement && (
-              <p className="text-xs text-red-500 mt-1">{validationErrors.tauxAmortissement}</p>
+            {erreurs.tauxAmortissement && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tauxAmortissement}</p>
             )}
           </div>
         </div>
       </div>
+
+      {/* Affichage d'erreurs globales si nécessaire */}
+      {Object.keys(erreurs).length > 0 && (
+        <div className="p-3 mt-4 bg-red-50 border border-red-200 rounded-md">
+          <h4 className="text-sm font-medium text-red-700 mb-1">Des erreurs de validation ont été détectées :</h4>
+          <ul className="text-xs text-red-600 list-disc list-inside">
+            {Object.entries(erreurs).map(([key, value]) => (
+              <li key={key}>{value}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
