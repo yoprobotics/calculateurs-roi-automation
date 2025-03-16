@@ -6,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
  */
 const ResultatsFinanciers = ({ resultats, parametresSystemeAutomatise }) => {
   const { 
-    roi, delaiRecuperation, van, tri, economieAnnuelle, fluxTresorerie
+    roi, delaiRecuperation, van, tri, economieAnnuelle, fluxTresorerie, economiesCO2
   } = resultats;
   
   const { 
@@ -56,7 +56,7 @@ const ResultatsFinanciers = ({ resultats, parametresSystemeAutomatise }) => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="bg-yellow-50 p-3 rounded">
           <h3 className="text-sm font-medium text-gray-700">Économie annuelle moyenne</h3>
           <p className="text-2xl font-bold text-yellow-700">
@@ -69,6 +69,15 @@ const ResultatsFinanciers = ({ resultats, parametresSystemeAutomatise }) => {
           <p className="text-2xl font-bold text-red-700">
             {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(investissementInitial)}
           </p>
+        </div>
+        
+        {/* Ajout de l'indicateur d'économies de CO2 */}
+        <div className="bg-green-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">Réduction CO2 totale</h3>
+          <p className="text-2xl font-bold text-green-700">
+            {economiesCO2 ? economiesCO2.toFixed(1) : '0'} tonnes
+          </p>
+          <p className="text-xs text-gray-600">Sur la durée de vie du système</p>
         </div>
       </div>
       
@@ -145,6 +154,16 @@ const ResultatsFinanciers = ({ resultats, parametresSystemeAutomatise }) => {
               <span>Gain de flexibilité de production de <strong>{parametresSystemeAutomatise.augmentationProduction}%</strong></span>
             </div>
           )}
+          
+          {/* Ajout de l'avantage de réduction des émissions de CO2 */}
+          {parametresSystemeAutomatise.reductionEmissionsCO2 > 0 && (
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Réduction de l'empreinte carbone de <strong>{parametresSystemeAutomatise.reductionEmissionsCO2}%</strong></span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -163,6 +182,47 @@ const ResultatsFinanciers = ({ resultats, parametresSystemeAutomatise }) => {
           <div className="p-2 bg-white rounded shadow-sm">
             <p className="font-medium">Consommables spécifiques</p>
             <p className="text-sm">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(parametresSystemeAutomatise.coutConsommables)}/an</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Ajout d'une section pour l'impact environnemental */}
+      <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+        <h3 className="font-medium text-green-800 mb-2 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zm0 16a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+          </svg>
+          Impact environnemental
+        </h3>
+        <div className="flex items-start">
+          <div className="mr-4">
+            <div className="p-3 bg-white rounded-lg border border-green-100 shadow-sm">
+              <p className="font-medium text-green-800">Réduction d'émissions CO2</p>
+              <p className="text-2xl font-bold text-green-700">{economiesCO2 ? (economiesCO2 / dureeVie).toFixed(1) : '0'} tonnes/an</p>
+            </div>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-gray-700 mb-2">
+              L'automatisation de votre processus contribue à réduire votre empreinte carbone grâce à:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-green-600 mr-2"></div>
+                <p className="text-sm">Une meilleure efficacité énergétique</p>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-green-600 mr-2"></div>
+                <p className="text-sm">Réduction des déchets et rebuts</p>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-green-600 mr-2"></div>
+                <p className="text-sm">Optimisation des ressources utilisées</p>
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 rounded-full bg-green-600 mr-2"></div>
+                <p className="text-sm">Diminution des transports et déplacements</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

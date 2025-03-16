@@ -288,6 +288,35 @@ const ParametresSystemeAutomatise = ({ parametresSystemeAutomatise, setParametre
         </div>
       </div>
       
+      {/* Nouveau champ pour la réduction des émissions CO2 */}
+      <div className="mb-6">
+        <h3 className="font-medium text-green-700 mb-2 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-14a2 2 0 10-4 0v1a2 2 0 104 0V2zm3 0a2 2 0 10-4 0v1a2 2 0 104 0V2zm5 0a2 2 0 10-4 0v10a2 2 0 104 0V2z" clipRule="evenodd" />
+          </svg>
+          Impact environnemental
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Réduction émissions CO2 (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.reductionEmissionsCO2 || 0}
+              onChange={(e) => updateParametre('reductionEmissionsCO2', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+            <p className="text-xs text-gray-500 mt-1">Réduction totale de l'empreinte carbone par rapport au système actuel</p>
+          </div>
+        </div>
+        <div className="mt-2 p-2 bg-green-50 rounded-md text-sm text-green-800">
+          <div className="flex items-start">
+            <div className="w-2 h-2 rounded-full bg-green-600 mr-2 mt-1.5"></div>
+            <p>La réduction d'émissions de CO2 tient compte de la consommation d'énergie, des économies de matériaux et de la réduction des déchets de votre système automatisé.</p>
+          </div>
+        </div>
+      </div>
+      
       <div className="mb-4">
         <h3 className="font-medium text-gray-700 mb-2">Paramètres financiers</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
