@@ -1,134 +1,209 @@
 import React from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
-import ResultCard from '../../common/ResultCard';
-import { formaterDevise, formaterPourcentage, formaterDuree } from '../../../utils/formatters';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 /**
- * Composant d'affichage des résultats du calculateur ROI
- * @returns {JSX.Element} - Affichage des résultats
+ * Composant pour afficher les résultats financiers du ROI
  */
 const ResultatsROI = () => {
-  const { resultats } = useCalculateurGeneral();
+  const { 
+    resultats, 
+    systemeAutomatise,
+    systemeActuel,
+    parametresGeneraux
+  } = useCalculateurGeneral();
   
+  // Extraction des valeurs pertinentes
   const {
     roi,
     delaiRecuperation,
     van,
     tri,
     economieAnnuelle,
+    fluxTresorerie,
     ameliorationEfficacite,
     investissementInitial
   } = resultats;
   
+  const { dureeVie, coutFormationContinue, coutMisesAJour, coutConsommables } = systemeAutomatise;
+  
+  // Données pour le graphique d'évolution du retour sur investissement
+  const dataFluxCumulatif = fluxTresorerie.map(item => ({
+    annee: `Année ${item.annee}`,
+    fluxCumulatif: item.cumulFluxTresorerie,
+    seuil: investissementInitial
+  }));
+  
+  // Calculer le total des coûts cachés
+  const totalCoutsCache = (coutFormationContinue || 0) + (coutMisesAJour || 0) + (coutConsommables || 0);
+  
+  // Formater les nombres avec séparateurs de milliers et devise
+  const formatMontant = (montant) => {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(montant);
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <h2 className="text-xl font-semibold mb-4 text-blue-700 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clipRule="evenodd" />
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
-        Résultats
+        Résultats financiers
       </h2>
       
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <ResultCard
-          title="ROI global"
-          value={roi ? roi.toFixed(2) : '0.00'}
-          unit="%"
-          description="Pourcentage de retour sur investissement"
-          tooltip="Pourcentage de retour sur l'investissement total sur la durée de vie du système"
-          color="blue"
-        />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-green-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">ROI global</h3>
+          <p className="text-2xl font-bold text-green-800">{Math.min(roi, 1000).toFixed(2)}%</p>
+          <p className="text-xs text-gray-600">Sur {dureeVie} ans</p>
+        </div>
         
-        <ResultCard
-          title="Délai de récupération"
-          value={delaiRecuperation ? delaiRecuperation.toFixed(2) : '0.00'}
-          unit="ans"
-          description="Temps nécessaire pour récupérer l'investissement"
-          tooltip="Temps nécessaire pour que les bénéfices cumulés égalent l'investissement initial"
-          color={delaiRecuperation <= 2 ? 'green' : delaiRecuperation <= 3 ? 'blue' : 'yellow'}
-        />
+        <div className="bg-blue-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">Délai de récupération</h3>
+          <p className={`text-2xl font-bold ${delaiRecuperation < 3 ? 'text-green-600' : 'text-blue-800'}`}>
+            {delaiRecuperation.toFixed(2)} ans
+          </p>
+        </div>
         
-        <ResultCard
-          title="VAN"
-          value={van ? formaterDevise(van, 'USD', 0) : '$0'}
-          description="Valeur Actuelle Nette"
-          tooltip="Valeur Actuelle Nette - valeur actualisée des flux futurs moins l'investissement initial"
-          color="purple"
-        />
+        <div className="bg-purple-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">VAN</h3>
+          <p className="text-2xl font-bold text-purple-800">
+            {formatMontant(van)}
+          </p>
+        </div>
         
-        <ResultCard
-          title="TRI"
-          value={tri ? tri.toFixed(2) : '0.00'}
-          unit="%"
-          description="Taux de Rendement Interne"
-          tooltip="Taux de Rendement Interne - taux d'actualisation qui annule la VAN"
-          color="indigo"
-        />
-      </div>
-      
-      <div className="flex space-x-4 mb-6">
-        <div className="flex-1">
-          <ResultCard
-            title="Économie annuelle moyenne"
-            value={economieAnnuelle ? formaterDevise(economieAnnuelle, 'USD', 0) : '$0'}
-            description="Économie moyenne par an"
-            tooltip="Économie annuelle moyenne sur toute la durée de vie de l'investissement"
-            color="yellow"
-            size="large"
-          />
+        <div className="bg-indigo-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">TRI</h3>
+          <p className="text-2xl font-bold text-indigo-800">{tri.toFixed(2)}%</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <ResultCard
-          title="Capacité"
-          value={ameliorationEfficacite?.capacite ? `+${ameliorationEfficacite.capacite.toFixed(1)}` : '0'}
-          unit="%"
-          description="Amélioration de la capacité de production"
-          color="green"
-          size="small"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="bg-yellow-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">Économie annuelle moyenne</h3>
+          <p className="text-2xl font-bold text-yellow-700">
+            {formatMontant(economieAnnuelle)}
+          </p>
+        </div>
         
-        <ResultCard
-          title="Temps de cycle"
-          value={ameliorationEfficacite?.tempsCycle ? `+${ameliorationEfficacite.tempsCycle.toFixed(1)}` : '0'}
-          unit="%"
-          description="Réduction du temps de cycle"
-          color="green"
-          size="small"
-        />
-        
-        <ResultCard
-          title="Main d'œuvre"
-          value={ameliorationEfficacite?.mainOeuvre ? `${ameliorationEfficacite.mainOeuvre.toFixed(1)}` : '0'}
-          unit="%"
-          description="Réduction de la main d'œuvre requise"
-          color="green"
-          size="small"
-        />
+        <div className="bg-red-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">Investissement initial net</h3>
+          <p className="text-2xl font-bold text-red-700">
+            {formatMontant(investissementInitial)}
+          </p>
+        </div>
       </div>
       
-      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-        <h3 className="font-medium text-gray-800 mb-2">Interprétation des résultats</h3>
-        <ul className="list-disc pl-5 space-y-2 text-sm">
-          <li><span className="font-medium">ROI &gt; 100%</span> : L'investissement génère plus de valeur qu'il n'en coûte.</li>
-          <li><span className="font-medium">Délai de récupération &lt; 3 ans</span> : Considéré comme un très bon investissement dans l'industrie.</li>
-          <li><span className="font-medium">VAN positive</span> : Le projet crée de la valeur pour l'entreprise.</li>
-          <li><span className="font-medium">TRI &gt; taux d'actualisation</span> : Le projet est financièrement viable.</li>
-        </ul>
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Évolution du retour sur investissement</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={dataFluxCumulatif}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="annee" />
+              <YAxis />
+              <Tooltip formatter={(value) => [formatMontant(value), 'Montant']} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="fluxCumulatif" 
+                name="Flux cumulatif" 
+                stroke="#22c55e" 
+                strokeWidth={2} 
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="seuil" 
+                name="Seuil d'investissement" 
+                stroke="#ef4444"
+                strokeWidth={2}
+                strokeDasharray="5 5" 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="text-xs text-gray-500 mt-2 italic">
+          * Le point d'intersection entre la courbe verte et la ligne rouge représente le délai de récupération de l'investissement.
+        </p>
       </div>
       
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h3 className="font-medium text-blue-800 mb-2">Recommandation</h3>
-        {van > 0 && roi > 0 ? (
-          <p className="text-green-700">
-            <span className="font-bold">✓ Projet recommandé</span> - Cet investissement en automatisation semble financièrement viable avec un ROI positif et un délai de récupération raisonnable.
+      <div className="p-4 bg-white rounded-lg border border-green-200 mb-6">
+        <h3 className="font-medium text-gray-800 mb-2">Avantages du système automatisé</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {ameliorationEfficacite && ameliorationEfficacite.capacite > 0 && (
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Traitement de <strong>{systemeAutomatise.capaciteTraitement} unités/heure</strong> contre {systemeActuel.capacite} actuellement</span>
+            </div>
+          )}
+          
+          {ameliorationEfficacite && ameliorationEfficacite.mainOeuvre > 0 && (
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Réduction de la main d'œuvre de <strong>{systemeAutomatise.nbEmployesRemplaces.toFixed(1)} ETP</strong></span>
+            </div>
+          )}
+          
+          {ameliorationEfficacite && ameliorationEfficacite.tauxRejets > 0 && (
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Diminution des rejets de <strong>{ameliorationEfficacite.tauxRejets.toFixed(1)}%</strong></span>
+            </div>
+          )}
+          
+          {ameliorationEfficacite && ameliorationEfficacite.tempsCycle > 0 && (
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Réduction du temps de cycle de <strong>{ameliorationEfficacite.tempsCycle.toFixed(1)}%</strong></span>
+            </div>
+          )}
+          
+          {ameliorationEfficacite && ameliorationEfficacite.accidents > 0 && (
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Réduction des accidents de <strong>{ameliorationEfficacite.accidents}%</strong></span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+        <h3 className="font-medium text-amber-800 mb-2">Attention aux coûts cachés</h3>
+        <p className="text-sm mb-2">L'automatisation implique des coûts supplémentaires souvent négligés dans l'analyse initiale:</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-2 bg-white rounded shadow-sm">
+            <p className="font-medium">Formation continue</p>
+            <p className="text-sm">{formatMontant(coutFormationContinue || 0)}/an</p>
+          </div>
+          <div className="p-2 bg-white rounded shadow-sm">
+            <p className="font-medium">Mises à jour logicielles</p>
+            <p className="text-sm">{formatMontant(coutMisesAJour || 0)}/an</p>
+          </div>
+          <div className="p-2 bg-white rounded shadow-sm">
+            <p className="font-medium">Consommables spécifiques</p>
+            <p className="text-sm">{formatMontant(coutConsommables || 0)}/an</p>
+          </div>
+        </div>
+        <div className="mt-3">
+          <p className="text-sm">
+            <span className="font-semibold">Impact total annuel:</span> {formatMontant(totalCoutsCache)} 
+            {totalCoutsCache > 0 && economieAnnuelle > 0 && (
+              <span className="ml-2">({Math.round((totalCoutsCache / economieAnnuelle) * 100)}% de l'économie annuelle)</span>
+            )}
           </p>
-        ) : (
-          <p className="text-yellow-700">
-            <span className="font-bold">⚠ À réévaluer</span> - Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives.
-          </p>
-        )}
+        </div>
       </div>
     </div>
   );
