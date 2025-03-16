@@ -37,13 +37,13 @@ const Footer = () => {
                   Revoir les conditions d'utilisation
                 </button>
                 <button 
-                  onClick={() => setTermsModal(true)}
+                  onClick={() => setShowTermsModal(true)}
                   className="text-blue-600 hover:text-blue-800 font-medium focus:outline-none underline"
                 >
                   Termes et conditions
                 </button>
                 <button 
-                  onClick={() => setPrivacyModal(true)}
+                  onClick={() => setShowPrivacyModal(true)}
                   className="text-blue-600 hover:text-blue-800 font-medium focus:outline-none underline"
                 >
                   Politique de confidentialité
