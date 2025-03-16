@@ -118,7 +118,7 @@ const OngletSecurite = () => {
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="p-3 bg-red-50 rounded">
                 <p className="text-xs text-gray-500">Coût moyen par accident</p>
-                <p className="text-xl font-bold text-red-600">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(coutMoyenAccident)}</p>
+                <p className="text-xl font-bold text-red-600">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(coutMoyenAccident)}</p>
               </div>
               <div className="p-3 bg-red-50 rounded">
                 <p className="text-xs text-gray-500">Temps d'arrêt par accident</p>
@@ -130,9 +130,9 @@ const OngletSecurite = () => {
           <div className="p-3 bg-green-50 rounded border border-green-200">
             <h4 className="text-sm font-medium text-green-800 mb-1">Impact financier</h4>
             <p className="text-sm">Réduction des accidents: <span className="font-bold">{reductionAccidents}%</span></p>
-            <p className="text-sm">Économie directe annuelle: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(economieAnnuelleAccidents)}</span></p>
-            <p className="text-sm">Économie due aux temps d'arrêt évités: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(economieArretAccidents)}</span></p>
-            <p className="text-sm font-bold mt-2">Total: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totalEconomiesSecurite)}</p>
+            <p className="text-sm">Économie directe annuelle: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieAnnuelleAccidents)}</span></p>
+            <p className="text-sm">Économie due aux temps d'arrêt évités: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieArretAccidents)}</span></p>
+            <p className="text-sm font-bold mt-2">Total: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalEconomiesSecurite)}</p>
           </div>
         </div>
         
@@ -190,9 +190,9 @@ const OngletSecurite = () => {
           
           <div className="p-3 bg-green-50 rounded border border-green-200">
             <h4 className="text-sm font-medium text-green-800 mb-1">Impact économique environnemental</h4>
-            <p className="text-sm">Économie d'énergie: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(energieEconomisee)}</span> ({reductionEnergie}%)</p>
-            <p className="text-sm">Économie d'eau: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(eauEconomisee)}</span> ({reductionEau}%)</p>
-            <p className="text-sm font-bold mt-2">Total: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totalEconomiesEnvironnement)}</p>
+            <p className="text-sm">Économie d'énergie: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(energieEconomisee)}</span> ({reductionEnergie}%)</p>
+            <p className="text-sm">Économie d'eau: <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(eauEconomisee)}</span> ({reductionEau}%)</p>
+            <p className="text-sm font-bold mt-2">Total: {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalEconomiesEnvironnement)}</p>
           </div>
         </div>
       </div>
@@ -237,7 +237,7 @@ const OngletSecurite = () => {
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value), '']} />
+                  <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value), '']} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -263,7 +263,7 @@ const OngletSecurite = () => {
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value), '']} />
+                  <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value), '']} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -273,16 +273,16 @@ const OngletSecurite = () => {
         <div className="mt-6 p-4 bg-white rounded border border-blue-100">
           <h4 className="font-medium text-blue-800 mb-2">Impact total sur 5 ans</h4>
           <p className="text-sm mb-1">
-            <span className="font-bold">Économies de sécurité :</span> {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totalEconomiesSecurite * 5)}
+            <span className="font-bold">Économies de sécurité :</span> {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalEconomiesSecurite * 5)}
           </p>
           <p className="text-sm mb-1">
-            <span className="font-bold">Économies environnementales :</span> {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(totalEconomiesEnvironnement * 5)}
+            <span className="font-bold">Économies environnementales :</span> {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalEconomiesEnvironnement * 5)}
           </p>
           <p className="text-sm mb-1">
             <span className="font-bold">Réduction totale des émissions CO2 :</span> {(tonnesCO2Economisees * 5).toFixed(0)} tonnes
           </p>
           <p className="text-sm font-bold text-green-700 mt-2">
-            Impact financier total : {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format((totalEconomiesSecurite + totalEconomiesEnvironnement) * 5)}
+            Impact financier total : {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format((totalEconomiesSecurite + totalEconomiesEnvironnement) * 5)}
           </p>
         </div>
       </div>
