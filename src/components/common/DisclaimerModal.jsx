@@ -1,150 +1,73 @@
-import React, { useState } from 'react';
-import { useDisclaimer } from '../../context/DisclaimerContext';
+import React, { useState, useEffect } from 'react';
 
 /**
- * Composant de modal d'avertissement
- * @returns {JSX.Element} - Modal d'avertissement
+ * Modal de disclaimer qui s'affiche lors de la première visite
+ * @returns {JSX.Element} - Modal de disclaimer
  */
 const DisclaimerModal = () => {
-  const { showModal, acceptDisclaimer } = useDisclaimer();
-  const [acceptCheck, setAcceptCheck] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  if (!showModal) {
-    return null;
-  }
+  useEffect(() => {
+    // Vérifier si l'utilisateur a déjà accepté le disclaimer
+    const disclaimerAccepted = localStorage.getItem('disclaimerAccepted');
+    if (!disclaimerAccepted) {
+      setIsOpen(true);
+    }
+  }, []);
+
+  const handleAccept = () => {
+    // Sauvegarder l'acceptation dans le localStorage
+    localStorage.setItem('disclaimerAccepted', 'true');
+    setIsOpen(false);
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-800">
-            Conditions d'utilisation des calculateurs
-          </h2>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity">
+          <div className="absolute inset-0 bg-gray-800 opacity-75"></div>
         </div>
-        
-        <div className="p-6 overflow-y-auto">
-          <div className="space-y-4 text-gray-700">
-            <div className="flex items-start">
-              <svg 
-                className="h-6 w-6 text-yellow-500 mt-0.5 mr-2 flex-shrink-0" 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 20 20" 
-                fill="currentColor"
-              >
-                <path 
-                  fillRule="evenodd" 
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" 
-                  clipRule="evenodd" 
-                />
-              </svg>
-              
-              <div>
-                <h3 className="font-bold">Avertissement important</h3>
-                <p>
-                  Les résultats fournis par ces calculateurs sont uniquement à titre indicatif et ne 
-                  constituent pas une garantie de performance réelle.
-                </p>
+
+        <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="sm:flex sm:items-start">
+              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 sm:mx-0 sm:h-10 sm:w-10">
+                <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
               </div>
-            </div>
-            
-            <div className="flex items-start">
-              <svg 
-                className="h-6 w-6 text-blue-500 mt-0.5 mr-2 flex-shrink-0" 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 20 20" 
-                fill="currentColor"
-              >
-                <path 
-                  fillRule="evenodd" 
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" 
-                  clipRule="evenodd" 
-                />
-              </svg>
-              
-              <div>
-                <h3 className="font-bold">Responsabilité</h3>
-                <p>
-                  L'utilisateur est seul responsable des décisions prises sur la base des informations 
-                  fournies par ces calculateurs. YoProbotics décline toute responsabilité quant aux conséquences 
-                  directes ou indirectes résultant de l'utilisation de ces outils.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <svg 
-                className="h-6 w-6 text-green-500 mt-0.5 mr-2 flex-shrink-0" 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 20 20" 
-                fill="currentColor"
-              >
-                <path 
-                  fillRule="evenodd" 
-                  d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" 
-                  clipRule="evenodd" 
-                />
-              </svg>
-              
-              <div>
-                <h3 className="font-bold">Recommandations</h3>
-                <p>
-                  Nous recommandons vivement de consulter un professionnel qualifié en automatisation 
-                  industrielle et en analyse financière avant toute prise de décision d'investissement.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start">
-              <svg 
-                className="h-6 w-6 text-red-500 mt-0.5 mr-2 flex-shrink-0" 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 20 20" 
-                fill="currentColor"
-              >
-                <path 
-                  fillRule="evenodd" 
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" 
-                  clipRule="evenodd" 
-                />
-              </svg>
-              
-              <div>
-                <h3 className="font-bold">Limitations</h3>
-                <p>
-                  Les calculateurs utilisent des modèles simplifiés et des hypothèses standardisées 
-                  qui peuvent ne pas correspondre exactement à votre situation spécifique. Les résultats
-                  doivent être considérés comme des approximations et non comme des prévisions précises.
-                </p>
+              <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Avis de non-responsabilité important
+                </h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <strong>Attention :</strong> Les résultats fournis par ces calculateurs sont strictement indicatifs et ne constituent pas une garantie de performance réelle.
+                  </p>
+                  <p className="text-sm text-gray-700 mb-2">
+                    Les calculs sont basés uniquement sur les données saisies et les hypothèses intégrées au modèle. De nombreux facteurs externes, variables contextuelles et particularités propres à chaque projet ne sont pas pris en compte.
+                  </p>
+                  <p className="text-sm text-gray-700 mb-2">
+                    Une analyse approfondie par des professionnels qualifiés en automatisation industrielle, en finance et en gestion de projet est indispensable avant toute décision d'investissement.
+                  </p>
+                  <p className="text-sm text-gray-700 font-bold">
+                    YoProbotics décline toute responsabilité quant aux décisions prises sur la base de ces résultats.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <div className="p-6 border-t bg-gray-50">
-          <div className="flex items-center mb-4">
-            <input
-              id="accept-terms"
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 rounded border-gray-300"
-              checked={acceptCheck}
-              onChange={(e) => setAcceptCheck(e.target.checked)}
-            />
-            <label htmlFor="accept-terms" className="ml-2 block text-sm text-gray-700">
-              J'ai lu et j'accepte les conditions d'utilisation des calculateurs
-            </label>
-          </div>
-          
-          <div className="flex justify-end space-x-3">
+          <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
-              onClick={acceptDisclaimer}
-              disabled={!acceptCheck}
-              className={`px-4 py-2 rounded-md font-medium text-white ${
-                acceptCheck
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-gray-400 cursor-not-allowed'
-              }`}
+              onClick={handleAccept}
+              type="button"
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
             >
-              Accepter et continuer
+              J'ai compris et j'accepte
             </button>
           </div>
         </div>

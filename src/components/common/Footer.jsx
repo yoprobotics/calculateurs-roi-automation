@@ -1,52 +1,65 @@
-import React from 'react';
-import { useDisclaimer } from '../../context/DisclaimerContext';
+import React, { useState } from 'react';
+import DisclaimerModal from './DisclaimerModal';
 
 /**
- * Composant de pied de page
+ * Composant de pied de page avec rappel du disclaimer
  * @returns {JSX.Element} - Pied de page
  */
 const Footer = () => {
-  const { showDisclaimer } = useDisclaimer();
-  
-  const currentYear = new Date().getFullYear();
+  const [showModal, setShowModal] = useState(false);
+
+  const handleShowDisclaimer = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
 
   return (
-    <footer className="bg-gray-100 mt-12">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0">
-            <p className="text-gray-600 text-sm">
-              &copy; {currentYear} YoProbotics. Tous droits réservés.
+    <footer className="bg-gray-100 mt-12 pt-8 pb-6">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-wrap">
+          <div className="w-full lg:w-6/12 px-4">
+            <h4 className="text-xl font-semibold text-gray-700">YoProbotics - Calculateurs ROI</h4>
+            <p className="text-gray-600 mt-2 mb-4">
+              Les calculateurs de retour sur investissement pour l'automatisation industrielle.
             </p>
+            <div className="mt-6">
+              <button 
+                onClick={handleShowDisclaimer}
+                className="text-blue-600 hover:text-blue-800 font-medium focus:outline-none underline"
+              >
+                Revoir les conditions d'utilisation
+              </button>
+            </div>
           </div>
           
-          <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
-            <button
-              onClick={showDisclaimer}
-              className="text-blue-600 hover:text-blue-800 text-sm"
-            >
-              Mentions légales et avertissements
-            </button>
-            
-            <a
-              href="https://yoprobotics.com/contact"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 text-sm"
-            >
-              Contact
-            </a>
+          <div className="w-full lg:w-6/12 px-4">
+            <div className="flex flex-wrap mb-6">
+              <div className="w-full">
+                <h5 className="text-lg mt-4 lg:mt-0 font-semibold text-gray-700">Avertissement</h5>
+                <p className="text-sm text-gray-600 mt-2">
+                  Les résultats fournis sont à titre indicatif seulement. Une analyse approfondie par des professionnels 
+                  qualifiés est toujours nécessaire avant toute décision d'investissement.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-gray-500 text-xs text-center">
-            Les résultats fournis par ces calculateurs sont uniquement à titre indicatif.
-            Une analyse approfondie par des professionnels qualifiés est toujours nécessaire
-            avant de prendre des décisions d'investissement.
-          </p>
+        <hr className="my-6 border-gray-300" />
+        
+        <div className="flex flex-wrap items-center md:justify-between justify-center">
+          <div className="w-full md:w-4/12 px-4 mx-auto text-center">
+            <div className="text-sm text-gray-600">
+              © {new Date().getFullYear()} YoProbotics. Tous droits réservés.
+            </div>
+          </div>
         </div>
       </div>
+      
+      {showModal && <DisclaimerModal onClose={handleCloseModal} forceShow={true} />}
     </footer>
   );
 };
