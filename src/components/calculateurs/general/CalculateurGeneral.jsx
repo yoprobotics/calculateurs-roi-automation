@@ -40,11 +40,6 @@ const CalculateurGeneralContent = () => {
         </div>
       </div>
       
-      {/* Section relative à la production */}
-      <div className="mb-8">
-        <OngletProduction />
-      </div>
-      
       {/* Vue comparative côte à côte des systèmes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div className="flex flex-col space-y-8">
@@ -53,6 +48,11 @@ const CalculateurGeneralContent = () => {
         <div className="flex flex-col space-y-8">
           <SystemeAutomatise />
         </div>
+      </div>
+      
+      {/* Section relative à la production */}
+      <div className="mb-8">
+        <OngletProduction />
       </div>
       
       {/* Résultats financiers */}
