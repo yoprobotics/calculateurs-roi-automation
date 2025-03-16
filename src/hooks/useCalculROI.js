@@ -196,18 +196,57 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
     const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
     const roiCalcule = (totalBenefices / investissementInitial) * 100;
     
-    // Calcul du TRI (approximation simplifiée)
-    let triApprox = 0;
-    for (let r = 1; r <= 100; r++) {
-      let npv = -investissementInitial;
-      for (let t = 0; t < fluxTresorerie.length; t++) {
-        npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + r / 100, t + 1);
+    // Calcul du TRI (Taux de Rendement Interne) - Version améliorée
+    const calculTRI = () => {
+      // Création d'un tableau de flux de trésorerie complet en commençant par l'investissement initial
+      const fluxComplets = [-investissementInitial];
+      for (let i = 0; i < fluxTresorerie.length; i++) {
+        fluxComplets.push(fluxTresorerie[i].fluxAnnuel);
       }
-      if (npv <= 0) {
-        triApprox = r - 1;
-        break;
+
+      // Première vérification : si tous les flux sont négatifs, le TRI n'existe pas
+      if (fluxComplets.slice(1).every(flux => flux <= 0)) {
+        return 0;
       }
-    }
+
+      // Deuxième vérification : si la VAN est négative même avec un taux de 1%, le projet n'est pas rentable
+      let vanMinimale = 0;
+      for (let i = 0; i < fluxComplets.length; i++) {
+        vanMinimale += fluxComplets[i] / Math.pow(1.01, i);
+      }
+      if (vanMinimale < 0) {
+        return 0;
+      }
+
+      // Méthode de bissection pour trouver le TRI
+      let tauxMin = 0;
+      let tauxMax = 100;
+      const precision = 0.01;
+      let iteration = 0;
+      const maxIterations = 100;
+
+      while ((tauxMax - tauxMin) > precision && iteration < maxIterations) {
+        const tauxMilieu = (tauxMin + tauxMax) / 2;
+        let van = 0;
+        for (let i = 0; i < fluxComplets.length; i++) {
+          van += fluxComplets[i] / Math.pow(1 + tauxMilieu / 100, i);
+        }
+
+        if (Math.abs(van) < precision) {
+          return tauxMilieu;
+        } else if (van > 0) {
+          tauxMin = tauxMilieu;
+        } else {
+          tauxMax = tauxMilieu;
+        }
+
+        iteration++;
+      }
+
+      return (tauxMin + tauxMax) / 2;
+    };
+
+    const triCalcule = calculTRI();
     
     // Calcul de l'économie annuelle moyenne
     const economieAnnuelle = totalBenefices / dureeVie;
@@ -228,7 +267,7 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       roi: roiCalcule,
       delaiRecuperation: periodeRecuperation,
       van: valeurActuelleNette,
-      tri: triApprox,
+      tri: triCalcule,
       economiesCO2: totalTonnesCO2Economisees,
       differenceProduction,
       economieAnnuelle,
@@ -237,7 +276,8 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       economiesQualite: dernierBeneficeQualite,
       economiesTempsArret,
       ameliorationEfficacite,
-      investissementInitial
+      investissementInitial,
+      dureeVie
     };
   }, [systemeActuel, systemeAutomatise, parametresGeneraux]);
 };
