@@ -26,6 +26,7 @@ export const MODES_ANALYSE = {
 // Onglets des calculateurs
 export const ONGLETS_CALCULATEUR = {
   GENERAL: 'general',
+  PRODUCTION: 'production',
   COMPARATIF: 'comparatif',
   FINANCIER: 'financier',
   SECURITE: 'securite'
