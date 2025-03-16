@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CalculateurGeneralProvider, useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
 import SystemeActuel from './SystemeActuel';
 import SystemeAutomatise from './SystemeAutomatise';
@@ -6,6 +6,7 @@ import ResultatsROI from './ResultatsROI';
 import GraphiquesROI from './GraphiquesROI';
 import OngletProduction from './OngletProduction';
 import OngletSecurite from './OngletSecurite';
+import NavigationParAncres from './NavigationParAncres';
 
 /**
  * Conteneur interne du calculateur général - Vue unique et comparative
@@ -13,6 +14,7 @@ import OngletSecurite from './OngletSecurite';
  */
 const CalculateurGeneralContent = () => {
   const { resultats } = useCalculateurGeneral();
+  const [sectionActive, setSectionActive] = useState('parametres');
 
   // Déterminer si le projet est recommandable
   const projetRecommandable = resultats.van > 0 && resultats.delaiRecuperation < resultats.dureeVie;
@@ -40,8 +42,11 @@ const CalculateurGeneralContent = () => {
         </div>
       </div>
       
+      {/* Navigation par ancres */}
+      <NavigationParAncres sectionActive={sectionActive} setSectionActive={setSectionActive} />
+      
       {/* Vue comparative côte à côte des systèmes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div id="parametres" className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 scroll-mt-24">
         <div className="flex flex-col space-y-8">
           <SystemeActuel />
         </div>
@@ -51,27 +56,27 @@ const CalculateurGeneralContent = () => {
       </div>
       
       {/* Section relative à la production */}
-      <div className="mb-8">
+      <div id="production" className="mb-8 scroll-mt-24">
         <OngletProduction />
       </div>
       
       {/* Résultats financiers */}
-      <div className="mb-8">
+      <div id="resultats" className="mb-8 scroll-mt-24">
         <ResultatsROI />
       </div>
       
       {/* Graphiques comparatifs */}
-      <div className="mb-8">
+      <div id="graphiques" className="mb-8 scroll-mt-24">
         <GraphiquesROI />
       </div>
       
       {/* Section sécurité et environnement */}
-      <div className="mb-8">
+      <div id="securite" className="mb-8 scroll-mt-24">
         <OngletSecurite />
       </div>
       
       {/* Recommandation - Visible sur tous les onglets */}
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div id="recommandation" className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200 scroll-mt-24">
         <h3 className="font-medium text-blue-800 mb-2">Recommandation</h3>
         {projetRecommandable ? (
           <div className="flex items-start">
