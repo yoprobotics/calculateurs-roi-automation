@@ -40,12 +40,7 @@ const CalculateurGeneralContent = () => {
         </div>
       </div>
       
-      {/* Section relative à la production */}
-      <div className="mb-8">
-        <OngletProduction />
-      </div>
-      
-      {/* Vue comparative côte à côte des systèmes */}
+      {/* Vue comparative côte à côte des systèmes - PARAMÈTRES */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div className="flex flex-col space-y-8">
           <SystemeActuel />
@@ -63,6 +58,11 @@ const CalculateurGeneralContent = () => {
       {/* Graphiques comparatifs */}
       <div className="mb-8">
         <GraphiquesROI />
+      </div>
+      
+      {/* Section relative à la production */}
+      <div className="mb-8">
+        <OngletProduction />
       </div>
       
       {/* Section sécurité et environnement */}
