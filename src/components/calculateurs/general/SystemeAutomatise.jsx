@@ -7,13 +7,23 @@ import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContex
 const SystemeAutomatise = () => {
   const { 
     systemeAutomatise, 
-    setSystemeAutomatise 
+    setSystemeAutomatise,
+    parametresGeneraux,
+    setParametresGeneraux 
   } = useCalculateurGeneral();
   
   // Fonction pour mettre à jour un paramètre spécifique
   const updateParametre = (param, value) => {
     setSystemeAutomatise({
       ...systemeAutomatise,
+      [param]: Number(value)
+    });
+  };
+  
+  // Fonction pour mettre à jour un paramètre général
+  const updateParametreGeneral = (param, value) => {
+    setParametresGeneraux({
+      ...parametresGeneraux,
       [param]: Number(value)
     });
   };
@@ -256,6 +266,59 @@ const SystemeAutomatise = () => {
               onChange={(e) => updateParametre('coutEnergie', e.target.value)}
               className="w-full p-2 border rounded"
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Section pour les paramètres d'économie d'énergie qui manquaient */}
+      <div className="mb-6 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+        <h3 className="font-medium text-gray-700 mb-2 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+          </svg>
+          Économies d'énergie dans le processus
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Tonnage annuel (tonnes)</label>
+            <input
+              type="number"
+              value={parametresGeneraux.tonnageAnnuel}
+              onChange={(e) => updateParametreGeneral('tonnageAnnuel', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+            <p className="text-xs text-gray-600 mt-1">Volume total de production annuelle</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Réduction énergie/tonne (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={systemeAutomatise.reductionEnergie}
+              onChange={(e) => updateParametre('reductionEnergie', e.target.value)}
+              className="w-full p-2 border rounded"
+            />
+            <p className="text-xs text-gray-600 mt-1">Réduction énergétique par tonne produite</p>
+          </div>
+        </div>
+        
+        <div className="mt-4">
+          <label className="block text-sm font-medium mb-1">Coût énergie par tonne ($/tonne)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={systemeAutomatise.coutEnergieTonne}
+            onChange={(e) => updateParametre('coutEnergieTonne', e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+          <p className="text-xs text-gray-600 mt-1">Coût moyen de l'énergie pour produire une tonne</p>
+        </div>
+        
+        <div className="mt-2 p-2 bg-yellow-100 rounded-md text-sm text-yellow-800">
+          <div className="flex items-center">
+            <div className="w-2 h-2 rounded-full bg-yellow-600 mr-2"></div>
+            <p>Ces paramètres sont essentiels pour calculer les économies d'énergie dans le processus de production, distinctes des coûts énergétiques directs du système.</p>
           </div>
         </div>
       </div>
