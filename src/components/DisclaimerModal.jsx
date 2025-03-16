@@ -16,6 +16,14 @@ const DisclaimerModal = () => {
     setIsOpen(false);
   };
 
+  // Fonction pour réafficher le disclaimer si l'utilisateur souhaite le revoir
+  const showDisclaimer = () => {
+    setIsOpen(true);
+  };
+
+  // Exposer cette fonction pour permettre à d'autres composants de l'appeler
+  window.showDisclaimer = showDisclaimer;
+
   if (!isOpen) return null;
 
   return (
@@ -44,9 +52,9 @@ const DisclaimerModal = () => {
               
               <li><span className="font-medium">Conseil professionnel nécessaire :</span> Une analyse approfondie par des professionnels qualifiés est essentielle avant toute décision d'investissement basée sur ces résultats.</li>
               
-              <li><span className="font-medium">Absence de garantie :</span> YoProbotics ne garantit pas l'exactitude, l'exhaustivité ou la pertinence des résultats fournis pour votre situation spécifique.</li>
+              <li><span className="font-medium">Absence de garantie :</span> YopRobotics ne garantit pas l'exactitude, l'exhaustivité ou la pertinence des résultats fournis pour votre situation spécifique.</li>
               
-              <li><span className="font-medium">Limitation de responsabilité :</span> YoProbotics décline toute responsabilité quant aux décisions prises sur la base des résultats fournis par ces calculateurs. En aucun cas, YoProbotics ne pourra être tenu responsable des pertes ou dommages directs, indirects, accessoires, spéciaux ou consécutifs résultant de l'utilisation de ces calculateurs.</li>
+              <li><span className="font-medium">Limitation de responsabilité :</span> YopRobotics décline toute responsabilité quant aux décisions prises sur la base des résultats fournis par ces calculateurs. En aucun cas, YopRobotics ne pourra être tenu responsable des pertes ou dommages directs, indirects, accessoires, spéciaux ou consécutifs résultant de l'utilisation de ces calculateurs.</li>
             </ol>
           </div>
           

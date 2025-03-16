@@ -2,23 +2,53 @@ import React, { useState, useEffect } from 'react';
 
 /**
  * Modal de disclaimer qui s'affiche lors de la première visite
+ * @param {Object} props - Propriétés du composant
+ * @param {Function} props.onClose - Fonction appelée à la fermeture du modal
+ * @param {boolean} props.forceShow - Force l'affichage du modal, indépendamment de l'état du localStorage
  * @returns {JSX.Element} - Modal de disclaimer
  */
-const DisclaimerModal = () => {
+const DisclaimerModal = ({ onClose, forceShow = false }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Vérifier si l'utilisateur a déjà accepté le disclaimer
+    // Si forceShow est à true, on affiche le modal
+    if (forceShow) {
+      setIsOpen(true);
+      return;
+    }
+    
+    // Sinon, on vérifie si l'utilisateur a déjà accepté le disclaimer
     const disclaimerAccepted = localStorage.getItem('disclaimerAccepted');
     if (!disclaimerAccepted) {
       setIsOpen(true);
     }
+  }, [forceShow]);
+
+  // Fonction pour exposer l'affichage du disclaimer
+  const showDisclaimer = () => {
+    setIsOpen(true);
+  };
+
+  // Exposer cette fonction pour permettre à d'autres composants de l'appeler
+  useEffect(() => {
+    window.showDisclaimer = showDisclaimer;
+    return () => {
+      // Nettoyer la référence globale lors du démontage
+      if (window.showDisclaimer === showDisclaimer) {
+        delete window.showDisclaimer;
+      }
+    };
   }, []);
 
   const handleAccept = () => {
     // Sauvegarder l'acceptation dans le localStorage
     localStorage.setItem('disclaimerAccepted', 'true');
     setIsOpen(false);
+    
+    // Si onClose est fourni, on l'appelle
+    if (onClose) {
+      onClose();
+    }
   };
 
   if (!isOpen) return null;
@@ -55,7 +85,7 @@ const DisclaimerModal = () => {
                     Une analyse approfondie par des professionnels qualifiés en automatisation industrielle, en finance et en gestion de projet est indispensable avant toute décision d'investissement.
                   </p>
                   <p className="text-sm text-gray-700 font-bold">
-                    YoProbotics décline toute responsabilité quant aux décisions prises sur la base de ces résultats.
+                    YopRobotics décline toute responsabilité quant aux décisions prises sur la base de ces résultats.
                   </p>
                 </div>
               </div>
