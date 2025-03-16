@@ -49,7 +49,10 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       tauxRejets: tauxRejetsAutomatise,
       reductionAccidents,
       subventions,
-      tempsCycle: tempsCycleAutomatise
+      tempsCycle: tempsCycleAutomatise,
+      // Nouveaux paramètres ajoutés à l'interface mais pas encore dans les calculs
+      coutMisesAJour = 0,
+      coutConsommables = 0
     } = systemeAutomatise;
     
     const {
@@ -103,6 +106,10 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       const energieActuelleAjustee = energieActuelle * facteurInflation;
       const formationContinueAnnuelle = coutFormationContinue * facteurInflation;
       
+      // Ajout des coûts manquants ajustés avec l'inflation
+      const misesAJourAnnuelles = coutMisesAJour * facteurInflation;
+      const consommablesAnnuels = coutConsommables * facteurInflation;
+      
       // Calcul des économies
       const economiePersonnel = reductionMainOeuvre * facteurInflation;
       const economieMaintenance = maintenanceActuelleAjustee - maintenanceAnnuelle;
@@ -144,12 +151,13 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       // Amortissement
       const amortissement = (investissementInitial / dureeVie) * (tauxAmortissement / 100);
       
-      // Calcul du flux de trésorerie annuel
+      // Calcul du flux de trésorerie annuel - Inclusion des nouveaux coûts
       const fluxAnnuel = economiePersonnel + economieDechet + economieMaintenance + economieEnergie + 
                          economieEnergieProcessus + economieEau + economieRejets +
                          beneficeSupplementaire + beneficeQualite + 
                          economieSecuriteAjustee + economieTempsArretAjustee - 
-                         maintenanceAnnuelle - energieOperationAnnuelle - formationContinueAnnuelle + amortissement;
+                         maintenanceAnnuelle - energieOperationAnnuelle - formationContinueAnnuelle - 
+                         misesAJourAnnuelles - consommablesAnnuels + amortissement;
       
       // Calcul du flux de trésorerie actualisé
       const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
@@ -187,6 +195,9 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
         maintenanceAnnuelle,
         energieOperationAnnuelle,
         formationContinueAnnuelle,
+        // Ajout des nouveaux coûts aux résultats
+        misesAJourAnnuelles,
+        consommablesAnnuels,
         amortissement,
         tonnesCO2Economisees
       });
@@ -277,7 +288,14 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       economiesTempsArret,
       ameliorationEfficacite,
       investissementInitial,
-      dureeVie
+      dureeVie,
+      // Ajout des nouveaux coûts aux résultats globaux pour l'affichage
+      coutsCaches: {
+        formationContinue: coutFormationContinue,
+        misesAJour: coutMisesAJour,
+        consommables: coutConsommables,
+        total: coutFormationContinue + coutMisesAJour + coutConsommables
+      }
     };
   }, [systemeActuel, systemeAutomatise, parametresGeneraux]);
 };
