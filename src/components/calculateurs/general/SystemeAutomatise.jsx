@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
 import { validateParams, validateEmployeeReplacement } from '../../../utils/validationService';
+import InfoBulle from '../../communs/InfoBulle';
+import { descriptionSystemeAutomatise, descriptionParametresGeneraux } from '../../../utils/parametresDescriptions';
 
 /**
  * Composant pour les paramètres du système automatisé
@@ -102,7 +104,13 @@ const SystemeAutomatise = () => {
         <h3 className="font-medium text-gray-700 mb-2">Performance</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Capacité (unités/heure)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Capacité (unités/heure)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.capaciteTraitement.titre}
+                texte={descriptionSystemeAutomatise.capaciteTraitement.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.capaciteTraitement}
@@ -115,7 +123,13 @@ const SystemeAutomatise = () => {
             <p className="text-xs text-gray-500 mt-1">Volume de production horaire</p>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Temps de cycle (sec)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Temps de cycle (sec)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.tempsCycle.titre}
+                texte={descriptionSystemeAutomatise.tempsCycle.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.tempsCycle}
@@ -140,7 +154,13 @@ const SystemeAutomatise = () => {
         <h3 className="font-medium text-gray-700 mb-2">Coûts d'investissement</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Coût du système ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût du système ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutSysteme.titre}
+                texte={descriptionSystemeAutomatise.coutSysteme.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutSysteme}
@@ -152,7 +172,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût d'installation ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût d'installation ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutInstallation.titre}
+                texte={descriptionSystemeAutomatise.coutInstallation.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutInstallation}
@@ -166,7 +192,13 @@ const SystemeAutomatise = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Coût d'ingénierie ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût d'ingénierie ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutIngenierie.titre}
+                texte={descriptionSystemeAutomatise.coutIngenierie.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutIngenierie}
@@ -178,7 +210,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût de formation ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût de formation ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutFormation.titre}
+                texte={descriptionSystemeAutomatise.coutFormation.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutFormation}
@@ -191,7 +229,13 @@ const SystemeAutomatise = () => {
           </div>
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium mb-1">Subventions ($)</label>
+          <label className="block text-sm font-medium mb-1 flex items-center">
+            Subventions ($)
+            <InfoBulle 
+              titre={descriptionSystemeAutomatise.subventions.titre}
+              texte={descriptionSystemeAutomatise.subventions.description}
+            />
+          </label>
           <input
             type="number"
             value={systemeAutomatise.subventions}
@@ -209,7 +253,13 @@ const SystemeAutomatise = () => {
         <h3 className="font-medium text-gray-700 mb-2">Impacts sur les ressources humaines</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Coût annuel employé ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût annuel employé ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutMainOeuvre.titre}
+                texte={descriptionSystemeAutomatise.coutMainOeuvre.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutMainOeuvre}
@@ -221,7 +271,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Employés remplacés (ETP)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Employés remplacés (ETP)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.nbEmployesRemplaces.titre}
+                texte={descriptionSystemeAutomatise.nbEmployesRemplaces.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -245,7 +301,13 @@ const SystemeAutomatise = () => {
         <h3 className="font-medium text-gray-700 mb-2">Améliorations</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Taux de rejets (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Taux de rejets (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.tauxRejets.titre}
+                texte={descriptionSystemeAutomatise.tauxRejets.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -258,7 +320,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût par rejet ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Coût par rejet ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutDechet.titre}
+                texte={descriptionSystemeAutomatise.coutDechet.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutDechet}
@@ -272,7 +340,13 @@ const SystemeAutomatise = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Augmentation production (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Augmentation production (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.augmentationProduction.titre}
+                texte={descriptionSystemeAutomatise.augmentationProduction.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -285,7 +359,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Amélioration qualité (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Amélioration qualité (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.ameliorationQualite.titre}
+                texte={descriptionSystemeAutomatise.ameliorationQualite.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -304,7 +384,13 @@ const SystemeAutomatise = () => {
         <h3 className="font-medium text-gray-700 mb-2">Sécurité et temps d'arrêt</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction accidents (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Réduction accidents (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.reductionAccidents.titre}
+                texte={descriptionSystemeAutomatise.reductionAccidents.description}
+              />
+            </label>
             <input
               type="number"
               step="1"
@@ -317,7 +403,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction temps d'arrêt (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Réduction temps d'arrêt (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.reductionTempsArret.titre}
+                texte={descriptionSystemeAutomatise.reductionTempsArret.description}
+              />
+            </label>
             <input
               type="number"
               step="1"
@@ -336,7 +428,13 @@ const SystemeAutomatise = () => {
         <h3 className="font-medium text-gray-700 mb-2">Coûts opérationnels</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Maintenance/an ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Maintenance/an ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutMaintenance.titre}
+                texte={descriptionSystemeAutomatise.coutMaintenance.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutMaintenance}
@@ -348,7 +446,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Énergie/an ($)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Énergie/an ($)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutEnergie.titre}
+                texte={descriptionSystemeAutomatise.coutEnergie.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutEnergie}
@@ -373,7 +477,13 @@ const SystemeAutomatise = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Tonnage annuel (tonnes)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Tonnage annuel (tonnes)
+              <InfoBulle 
+                titre={descriptionParametresGeneraux.tonnageAnnuel.titre}
+                texte={descriptionParametresGeneraux.tonnageAnnuel.description}
+              />
+            </label>
             <input
               type="number"
               value={parametresGeneraux.tonnageAnnuel}
@@ -386,7 +496,13 @@ const SystemeAutomatise = () => {
             <p className="text-xs text-gray-600 mt-1">Volume total de production annuelle</p>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction énergie/tonne (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Réduction énergie/tonne (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.reductionEnergie.titre}
+                texte={descriptionSystemeAutomatise.reductionEnergie.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -402,7 +518,13 @@ const SystemeAutomatise = () => {
         </div>
         
         <div className="mt-4">
-          <label className="block text-sm font-medium mb-1">Coût énergie par tonne ($/tonne)</label>
+          <label className="block text-sm font-medium mb-1 flex items-center">
+            Coût énergie par tonne ($/tonne)
+            <InfoBulle 
+              titre={descriptionSystemeAutomatise.coutEnergieTonne.titre}
+              texte={descriptionSystemeAutomatise.coutEnergieTonne.description}
+            />
+          </label>
           <input
             type="number"
             step="0.01"
@@ -435,7 +557,13 @@ const SystemeAutomatise = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Consommation d'eau (m³/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Consommation d'eau (m³/an)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.consommationEau.titre}
+                texte={descriptionSystemeAutomatise.consommationEau.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.consommationEau}
@@ -447,7 +575,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction consommation eau (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Réduction consommation eau (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.reductionConsommationEau.titre}
+                texte={descriptionSystemeAutomatise.reductionConsommationEau.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -464,7 +598,13 @@ const SystemeAutomatise = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Air comprimé (m³/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Air comprimé (m³/an)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.consommationAirComprime.titre}
+                texte={descriptionSystemeAutomatise.consommationAirComprime.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.consommationAirComprime}
@@ -476,7 +616,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction air comprimé (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Réduction air comprimé (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.reductionConsommationAirComprime.titre}
+                texte={descriptionSystemeAutomatise.reductionConsommationAirComprime.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -492,7 +638,13 @@ const SystemeAutomatise = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Émissions CO₂ (tonnes/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Émissions CO₂ (tonnes/an)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.emissionCO2.titre}
+                texte={descriptionSystemeAutomatise.emissionCO2.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.emissionCO2}
@@ -504,7 +656,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction empreinte CO₂ (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Réduction empreinte CO₂ (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.reductionEmpreinteCO2.titre}
+                texte={descriptionSystemeAutomatise.reductionEmpreinteCO2.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -520,7 +678,13 @@ const SystemeAutomatise = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Fluide hydraulique (L/an)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Fluide hydraulique (L/an)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.consommationHydraulique.titre}
+                texte={descriptionSystemeAutomatise.consommationHydraulique.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.consommationHydraulique}
@@ -532,7 +696,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction hydraulique (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Réduction hydraulique (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.reductionConsommationHydraulique.titre}
+                texte={descriptionSystemeAutomatise.reductionConsommationHydraulique.description}
+              />
+            </label>
             <input
               type="number"
               step="0.1"
@@ -555,10 +725,23 @@ const SystemeAutomatise = () => {
       </div>
       
       <div className="mb-6">
-        <h3 className="font-medium text-gray-700 mb-2">Coûts cachés</h3>
+        <h3 className="font-medium text-gray-700 mb-2 flex items-center">
+          Coûts cachés
+          <InfoBulle 
+            titre="Coûts souvent négligés"
+            texte="Ces coûts sont fréquemment omis dans l'évaluation initiale d'un projet d'automatisation, mais peuvent représenter une part significative du coût total de possession (TCO) sur la durée de vie du système."
+            position="right"
+          />
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Formation continue/an</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Formation continue/an
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutFormationContinue.titre}
+                texte={descriptionSystemeAutomatise.coutFormationContinue.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutFormationContinue}
@@ -570,7 +753,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Mises à jour logicielles</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Mises à jour logicielles
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutMisesAJour.titre}
+                texte={descriptionSystemeAutomatise.coutMisesAJour.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutMisesAJour || 0}
@@ -582,7 +771,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Consommables spécifiques</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Consommables spécifiques
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.coutConsommables.titre}
+                texte={descriptionSystemeAutomatise.coutConsommables.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.coutConsommables || 0}
@@ -600,7 +795,13 @@ const SystemeAutomatise = () => {
         <h3 className="font-medium text-gray-700 mb-2">Paramètres financiers</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Durée de vie (années)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Durée de vie (années)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.dureeVie.titre}
+                texte={descriptionSystemeAutomatise.dureeVie.description}
+              />
+            </label>
             <input
               type="number"
               value={systemeAutomatise.dureeVie}
@@ -612,7 +813,13 @@ const SystemeAutomatise = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Taux d'amortissement (%)</label>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Taux d'amortissement (%)
+              <InfoBulle 
+                titre={descriptionSystemeAutomatise.tauxAmortissement.titre}
+                texte={descriptionSystemeAutomatise.tauxAmortissement.description}
+              />
+            </label>
             <input
               type="number"
               step="1"
@@ -625,6 +832,60 @@ const SystemeAutomatise = () => {
             )}
           </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Taux d'inflation (%)
+              <InfoBulle 
+                titre={descriptionParametresGeneraux.tauxInflation.titre}
+                texte={descriptionParametresGeneraux.tauxInflation.description}
+              />
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresGeneraux.tauxInflation}
+              onChange={(e) => updateParametreGeneral('tauxInflation', e.target.value)}
+              className={`w-full p-2 border rounded ${erreurs.tauxInflation ? 'border-red-500' : ''}`}
+            />
+            {erreurs.tauxInflation && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tauxInflation}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 flex items-center">
+              Taux d'actualisation (%)
+              <InfoBulle 
+                titre={descriptionParametresGeneraux.tauxActualisation.titre}
+                texte={descriptionParametresGeneraux.tauxActualisation.description}
+              />
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresGeneraux.tauxActualisation}
+              onChange={(e) => updateParametreGeneral('tauxActualisation', e.target.value)}
+              className={`w-full p-2 border rounded ${erreurs.tauxActualisation ? 'border-red-500' : ''}`}
+            />
+            {erreurs.tauxActualisation && (
+              <p className="text-xs text-red-500 mt-1">{erreurs.tauxActualisation}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Lien vers la documentation des formules */}
+      <div className="mt-6 text-center">
+        <a 
+          href="/docs/formules-calculateur-general.md" 
+          target="_blank"
+          className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Consulter la documentation détaillée des formules utilisées
+        </a>
       </div>
 
       {/* Affichage d'erreurs globales si nécessaire */}
