@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './layout/Header';
 import Footer from './layout/Footer';
 import CalculateurGeneral from './calculateurs/general/CalculateurGeneral';
-import CalculateurPatesPapiers from './CalculateurPatesPapiers';
+import CalculateurPatesPapiers from './calculateurs/pates-papiers/CalculateurPatesPapiers';
 
 /**
  * Composant principal qui intègre les calculateurs et la navigation
