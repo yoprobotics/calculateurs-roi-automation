@@ -1,301 +1,177 @@
-import { 
-  calculerROIPatesPapiers, 
-  ajusterParametresSystemeActuel, 
-  preparerDonneesGraphiques,
-  validerChampNumerique,
-  validerParametres
+import {
+  calculerFluxActualise,
+  appliquerInflation,
+  calculerEconomiesCO2,
+  calculerEconomieDechet,
+  calculerEconomieRejets,
+  validerParametres,
+  formaterMontant,
+  formaterPourcentage,
+  formaterNombre
 } from './patesPapiersHelpers';
 
-describe('Fonctions utilitaires pour le calculateur de pâtes et papiers', () => {
-  describe('ajusterParametresSystemeActuel', () => {
-    it('devrait ajuster les paramètres pour un système manuel', () => {
-      const parametresActuels = {
-        capacite: 100,
-        nombreEmployes: 3,
-        coutSysteme: 50000,
-        maintenance: 10000,
-        energie: 5000,
-        tauxRejets: 10,
-        perteProduction: 10,
-        frequenceAccident: 4
-      };
+// Mock de localStorage pour les tests
+const localStorageMock = (function() {
+  let store = {};
+  return {
+    getItem: jest.fn(key => store[key] || null),
+    setItem: jest.fn((key, value) => {
+      store[key] = value.toString();
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    }),
+    removeItem: jest.fn(key => {
+      delete store[key];
+    })
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock
+});
+
+describe('Fonctions utilitaires pour le calculateur pâtes et papiers', () => {
+  describe('calculerFluxActualise', () => {
+    test('devrait actualiser correctement un flux de trésorerie', () => {
+      // Flux de 1000, taux de 5%, année 1
+      expect(calculerFluxActualise(1000, 5, 1)).toBeCloseTo(952.38, 2);
       
-      const resultat = ajusterParametresSystemeActuel('manuel', parametresActuels);
+      // Flux de 1000, taux de 5%, année 5
+      expect(calculerFluxActualise(1000, 5, 5)).toBeCloseTo(783.53, 2);
       
-      expect(resultat.capacite).toBe(45);
-      expect(resultat.nombreEmployes).toBe(2.5);
-      expect(resultat.coutSysteme).toBe(15000);
-      expect(resultat.maintenance).toBe(6000);
-      expect(resultat.energie).toBe(4000);
-      expect(resultat.tauxRejets).toBe(8);
-      expect(resultat.perteProduction).toBe(12);
-      expect(resultat.frequenceAccident).toBe(5.2);
+      // Taux nul : pas d'actualisation
+      expect(calculerFluxActualise(1000, 0, 3)).toBe(1000);
     });
     
-    it('devrait ajuster les paramètres pour un système semi-automatisé', () => {
-      const parametresActuels = {
-        capacite: 100,
-        nombreEmployes: 3,
-        coutSysteme: 50000,
-        maintenance: 10000,
-        energie: 5000,
-        tauxRejets: 10,
-        perteProduction: 10,
-        frequenceAccident: 4
-      };
+    test('devrait gérer les valeurs extrêmes correctement', () => {
+      // Valeur nulle
+      expect(calculerFluxActualise(0, 5, 1)).toBe(0);
       
-      const resultat = ajusterParametresSystemeActuel('semi-auto', parametresActuels);
-      
-      expect(resultat.capacite).toBe(80);
-      expect(resultat.nombreEmployes).toBe(1.5);
-      expect(resultat.coutSysteme).toBe(120000);
-      expect(resultat.maintenance).toBe(18000);
-      expect(resultat.energie).toBe(8000);
-      expect(resultat.tauxRejets).toBe(5.5);
-      expect(resultat.perteProduction).toBe(8);
-      expect(resultat.frequenceAccident).toBe(3.8);
-    });
-    
-    it('devrait ajuster les paramètres pour un ancien système automatisé', () => {
-      const parametresActuels = {
-        capacite: 100,
-        nombreEmployes: 3,
-        coutSysteme: 50000,
-        maintenance: 10000,
-        energie: 5000,
-        tauxRejets: 10,
-        perteProduction: 10,
-        frequenceAccident: 4
-      };
-      
-      const resultat = ajusterParametresSystemeActuel('auto-ancien', parametresActuels);
-      
-      expect(resultat.capacite).toBe(100);
-      expect(resultat.nombreEmployes).toBe(1);
-      expect(resultat.coutSysteme).toBe(250000);
-      expect(resultat.maintenance).toBe(25000);
-      expect(resultat.energie).toBe(10000);
-      expect(resultat.tauxRejets).toBe(4.2);
-      expect(resultat.perteProduction).toBe(5);
-      expect(resultat.frequenceAccident).toBe(1.5);
-    });
-    
-    it('devrait conserver les paramètres pour un type non reconnu', () => {
-      const parametresActuels = {
-        capacite: 100,
-        nombreEmployes: 3,
-        coutSysteme: 50000,
-        maintenance: 10000,
-        energie: 5000,
-        tauxRejets: 10,
-        perteProduction: 10,
-        frequenceAccident: 4
-      };
-      
-      const resultat = ajusterParametresSystemeActuel('inconnu', parametresActuels);
-      
-      expect(resultat).toEqual(parametresActuels);
+      // Taux élevé
+      expect(calculerFluxActualise(1000, 100, 1)).toBeCloseTo(500, 2);
     });
   });
   
-  describe('validerChampNumerique', () => {
-    it('devrait valider un nombre positif', () => {
-      expect(validerChampNumerique(42, { min: 0 })).toBe(true);
-      expect(validerChampNumerique('42', { min: 0 })).toBe(true);
+  describe('appliquerInflation', () => {
+    test('devrait appliquer correctement l\'inflation sur plusieurs années', () => {
+      // Valeur de 1000, inflation de 2%, sur 1 an
+      expect(appliquerInflation(1000, 2, 1)).toBeCloseTo(1020, 2);
+      
+      // Valeur de 1000, inflation de 2%, sur 5 ans
+      expect(appliquerInflation(1000, 2, 5)).toBeCloseTo(1104.08, 2);
+      
+      // Sans inflation
+      expect(appliquerInflation(1000, 0, 3)).toBe(1000);
     });
     
-    it('devrait rejeter un nombre négatif quand min est 0', () => {
-      expect(validerChampNumerique(-5, { min: 0 })).toBe(false);
+    test('devrait gérer l\'inflation négative (déflation)', () => {
+      // Valeur de 1000, déflation de 2%, sur 1 an
+      expect(appliquerInflation(1000, -2, 1)).toBeCloseTo(980, 2);
+      
+      // Valeur de 1000, déflation de 2%, sur 3 ans
+      expect(appliquerInflation(1000, -2, 3)).toBeCloseTo(941.19, 2);
     });
-    
-    it('devrait rejeter un nombre hors limites', () => {
-      expect(validerChampNumerique(101, { min: 0, max: 100 })).toBe(false);
+  });
+  
+  describe('calculerEconomiesCO2', () => {
+    test('devrait calculer correctement les tonnes de CO2 économisées', () => {
+      // 20 000 tonnes annuelles, réduction de 7%, sur 15 ans
+      expect(calculerEconomiesCO2(20000, 7, 15)).toBeCloseTo(21000, 2);
+      
+      // Aucune réduction
+      expect(calculerEconomiesCO2(20000, 0, 15)).toBe(0);
     });
-    
-    it('devrait rejeter les valeurs non numériques', () => {
-      expect(validerChampNumerique('abc', { min: 0 })).toBe(false);
+  });
+  
+  describe('calculerEconomieDechet', () => {
+    test('devrait calculer correctement l\'économie liée à la réduction des déchets', () => {
+      // 20 000 tonnes annuelles, réduction de 14%, coût de 230$/tonne, inflation de 2%, année 1
+      expect(calculerEconomieDechet(20000, 14, 230, 2, 1)).toBeCloseTo(644000, 2);
+      
+      // Avec inflation (année 2)
+      expect(calculerEconomieDechet(20000, 14, 230, 2, 2)).toBeCloseTo(656880, 2);
     });
-    
-    it('devrait gérer les valeurs vides selon le paramètre requis', () => {
-      expect(validerChampNumerique('', { requis: true })).toBe(false);
-      expect(validerChampNumerique('', { requis: false })).toBe(true);
-      expect(validerChampNumerique(null, { requis: false })).toBe(true);
-      expect(validerChampNumerique(undefined, { requis: false })).toBe(true);
+  });
+  
+  describe('calculerEconomieRejets', () => {
+    test('devrait calculer correctement l\'économie liée à la réduction des rejets', () => {
+      // 20 000 tonnes, taux actuel 8%, taux automatisé 3.5%, coût de 230$/tonne, inflation de 2%, année 1
+      expect(calculerEconomieRejets(20000, 8, 3.5, 230, 2, 1)).toBeCloseTo(207000, 2);
+      
+      // Avec inflation (année 3)
+      expect(calculerEconomieRejets(20000, 8, 3.5, 230, 2, 3)).toBeCloseTo(215330.8, 2);
     });
   });
   
   describe('validerParametres', () => {
-    it('devrait valider des paramètres corrects', () => {
-      const parametres = {
-        parametresGeneraux: {
-          margeBrute: 110,
-          tonnageAnnuel: 20000,
-          heuresOperationParJour: 16,
-          joursOperationParAn: 300
-        },
-        parametresSystemeAutomatise: {
-          capaciteTraitement: 120,
-          coutSysteme: 380000
-        },
-        parametresSystemeActuel: {}
-      };
-      
-      const erreurs = validerParametres(parametres);
-      expect(Object.keys(erreurs).length).toBe(0);
-    });
-    
-    it('devrait détecter des erreurs dans les paramètres', () => {
-      const parametres = {
-        parametresGeneraux: {
-          margeBrute: -10, // Valeur négative invalide
-          tonnageAnnuel: 0, // Doit être > 0
-          heuresOperationParJour: 25, // Hors limites (> 24)
-          joursOperationParAn: 300
-        },
-        parametresSystemeAutomatise: {
-          capaciteTraitement: 120,
-          coutSysteme: 380000
-        },
-        parametresSystemeActuel: {}
-      };
-      
-      const erreurs = validerParametres(parametres);
-      expect(Object.keys(erreurs).length).toBe(3);
-      expect(erreurs.margeBrute).toBeDefined();
-      expect(erreurs.tonnageAnnuel).toBeDefined();
-      expect(erreurs.heuresOperationParJour).toBeDefined();
-    });
-  });
-  
-  describe('calculerROIPatesPapiers', () => {
-    // Ces tests nécessitent des mocks plus complexes et des scénarios complets
-    it('devrait calculer les résultats pour un scénario simple', () => {
-      // Test simplifié pour vérifier que la fonction s'exécute sans erreur
-      const parametresSystemeAutomatise = {
-        coutSysteme: 380000,
-        coutInstallation: 45000,
-        coutIngenierie: 25000,
-        coutFormation: 15000,
-        coutMaintenance: 12000,
-        coutEnergie: 6500,
-        dureeVie: 15,
-        tauxAmortissement: 15,
-        coutMainOeuvre: 55000,
-        nbEmployesRemplaces: 2,
-        reductionDechet: 14,
-        coutDechet: 230,
-        augmentationProduction: 10,
-        reductionEnergie: 12,
-        coutEnergieTonne: 40,
-        reductionEau: 8,
-        coutEauTonne: 4.5,
-        ameliorationQualite: 5,
-        reductionEmpreinteCO2: 7,
-        capaciteTraitement: 120,
-        tauxRejets: 3.5,
-        reductionAccidents: 85,
-        subventions: 40000
-      };
-      
-      const parametresSystemeActuel = {
+    test('devrait valider correctement des paramètres valides', () => {
+      const parametresValides = {
         capacite: 45,
         nombreEmployes: 2.5,
-        maintenance: 18000,
-        energie: 9500,
+        nbEmployesRemplaces: 2,
         perteProduction: 8,
         tauxRejets: 8,
-        frequenceAccident: 5.2,
-        coutMoyenAccident: 12500,
-        tempsArretAccident: 24
+        reductionDechet: 14
       };
       
-      const parametresGeneraux = {
-        margeBrute: 110,
-        tauxInflation: 2,
-        tauxActualisation: 5,
-        tonnageAnnuel: 20000,
-        heuresOperationParJour: 16,
-        joursOperationParAn: 300
+      const resultat = validerParametres(parametresValides);
+      expect(resultat.valide).toBe(true);
+      expect(resultat.erreurs.length).toBe(0);
+    });
+    
+    test('devrait détecter les valeurs négatives', () => {
+      const parametresInvalides = {
+        capacite: -45,
+        nombreEmployes: 2.5
       };
       
-      const resultats = calculerROIPatesPapiers(
-        parametresSystemeAutomatise, 
-        parametresSystemeActuel, 
-        parametresGeneraux
-      );
+      const resultat = validerParametres(parametresInvalides);
+      expect(resultat.valide).toBe(false);
+      expect(resultat.erreurs.length).toBeGreaterThan(0);
+      expect(resultat.erreurs[0]).toContain('ne peut pas être négatif');
+    });
+    
+    test('devrait détecter les pourcentages supérieurs à 100%', () => {
+      const parametresInvalides = {
+        capacite: 45,
+        nombreEmployes: 2.5,
+        reductionDechet: 140
+      };
       
-      // Vérifier que les propriétés attendues sont présentes
-      expect(resultats.roi).toBeDefined();
-      expect(resultats.delaiRecuperation).toBeDefined();
-      expect(resultats.van).toBeDefined();
-      expect(resultats.tri).toBeDefined();
-      expect(resultats.fluxTresorerie).toBeDefined();
-      expect(resultats.fluxTresorerie.length).toBe(parametresSystemeAutomatise.dureeVie);
+      const resultat = validerParametres(parametresInvalides);
+      expect(resultat.valide).toBe(false);
+      expect(resultat.erreurs.length).toBeGreaterThan(0);
+      expect(resultat.erreurs[0]).toContain('ne peut pas dépasser 100%');
+    });
+    
+    test('devrait détecter les incohérences d\'employés remplacés', () => {
+      const parametresInvalides = {
+        nombreEmployes: 2,
+        nbEmployesRemplaces: 3
+      };
       
-      // Le ROI devrait être positif dans ce scénario
-      expect(resultats.roi).toBeGreaterThan(0);
+      const resultat = validerParametres(parametresInvalides);
+      expect(resultat.valide).toBe(false);
+      expect(resultat.erreurs.length).toBeGreaterThan(0);
+      expect(resultat.erreurs[0]).toContain('employés remplacés');
     });
   });
   
-  describe('preparerDonneesGraphiques', () => {
-    it('devrait préparer les données pour les graphiques', () => {
-      const resultats = {
-        fluxTresorerie: [{ annee: 1, cumulFluxTresorerie: 100000 }],
-        reductionMainOeuvre: 110000,
-        economiesQualite: 50000,
-        economiesSecurite: 20000,
-        economiesTempsArret: 15000,
-        differenceProduction: 45000
-      };
-      
-      const parametresSystemeActuel = {
-        capacite: 45,
-        nombreEmployes: 2.5,
-        maintenance: 18000,
-        energie: 9500,
-        tauxRejets: 8,
-        frequenceAccident: 5.2
-      };
-      
-      const parametresSystemeAutomatise = {
-        capaciteTraitement: 120,
-        tauxRejets: 3.5,
-        reductionAccidents: 85,
-        coutSysteme: 380000,
-        coutInstallation: 45000,
-        coutIngenierie: 25000,
-        coutFormation: 15000,
-        coutMaintenance: 12000,
-        coutEnergie: 6500,
-        nbEmployesRemplaces: 2,
-        subventions: 40000
-      };
-      
-      const parametresGeneraux = {
-        margeBrute: 110,
-        tonnageAnnuel: 20000
-      };
-      
-      const donnees = preparerDonneesGraphiques(
-        resultats,
-        parametresSystemeActuel,
-        parametresSystemeAutomatise,
-        parametresGeneraux
-      );
-      
-      // Vérifier que les données de graphiques sont correctement préparées
-      expect(donnees.dataComparaisonCapacite).toBeDefined();
-      expect(donnees.dataComparaisonEmployes).toBeDefined();
-      expect(donnees.dataComparaisonRejets).toBeDefined();
-      expect(donnees.dataComparaisonAccidents).toBeDefined();
-      expect(donnees.dataEconomies).toBeDefined();
-      expect(donnees.dataCumulatif).toBeDefined();
-      
-      // Vérifier quelques valeurs spécifiques
-      expect(donnees.dataComparaisonCapacite[0].value).toBe(45);
-      expect(donnees.dataComparaisonCapacite[1].value).toBe(120);
-      expect(donnees.dataComparaisonEmployes[0].value).toBe(2.5);
-      expect(donnees.dataComparaisonEmployes[1].value).toBe(0.5);
+  describe('fonctions de formatage', () => {
+    test('formaterMontant devrait formater correctement les montants', () => {
+      expect(formaterMontant(1000)).toBe('1 000 $US');
+      expect(formaterMontant(1234.567, 'EUR', 2)).toBe('1 234,57 €');
+    });
+    
+    test('formaterPourcentage devrait formater correctement les pourcentages', () => {
+      expect(formaterPourcentage(12.345)).toBe('12.35%');
+      expect(formaterPourcentage(10, 0)).toBe('10%');
+    });
+    
+    test('formaterNombre devrait formater correctement les nombres', () => {
+      expect(formaterNombre(1234.567)).toBe('1 234,57');
+      expect(formaterNombre(1234.567, 0)).toBe('1 235');
     });
   });
 });
