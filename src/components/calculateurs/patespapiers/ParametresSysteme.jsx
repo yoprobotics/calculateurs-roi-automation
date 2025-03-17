@@ -1,21 +1,21 @@
-import React from 'react';
-import { useCalculateurPapier } from '../../../context/CalculateurPapierContext';
+import React, { useContext } from 'react';
+import { CalculateurPapierContext } from './CalculateurPatesPapiers';
 
 const ParametresSysteme = () => {
+  // Accès au contexte partagé
   const { 
     typeSystemeActuel, 
     setTypeSystemeActuel,
     parametresSystemeActuel, 
     setParametresSystemeActuel,
+    parametresSystemeAutomatise, 
+    setParametresSystemeAutomatise,
     parametresGeneraux, 
     setParametresGeneraux,
     resultats,
-    ui,
-    toggleDetails
-  } = useCalculateurPapier();
-  
-  const { afficherDetails } = ui;
-  const { delaiRecuperation, roi, van, tri, economieAnnuelle } = resultats;
+    ui, 
+    toggleDetails 
+  } = useContext(CalculateurPapierContext);
   
   return (
     <>
@@ -161,8 +161,8 @@ const ParametresSysteme = () => {
               onClick={toggleDetails}
               className="flex items-center text-sm font-medium text-green-700 hover:text-green-800 transition-colors"
             >
-              {afficherDetails ? 'Masquer' : 'Afficher'} les paramètres avancés
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-1 transform ${afficherDetails ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {ui.afficherDetails ? 'Masquer' : 'Afficher'} les paramètres avancés
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-1 transform ${ui.afficherDetails ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -182,23 +182,23 @@ const ParametresSysteme = () => {
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-green-50 p-3 rounded">
                 <h3 className="text-sm font-medium text-gray-700">ROI global</h3>
-                <p className="text-2xl font-bold text-green-800">{roi.toFixed(2)}%</p>
+                <p className="text-2xl font-bold text-green-800">{resultats.roi.toFixed(2)}%</p>
               </div>
               <div className="bg-blue-50 p-3 rounded">
                 <h3 className="text-sm font-medium text-gray-700">Délai de récupération</h3>
-                <p className={`text-2xl font-bold ${delaiRecuperation <= 2 ? 'text-green-600' : 'text-blue-800'}`}>
-                  {delaiRecuperation.toFixed(2)} ans
+                <p className={`text-2xl font-bold ${resultats.delaiRecuperation <= 2 ? 'text-green-600' : 'text-blue-800'}`}>
+                  {resultats.delaiRecuperation.toFixed(2)} ans
                 </p>
               </div>
               <div className="bg-purple-50 p-3 rounded">
                 <h3 className="text-sm font-medium text-gray-700">VAN</h3>
                 <p className="text-2xl font-bold text-purple-800">
-                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(van)}
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(resultats.van)}
                 </p>
               </div>
               <div className="bg-indigo-50 p-3 rounded">
                 <h3 className="text-sm font-medium text-gray-700">TRI</h3>
-                <p className="text-2xl font-bold text-indigo-800">{tri.toFixed(2)}%</p>
+                <p className="text-2xl font-bold text-indigo-800">{resultats.tri.toFixed(2)}%</p>
               </div>
             </div>
             
@@ -206,7 +206,7 @@ const ParametresSysteme = () => {
               <div className="flex-1 bg-yellow-50 p-3 rounded">
                 <h3 className="text-sm font-medium text-gray-700">Économie annuelle moyenne</h3>
                 <p className="text-2xl font-bold text-yellow-700">
-                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieAnnuelle)}
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(resultats.economieAnnuelle)}
                 </p>
               </div>
             </div>
@@ -218,25 +218,25 @@ const ParametresSysteme = () => {
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Traitement de <strong>{parametresSystemeActuel.capacite} ballots/heure</strong> contre 120 avec le nouveau système</span>
+                  <span>Traitement de <strong>{parametresSystemeAutomatise.capaciteTraitement} ballots/heure</strong> contre {parametresSystemeActuel.capacite} actuellement</span>
                 </div>
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Réduction de la main d'œuvre de <strong>2 ETP</strong></span>
+                  <span>Réduction de la main d'œuvre de <strong>{parametresSystemeAutomatise.nbEmployesRemplaces.toFixed(1)} ETP</strong></span>
                 </div>
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Diminution des rejets de fils métalliques de <strong>{(parametresSystemeActuel.tauxRejets - 3.5).toFixed(1)}%</strong></span>
+                  <span>Diminution des rejets de fils métalliques de <strong>{(parametresSystemeActuel.tauxRejets - parametresSystemeAutomatise.tauxRejets).toFixed(1)}%</strong></span>
                 </div>
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Réduction des accidents de <strong>85%</strong></span>
+                  <span>Réduction des accidents de <strong>{parametresSystemeAutomatise.reductionAccidents}%</strong></span>
                 </div>
               </div>
             </div>
@@ -266,7 +266,7 @@ const ParametresSysteme = () => {
       </div>
       
       {/* Paramètres avancés - affichage conditionnel */}
-      {afficherDetails && (
+      {ui.afficherDetails && (
         <div className="bg-white p-4 rounded-lg shadow mb-8">
           <h2 className="text-xl font-semibold mb-4 text-green-700">Paramètres avancés</h2>
           
@@ -278,9 +278,9 @@ const ParametresSysteme = () => {
                   <label className="block text-sm font-medium mb-1">Capacité de traitement (ballots/h)</label>
                   <input
                     type="number"
-                    value={parametresSystemeActuel.capaciteTraitement}
-                    onChange={(e) => setParametresSystemeActuel({
-                      ...parametresSystemeActuel,
+                    value={parametresSystemeAutomatise.capaciteTraitement}
+                    onChange={(e) => setParametresSystemeAutomatise({
+                      ...parametresSystemeAutomatise,
                       capaciteTraitement: Number(e.target.value)
                     })}
                     className="w-full p-2 border rounded"
@@ -291,9 +291,9 @@ const ParametresSysteme = () => {
                   <input
                     type="number"
                     step="0.1"
-                    value={parametresSystemeActuel.tauxRejets}
-                    onChange={(e) => setParametresSystemeActuel({
-                      ...parametresSystemeActuel,
+                    value={parametresSystemeAutomatise.tauxRejets}
+                    onChange={(e) => setParametresSystemeAutomatise({
+                      ...parametresSystemeAutomatise,
                       tauxRejets: Number(e.target.value)
                     })}
                     className="w-full p-2 border rounded"
@@ -321,10 +321,42 @@ const ParametresSysteme = () => {
                   <label className="block text-sm font-medium mb-1">Maintenance système/an ($)</label>
                   <input
                     type="number"
-                    value={parametresSystemeActuel.coutMaintenance}
-                    onChange={(e) => setParametresSystemeActuel({
-                      ...parametresSystemeActuel,
+                    value={parametresSystemeAutomatise.coutMaintenance}
+                    onChange={(e) => setParametresSystemeAutomatise({
+                      ...parametresSystemeAutomatise,
                       coutMaintenance: Number(e.target.value)
+                    })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-gray-700 mb-2">Avantages du système</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Réduction des déchets (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={parametresSystemeAutomatise.reductionDechet}
+                    onChange={(e) => setParametresSystemeAutomatise({
+                      ...parametresSystemeAutomatise,
+                      reductionDechet: Number(e.target.value)
+                    })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Amélioration qualité (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={parametresSystemeAutomatise.ameliorationQualite}
+                    onChange={(e) => setParametresSystemeAutomatise({
+                      ...parametresSystemeAutomatise,
+                      ameliorationQualite: Number(e.target.value)
                     })}
                     className="w-full p-2 border rounded"
                   />
