@@ -19,29 +19,8 @@ const Navbar = () => {
     <nav className="bg-white shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex justify-between h-16">
-          {/* Logo et nom - Actualise l'application au clic */}
+          {/* Titre cliquable qui actualise l'application */}
           <div className="flex items-center cursor-pointer" onClick={refreshApp}>
-            {/* Logo YoProbotics simplifié */}
-            <svg 
-              width="140" 
-              height="40" 
-              viewBox="0 0 140 40" 
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-auto mr-3"
-            >
-              {/* Fond du logo transparent */}
-              <rect width="140" height="40" fill="transparent" />
-              
-              {/* YO en jaune */}
-              <g>
-                <text x="5" y="30" fontFamily="Arial" fontSize="24" fontWeight="bold" fill="#ffde59">YO</text>
-              </g>
-              
-              {/* ROBOTICS en noir */}
-              <g>
-                <text x="37" y="30" fontFamily="Arial" fontSize="24" fontWeight="bold" fill="black">ROBOTICS</text>
-              </g>
-            </svg>
             <span className="text-xl font-semibold text-gray-800">Calculateurs ROI</span>
           </div>
           
