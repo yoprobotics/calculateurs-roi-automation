@@ -66,8 +66,24 @@ Où :
 ```
 
 ### Économies liées à la réduction d'énergie
+
+Les économies d'énergie sont calculées en deux composantes distinctes :
+
+#### 1. Économies d'énergie directes
+Ces économies concernent la consommation énergétique du système lui-même.
 ```
-Économie annuelle = Tonnage annuel × (% Réduction d'énergie / 100) × Coût énergétique par tonne
+Économie directe = Coût énergétique actuel - Coût énergétique du système automatisé
+```
+
+#### 2. Économies d'énergie dans le processus
+Ces économies concernent l'efficacité énergétique du processus de production.
+```
+Économie processus = Tonnage annuel × (% Réduction d'énergie / 100) × Coût énergétique par tonne
+```
+
+#### 3. Économie d'énergie totale
+```
+Économie totale = Économie directe + Économie processus
 ```
 
 ### Bénéfices liés à l'augmentation de production
@@ -117,3 +133,28 @@ Avantage fiscal annuel = (Investissement initial / Durée vie) × (Taux amortiss
 ```
 
 Cet avantage est ajouté au flux de trésorerie annuel.
+
+## Validation des économies d'énergie et réduction de CO2
+
+Pour garantir la cohérence entre les économies d'énergie et la réduction des émissions de CO2, le calculateur applique la validation suivante :
+
+```
+Réduction CO2 effective = max(Réduction CO2 déclarée, Émissions CO2 actuelle - Émissions CO2 automatisée)
+```
+
+Cette validation assure que les économies de CO2 sont au moins égales à la différence entre les émissions des deux systèmes.
+
+## Calcul du flux de trésorerie annuel
+
+Le flux de trésorerie annuel intègre l'ensemble des économies et bénéfices, moins les coûts :
+
+```
+Flux annuel = Économie personnel + Économie déchet + Économie maintenance + 
+              Économie énergie directe + Économie énergie processus + Économie eau + Économie rejets +
+              Bénéfice production + Bénéfice qualité + 
+              Économie sécurité + Économie temps d'arrêt - 
+              Maintenance annuelle - Énergie annuelle - Formation continue -
+              Mises à jour - Consommables + Amortissement
+```
+
+Ce flux annuel est ensuite utilisé pour calculer le ROI, la VAN et le TRI du projet d'automatisation.
