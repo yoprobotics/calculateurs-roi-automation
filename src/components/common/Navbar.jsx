@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logoImg from '../../../public/logo.png';
 
 /**
  * Composant de barre de navigation
@@ -21,7 +22,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo et nom - Actualise l'application au clic */}
           <div className="flex items-center cursor-pointer" onClick={refreshApp}>
-            <img src="/logo.png" alt="YoProbotics" className="h-8 w-auto mr-3" />
+            <img src={logoImg} alt="YoProbotics" className="h-8 w-auto mr-3" />
             <span className="text-xl font-semibold text-gray-800">Calculateurs ROI</span>
           </div>
           
