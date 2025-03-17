@@ -1,43 +1,46 @@
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useCalculateurPapier } from '../../../context/CalculateurPapierContext';
+import { CalculateurPapierContext } from './CalculateurPatesPapiers';
 
 const ResultatsFinanciers = () => {
+  // Accès au contexte partagé
   const { 
     parametresSystemeAutomatise,
     resultats
-  } = useCalculateurPapier();
+  } = useContext(CalculateurPapierContext);
   
-  // Extraction des valeurs des paramètres du système automatisé
-  const {
-    coutSysteme, 
-    coutInstallation, 
-    coutIngenierie, 
-    coutFormation, 
-    dureeVie,
-    subventions
-  } = parametresSystemeAutomatise;
-  
-  // Extraction des résultats
+  // Extraction des valeurs de résultats pour plus de lisibilité
   const { 
-    roi, 
-    delaiRecuperation, 
-    van, 
-    tri, 
-    fluxTresorerie 
+    roi, delaiRecuperation, van, tri,
+    fluxTresorerie
   } = resultats;
   
-  // Données pour le graphique de flux de trésorerie cumulatif
+  // Extraction des paramètres du système automatisé
+  const {
+    coutSysteme, coutInstallation, coutIngenierie, coutFormation,
+    dureeVie, subventions
+  } = parametresSystemeAutomatise;
+
+  // Calcul de l'investissement initial
+  const investissementInitial = coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions;
+  
+  // Données pour le graphique de flux de trésorerie
+  const dataFluxTresorerie = useMemo(() => {
+    return fluxTresorerie.map(item => ({
+      annee: `Année ${item.annee}`,
+      fluxTresorerie: item.fluxAnnuel,
+      fluxActualise: item.fluxActualise
+    }));
+  }, [fluxTresorerie]);
+  
+  // Données pour le graphique de rentabilité cumulative
   const dataCumulatif = useMemo(() => {
     return fluxTresorerie.map(item => ({
       annee: `Année ${item.annee}`,
       cumulatif: item.cumulFluxTresorerie,
-      seuil: coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions
+      seuil: investissementInitial
     }));
-  }, [fluxTresorerie, coutSysteme, coutInstallation, coutIngenierie, coutFormation, subventions]);
-  
-  // Calcul de l'investissement initial
-  const investissementInitial = coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions;
+  }, [fluxTresorerie, investissementInitial]);
   
   return (
     <div className="grid grid-cols-1 gap-8">
@@ -120,30 +123,50 @@ const ResultatsFinanciers = () => {
                       {tri.toFixed(2)}%
                     </td>
                   </tr>
-                  <tr className="border-t">
-                    <td className="px-4 py-2 text-left">Durée de vie du projet</td>
-                    <td className="px-4 py-2 text-right font-medium">
-                      {dureeVie} ans
-                    </td>
-                  </tr>
                 </tbody>
               </table>
-            </div>
-            
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h4 className="font-medium text-gray-700 mb-2">Interprétation</h4>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li><strong>ROI de {roi.toFixed(2)}%</strong> - Excellente rentabilité sur la durée de vie du projet.</li>
-                <li><strong>Délai de récupération de {delaiRecuperation.toFixed(2)} ans</strong> - {delaiRecuperation <= 2 ? 'Retour sur investissement très rapide.' : 'Période de récupération acceptable.'}</li>
-                <li><strong>VAN positive</strong> - Le projet crée de la valeur pour l'entreprise.</li>
-                <li><strong>TRI de {tri.toFixed(2)}%</strong> - Taux de rendement interne très attractif.</li>
-              </ul>
             </div>
           </div>
         </div>
         
         <div className="mb-8">
-          <h3 className="font-medium text-gray-700 mb-3">Projection des flux de trésorerie</h3>
+          <h3 className="font-medium text-gray-700 mb-3">Flux de trésorerie annuels</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={dataFluxTresorerie}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="annee" />
+                <YAxis />
+                <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(value), 'Montant']} />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="fluxTresorerie" 
+                  name="Flux annuel" 
+                  stroke="#22c55e" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="fluxActualise" 
+                  name="Flux actualisé" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-sm text-gray-600 mt-2 italic">
+            * Les flux actualisés prennent en compte la valeur temporelle de l'argent avec le taux d'actualisation spécifié.
+          </p>
+        </div>
+        
+        <div className="mb-8">
+          <h3 className="font-medium text-gray-700 mb-3">Projection des flux de trésorerie cumulés</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dataCumulatif}>
@@ -175,62 +198,6 @@ const ResultatsFinanciers = () => {
           <p className="text-sm text-gray-600 mt-2 italic">
             * Le point d'intersection entre la courbe verte et la ligne rouge représente le délai de récupération de l'investissement.
           </p>
-        </div>
-        
-        <div>
-          <h3 className="font-medium text-gray-700 mb-3">Détail des flux de trésorerie annuels</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border-collapse">
-              <thead>
-                <tr className="bg-gray-100 text-gray-700 text-xs uppercase">
-                  <th className="py-2 px-3 text-center">Année</th>
-                  <th className="py-2 px-3 text-right">Écon. Main d'œuvre</th>
-                  <th className="py-2 px-3 text-right">Écon. Qualité</th>
-                  <th className="py-2 px-3 text-right">Écon. Sécurité</th>
-                  <th className="py-2 px-3 text-right">Gain Production</th>
-                  <th className="py-2 px-3 text-right">Écon. Maintenance</th>
-                  <th className="py-2 px-3 text-right">Écon. Énergie</th>
-                  <th className="py-2 px-3 text-center font-bold">Flux Annuel</th>
-                  <th className="py-2 px-3 text-center">Flux Actualisé</th>
-                  <th className="py-2 px-3 text-center">Cumulatif</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-600 text-xs">
-                {fluxTresorerie.map((item) => (
-                  <tr key={item.annee} className="border-t border-gray-200 hover:bg-gray-50">
-                    <td className="py-2 px-3 text-center font-medium">Année {item.annee}</td>
-                    <td className="py-2 px-3 text-right">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.economiePersonnel)}
-                    </td>
-                    <td className="py-2 px-3 text-right">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.beneficeQualite + item.economieRejets)}
-                    </td>
-                    <td className="py-2 px-3 text-right">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.economieSecuriteAjustee + item.economieTempsArretAjustee)}
-                    </td>
-                    <td className="py-2 px-3 text-right">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.beneficeSupplementaire)}
-                    </td>
-                    <td className="py-2 px-3 text-right">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.economieMaintenance)}
-                    </td>
-                    <td className="py-2 px-3 text-right">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.economieEnergie + item.economieEnergieProcessus + item.economieEau)}
-                    </td>
-                    <td className="py-2 px-3 text-center font-medium">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.fluxAnnuel)}
-                    </td>
-                    <td className="py-2 px-3 text-center">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.fluxActualise)}
-                    </td>
-                    <td className="py-2 px-3 text-center">
-                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(item.cumulFluxTresorerie)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </div>
