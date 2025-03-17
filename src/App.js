@@ -1,13 +1,10 @@
 import React from 'react';
 import AppCalculateursROI from './components/AppCalculateursROI';
+import './styles/tailwind.css';
 
-/**
- * Composant principal de l'application React
- * @returns {JSX.Element} - Composant App
- */
 function App() {
   return (
-    <div className="App">
+    <div className="App min-h-screen bg-gray-50">
       <AppCalculateursROI />
     </div>
   );
