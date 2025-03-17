@@ -3,6 +3,13 @@ import ParametresSysteme from './ParametresSysteme';
 import ComparatifSystemes from './ComparatifSystemes';
 import ResultatsFinanciers from './ResultatsFinanciers';
 import ImpactEnvironnemental from './ImpactEnvironnemental';
+import { 
+  sauvegarderParametres, 
+  chargerParametres,
+  validerParametres,
+  calculerFluxActualise,
+  formaterMontant
+} from '../../../utils/patesPapiersHelpers';
 
 // Création du contexte pour partager les états entre les composants
 export const CalculateurPapierContext = createContext();
@@ -82,8 +89,55 @@ const CalculateurPatesPapiers = () => {
   // État pour l'interface utilisateur
   const [ui, setUi] = useState({
     afficherDetails: false,
-    ongletActif: 'general'
+    ongletActif: 'general',
+    erreurs: [],
+    notification: null
   });
+  
+  // Chargement des paramètres depuis le localStorage au démarrage
+  useEffect(() => {
+    const parametresSauvegardes = chargerParametres();
+    if (parametresSauvegardes) {
+      try {
+        // Mettre à jour les états avec les paramètres sauvegardés
+        setTypeSystemeActuel(parametresSauvegardes.typeSystemeActuel);
+        setParametresSystemeActuel(parametresSauvegardes.parametresSystemeActuel);
+        setParametresSystemeAutomatise(parametresSauvegardes.parametresSystemeAutomatise);
+        setParametresGeneraux(parametresSauvegardes.parametresGeneraux);
+        
+        // Afficher une notification de succès
+        setUi(prev => ({
+          ...prev,
+          notification: {
+            type: 'success',
+            message: `Paramètres chargés (sauvegardés le ${new Date(parametresSauvegardes.dateEnregistrement).toLocaleString()})`,
+            duree: 5000
+          }
+        }));
+      } catch (error) {
+        console.error('Erreur lors du chargement des paramètres:', error);
+        setUi(prev => ({
+          ...prev,
+          notification: {
+            type: 'error',
+            message: 'Erreur lors du chargement des paramètres sauvegardés',
+            duree: 5000
+          }
+        }));
+      }
+    }
+  }, []);
+  
+  // Effet pour fermer automatiquement les notifications après leur durée
+  useEffect(() => {
+    if (ui.notification) {
+      const timer = setTimeout(() => {
+        setUi(prev => ({ ...prev, notification: null }));
+      }, ui.notification.duree);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [ui.notification]);
   
   // Fonction qui adapte les paramètres par défaut en fonction du type de système actuel
   useEffect(() => {
@@ -128,6 +182,26 @@ const CalculateurPatesPapiers = () => {
   
   // Fonction de calcul des résultats
   const calculerROI = useCallback(() => {
+    // Valider les paramètres avant calcul
+    const validationActuel = validerParametres(parametresSystemeActuel);
+    const validationAutomatise = validerParametres(parametresSystemeAutomatise);
+    const validationGeneraux = validerParametres(parametresGeneraux);
+    
+    // Combiner toutes les erreurs
+    const erreursCombinees = [
+      ...validationActuel.erreurs,
+      ...validationAutomatise.erreurs,
+      ...validationGeneraux.erreurs
+    ];
+    
+    // Mettre à jour les erreurs dans l'UI
+    setUi(prev => ({ ...prev, erreurs: erreursCombinees }));
+    
+    // Ne pas procéder au calcul si des erreurs sont présentes
+    if (erreursCombinees.length > 0) {
+      return;
+    }
+    
     const {
       coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance, 
       coutEnergie, dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
@@ -238,8 +312,7 @@ const CalculateurPatesPapiers = () => {
                        maintenanceAnnuelle - energieOperationAnnuelle + amortissement;
       
       // Calcul du flux de trésorerie actualisé
-      const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
-      const fluxActualise = fluxAnnuel / facteurActualisation;
+      const fluxActualise = calculerFluxActualise(fluxAnnuel, tauxActualisation, annee);
       
       // Mise à jour de la VAN
       valeurActuelleNette += fluxActualise;
@@ -314,6 +387,28 @@ const CalculateurPatesPapiers = () => {
     });
   }, [parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux]);
   
+  // Sauvegarde automatique des paramètres lorsqu'ils changent
+  useEffect(() => {
+    const success = sauvegarderParametres(
+      typeSystemeActuel,
+      parametresSystemeActuel,
+      parametresSystemeAutomatise,
+      parametresGeneraux
+    );
+    
+    if (success) {
+      // Notification discrète de sauvegarde
+      setUi(prev => ({
+        ...prev,
+        notification: {
+          type: 'info',
+          message: 'Paramètres sauvegardés automatiquement',
+          duree: 3000
+        }
+      }));
+    }
+  }, [typeSystemeActuel, parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux]);
+  
   // Calcul initial et lors des changements des paramètres principaux
   useEffect(() => {
     calculerROI();
@@ -343,16 +438,75 @@ const CalculateurPatesPapiers = () => {
     setParametresSystemeActuel,
     setParametresSystemeAutomatise,
     setParametresGeneraux,
+    setUi,
     changerOnglet,
     toggleDetails,
     
     // Fonctions de calcul
-    calculerROI
+    calculerROI,
+    
+    // Fonctions utilitaires
+    formaterMontant
   };
   
   return (
     <CalculateurPapierContext.Provider value={contextValue}>
       <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
+        {/* Notification */}
+        {ui.notification && (
+          <div className={`mb-4 p-3 rounded-lg ${
+            ui.notification.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+            ui.notification.type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+            'bg-blue-100 text-blue-800 border border-blue-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                {ui.notification.type === 'success' && (
+                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+                {ui.notification.type === 'error' && (
+                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                )}
+                {ui.notification.type === 'info' && (
+                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                  </svg>
+                )}
+                <span>{ui.notification.message}</span>
+              </div>
+              <button
+                onClick={() => setUi(prev => ({ ...prev, notification: null }))}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Affichage des erreurs */}
+        {ui.erreurs.length > 0 && (
+          <div className="mb-4 p-3 bg-red-100 text-red-800 border border-red-200 rounded-lg">
+            <h3 className="font-bold mb-2 flex items-center">
+              <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              {ui.erreurs.length} erreur(s) détectée(s)
+            </h3>
+            <ul className="list-disc list-inside pl-2">
+              {ui.erreurs.map((erreur, index) => (
+                <li key={index} className="text-sm">{erreur}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
         {/* En-tête */}
         <div className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg border border-green-200">
           <div className="flex justify-between items-start">
