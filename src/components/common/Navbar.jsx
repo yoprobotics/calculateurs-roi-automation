@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import logo from '../../logo.png';
 
 /**
  * Composant de barre de navigation
@@ -16,13 +15,16 @@ const Navbar = () => {
     window.location.reload();
   };
 
+  // URL absolue du logo sur GitHub
+  const logoUrl = "https://raw.githubusercontent.com/yoprobotics/calculateurs-roi-automation/main/src/logo.png";
+
   return (
     <nav className="bg-white shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex justify-between h-16">
           {/* Logo et nom - Actualise l'application au clic */}
           <div className="flex items-center cursor-pointer" onClick={refreshApp}>
-            <img src={logo} alt="YoProbotics" className="h-8 w-auto mr-3" />
+            <img src={logoUrl} alt="YoProbotics" className="h-8 w-auto mr-3" />
             <span className="text-xl font-semibold text-gray-800">Calculateurs ROI</span>
           </div>
           
