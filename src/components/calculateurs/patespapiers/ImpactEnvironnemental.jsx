@@ -1,52 +1,65 @@
-import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useCalculateurPapier } from '../../../context/CalculateurPapierContext';
+import React, { useContext, useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { CalculateurPapierContext } from './CalculateurPatesPapiers';
 
 const ImpactEnvironnemental = () => {
+  // Accès au contexte partagé
   const { 
     parametresSystemeActuel,
     parametresSystemeAutomatise,
     parametresGeneraux,
     resultats
-  } = useCalculateurPapier();
+  } = useContext(CalculateurPapierContext);
   
-  // Extraction des valeurs des paramètres du système actuel
-  const {
-    frequenceAccident: frequenceAccidentActuel,
-    coutMoyenAccident
-  } = parametresSystemeActuel;
-  
-  // Extraction des valeurs des paramètres du système automatisé
-  const {
-    reductionEnergie,
-    reductionEau,
-    reductionEmpreinteCO2,
-    reductionAccidents,
-    dureeVie
-  } = parametresSystemeAutomatise;
+  // Extraction des valeurs de résultats pour plus de lisibilité
+  const { 
+    economiesCO2, economiesSecurite, economiesTempsArret 
+  } = resultats;
   
   // Extraction des valeurs des paramètres généraux
   const { tonnageAnnuel } = parametresGeneraux;
   
-  // Extraction des résultats
-  const { 
-    economiesCO2,
-    economiesSecurite,
-    economiesTempsArret
-  } = resultats;
+  // Extraction des valeurs des paramètres du système actuel
+  const {
+    frequenceAccident, coutMoyenAccident
+  } = parametresSystemeActuel;
   
-  // Données pour le graphique de réduction des accidents
-  const dataReductionAccidents = [
-    { name: 'Système Actuel', value: frequenceAccidentActuel, fill: '#ef4444' },
-    { name: 'Solution Automatisée', value: frequenceAccidentActuel * (1 - reductionAccidents/100), fill: '#22c55e' }
-  ];
+  // Extraction des valeurs des paramètres du système automatisé
+  const {
+    reductionAccidents, reductionEmpreinteCO2, reductionEnergie,
+    reductionEau, dureeVie
+  } = parametresSystemeAutomatise;
   
-  // Données pour le graphique des économies environnementales
-  const dataEnvironnement = [
-    { name: 'Réduction CO2', value: reductionEmpreinteCO2 },
-    { name: 'Économie d\'énergie', value: reductionEnergie },
-    { name: 'Économie d\'eau', value: reductionEau }
-  ];
+  // Calcul des réductions annuelles
+  const reductionAccidentsAnnuels = frequenceAccident * reductionAccidents / 100;
+  const reductionCO2Annuelle = (tonnageAnnuel * reductionEmpreinteCO2 / 100);
+  const reductionEauAnnuelle = (tonnageAnnuel * reductionEau / 100);
+  
+  // Données pour le graphique d'économies de sécurité
+  const dataSecurite = useMemo(() => [
+    { name: 'Avant automatisation', accidents: frequenceAccident, fill: '#ef4444' },
+    { name: 'Après automatisation', accidents: frequenceAccident * (1 - reductionAccidents / 100), fill: '#22c55e' }
+  ], [frequenceAccident, reductionAccidents]);
+  
+  // Données pour le graphique d'impact environnemental cumulé
+  const dataEnvironnement = useMemo(() => {
+    const impactAnnees = [];
+    for (let annee = 1; annee <= dureeVie; annee++) {
+      impactAnnees.push({
+        annee: `Année ${annee}`,
+        co2: reductionCO2Annuelle * annee,
+        eau: reductionEauAnnuelle * annee
+      });
+    }
+    return impactAnnees;
+  }, [dureeVie, reductionCO2Annuelle, reductionEauAnnuelle]);
+  
+  // Données pour le graphique en camembert des économies
+  const dataCamembert = useMemo(() => [
+    { name: 'Économies d\'énergie', value: reductionEnergie, fill: '#22c55e' },
+    { name: 'Économies d\'eau', value: reductionEau, fill: '#3b82f6' },
+    { name: 'Réduction CO2', value: reductionEmpreinteCO2, fill: '#8b5cf6' }
+  ], [reductionEnergie, reductionEau, reductionEmpreinteCO2]);
   
   return (
     <div className="grid grid-cols-1 gap-8">
@@ -67,7 +80,7 @@ const ImpactEnvironnemental = () => {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="p-3 bg-red-50 rounded">
                   <p className="text-xs text-gray-500">Fréquence d'accidents</p>
-                  <p className="text-xl font-bold text-red-600">{frequenceAccidentActuel.toFixed(1)}<span className="text-xs font-normal ml-1">par an</span></p>
+                  <p className="text-xl font-bold text-red-600">{frequenceAccident.toFixed(1)}<span className="text-xs font-normal ml-1">par an</span></p>
                 </div>
                 <div className="p-3 bg-red-50 rounded">
                   <p className="text-xs text-gray-500">Coût moyen par accident</p>
@@ -80,30 +93,20 @@ const ImpactEnvironnemental = () => {
                 <p className="text-sm">Réduction des accidents : <span className="font-bold">{reductionAccidents}%</span></p>
                 <p className="text-sm">Économie annuelle estimée : <span className="font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economiesSecurite + economiesTempsArret)}</span></p>
               </div>
-              
-              <div className="h-60 mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-2 text-center">Comparaison de la fréquence d'accidents</h4>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dataReductionAccidents}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`${value.toFixed(1)} accidents/an`, 'Fréquence']} />
-                    <Bar dataKey="value" fill={(entry) => entry.fill} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
             </div>
             
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-6">
-              <h4 className="font-medium text-blue-800 mb-2">Dispositifs de sécurité intégrés</h4>
-              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
-                <li>Barrières immatérielles pour la détection de présence</li>
-                <li>Système d'arrêt d'urgence avec redondance</li>
-                <li>Capteurs de détection d'obstacles et de mouvement</li>
-                <li>Interface opérateur ergonomique</li>
-                <li>Formation complète à la sécurité incluse</li>
-              </ul>
+            <div className="h-64">
+              <h4 className="text-sm font-medium text-gray-600 mb-2 text-center">Fréquence des accidents par an</h4>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dataSecurite}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value.toFixed(1)} accidents/an`, 'Fréquence']} />
+                  <Legend />
+                  <Bar dataKey="accidents" fill={(entry) => entry.fill} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
           
@@ -127,77 +130,65 @@ const ImpactEnvironnemental = () => {
                   </p>
                 </div>
                 
-                <div className="p-3 bg-green-50 rounded">
-                  <p className="text-xs text-gray-500">Réduction de la consommation d'énergie</p>
+                <div className="p-3 bg-blue-50 rounded">
+                  <p className="text-xs text-gray-500">Économies d'eau</p>
                   <p className="flex justify-between">
-                    <span className="text-xl font-bold text-green-600">{reductionEnergie}%</span>
-                    <span className="text-sm font-medium text-green-700">{(tonnageAnnuel * reductionEnergie / 100).toFixed(0)} kWh par an</span>
+                    <span className="text-xl font-bold text-blue-600">{reductionEau}%</span>
+                    <span className="text-sm font-medium text-blue-700">{(reductionEauAnnuelle * dureeVie).toFixed(0)} tonnes sur {dureeVie} ans</span>
                   </p>
                 </div>
                 
-                <div className="p-3 bg-green-50 rounded">
-                  <p className="text-xs text-gray-500">Réduction de la consommation d'eau</p>
-                  <p className="flex justify-between">
-                    <span className="text-xl font-bold text-green-600">{reductionEau}%</span>
-                    <span className="text-sm font-medium text-green-700">{(tonnageAnnuel * reductionEau / 1000).toFixed(0)} m³ par an</span>
-                  </p>
+                <div className="p-3 bg-purple-50 rounded">
+                  <p className="text-xs text-gray-500">Économies d'énergie</p>
+                  <p className="text-xl font-bold text-purple-600">{reductionEnergie}%</p>
                 </div>
-              </div>
-              
-              <div className="h-60 mt-6">
-                <h4 className="text-sm font-medium text-gray-700 mb-2 text-center">Pourcentage de réduction par catégorie</h4>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dataEnvironnement}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`${value}%`, 'Réduction']} />
-                    <Bar dataKey="value" fill="#10b981" />
-                  </BarChart>
-                </ResponsiveContainer>
               </div>
             </div>
             
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200 mt-6">
-              <h4 className="font-medium text-green-800 mb-2">Engagement environnemental</h4>
-              <p className="text-sm mb-3">
-                Notre solution s'inscrit dans une démarche de développement durable en limitant considérablement :
-              </p>
-              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
-                <li>Les émissions de gaz à effet de serre</li>
-                <li>La consommation d'eau et d'énergie</li>
-                <li>Les déchets liés aux rejets de production</li>
-                <li>L'utilisation de ressources non renouvelables</li>
-              </ul>
-              <p className="text-sm mt-3 text-green-700 font-medium">
-                Impact sur {dureeVie} ans : réduction de {economiesCO2.toFixed(0)} tonnes de CO2
-              </p>
+            <div className="h-64">
+              <h4 className="text-sm font-medium text-gray-600 mb-2 text-center">Répartition des économies environnementales</h4>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={dataCamembert}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {dataCamembert.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value}%`, 'Réduction']} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
         
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h3 className="font-medium text-gray-800 mb-3">Conformité réglementaire et certification</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Normes de sécurité</h4>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li>ISO 13849-1 (PLd) - Sécurité des machines</li>
-                <li>IEC 62061 (SIL 2) - Sécurité fonctionnelle</li>
-                <li>ISO 10218 - Exigences de sécurité pour les robots industriels</li>
-                <li>CSA/ANSI RIA R15.06 - Normes nord-américaines</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Certification environnementale</h4>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li>ISO 14001 - Système de management environnemental</li>
-                <li>BREEAM - Certification pour construction durable</li>
-                <li>Certification Energy Star pour efficacité énergétique</li>
-                <li>Empreinte carbone vérifiée selon ISO 14064</li>
-              </ul>
-            </div>
+        <div className="mb-8">
+          <h3 className="font-medium text-gray-700 mb-3">Impact environnemental cumulé</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dataEnvironnement}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="annee" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="co2" name="Réduction CO2 (tonnes)" fill="#8b5cf6" />
+                <Bar dataKey="eau" name="Économies d'eau (tonnes)" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
+          <p className="text-sm text-gray-600 mt-2 italic">
+            * Les valeurs représentent les économies cumulatives au fil des années.
+          </p>
         </div>
       </div>
     </div>
