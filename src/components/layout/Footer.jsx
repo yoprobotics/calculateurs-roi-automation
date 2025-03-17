@@ -39,10 +39,10 @@ const Footer = () => {
                 <a href="/calculateurs/pates-papiers" className="hover:text-white">Industrie Pâtes et Papiers</a>
               </li>
               <li>
-                <a href="#" className="hover:text-white text-gray-500">Industrie Agroalimentaire (Bientôt)</a>
+                <a href="/calculateurs/agroalimentaire" className="hover:text-white text-gray-500">Industrie Agroalimentaire (Bientôt)</a>
               </li>
               <li>
-                <a href="#" className="hover:text-white text-gray-500">Industrie Automobile (Bientôt)</a>
+                <a href="/calculateurs/automobile" className="hover:text-white text-gray-500">Industrie Automobile (Bientôt)</a>
               </li>
             </ul>
           </div>
