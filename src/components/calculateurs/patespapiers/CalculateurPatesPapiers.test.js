@@ -1,10 +1,24 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import CalculateurPatesPapiers from './CalculateurPatesPapiers';
-import * as patesPapiersHelpers from '../../../utils/patesPapiersHelpers';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import CalculateurPatesPapiers, { CalculateurPapierContext } from './CalculateurPatesPapiers';
+import { sauvegarderParametres, chargerParametres } from '../../../utils/patesPapiersHelpers';
 
-// Mock du localStorage
+// Mock des fonctions d'utilitaires
+jest.mock('../../../utils/patesPapiersHelpers', () => {
+  return {
+    ...jest.requireActual('../../../utils/patesPapiersHelpers'),
+    sauvegarderParametres: jest.fn().mockReturnValue(true),
+    chargerParametres: jest.fn().mockReturnValue(null)
+  };
+});
+
+// Mock des composants enfants
+jest.mock('./ParametresSysteme', () => () => <div data-testid="parametres-systeme">Paramètres Système</div>);
+jest.mock('./ComparatifSystemes', () => () => <div data-testid="comparatif-systemes">Comparatif Systèmes</div>);
+jest.mock('./ResultatsFinanciers', () => () => <div data-testid="resultats-financiers">Résultats Financiers</div>);
+jest.mock('./ImpactEnvironnemental', () => () => <div data-testid="impact-environnemental">Impact Environnemental</div>);
+
+// Mock de localStorage pour les tests
 const localStorageMock = (function() {
   let store = {};
   return {
@@ -25,164 +39,128 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 });
 
-// Mock des helpers
-jest.mock('../../../utils/patesPapiersHelpers', () => ({
-  calculerROIPatesPapiers: jest.fn().mockReturnValue({
-    roi: 120,
-    delaiRecuperation: 1.8,
-    van: 250000,
-    tri: 25,
-    fluxTresorerie: [{annee: 1, cumulFluxTresorerie: 100000}],
-    economiesCO2: 500,
-    differenceProduction: 40000,
-    economieAnnuelle: 80000,
-    reductionMainOeuvre: 110000,
-    economiesSecurite: 25000,
-    economiesQualite: 15000,
-    economiesTempsArret: 10000
-  }),
-  ajusterParametresSystemeActuel: jest.fn(params => params),
-  preparerDonneesGraphiques: jest.fn().mockReturnValue({
-    dataComparaisonCapacite: [
-      {name: 'Système Actuel', value: 45, fill: '#ef4444'},
-      {name: 'Solution Automatisée', value: 120, fill: '#22c55e'}
-    ],
-    dataComparaisonEmployes: [
-      {name: 'Système Actuel', value: 2.5, fill: '#ef4444'},
-      {name: 'Solution Automatisée', value: 0.5, fill: '#22c55e'}
-    ],
-    dataComparaisonRejets: [],
-    dataComparaisonAccidents: [],
-    dataEconomies: [],
-    dataCumulatif: []
-  }),
-  sauvegarderParametres: jest.fn(),
-  chargerParametres: jest.fn().mockReturnValue(null),
-  validerChampNumerique: jest.fn().mockReturnValue(true),
-  validerParametres: jest.fn().mockReturnValue({})
-}));
-
-// Mock de recharts
-jest.mock('recharts', () => {
-  const OriginalModule = jest.requireActual('recharts');
-  return {
-    ...OriginalModule,
-    ResponsiveContainer: ({ children }) => <div data-testid="responsive-container">{children}</div>,
-    BarChart: ({ children }) => <div data-testid="bar-chart">{children}</div>,
-    LineChart: ({ children }) => <div data-testid="line-chart">{children}</div>,
-    Bar: () => <div data-testid="bar"></div>,
-    Line: () => <div data-testid="line"></div>,
-    XAxis: () => <div data-testid="x-axis"></div>,
-    YAxis: () => <div data-testid="y-axis"></div>,
-    CartesianGrid: () => <div data-testid="cartesian-grid"></div>,
-    Tooltip: () => <div data-testid="tooltip"></div>,
-    Legend: () => <div data-testid="legend"></div>
-  };
-});
-
 describe('CalculateurPatesPapiers', () => {
   beforeEach(() => {
+    // Réinitialisation des mocks avant chaque test
     jest.clearAllMocks();
-    window.localStorage.clear();
   });
-
-  it('rend correctement le composant', () => {
-    render(<CalculateurPatesPapiers />);
-    expect(screen.getByText(/Solution Automatisée de Désempilement et Débrochage de Ballots/i)).toBeInTheDocument();
-  });
-
-  it('affiche les quatre onglets de navigation', () => {
-    render(<CalculateurPatesPapiers />);
-    expect(screen.getByText('Vue générale')).toBeInTheDocument();
-    expect(screen.getByText('Analyse comparative')).toBeInTheDocument();
-    expect(screen.getByText('Détails financiers')).toBeInTheDocument();
-    expect(screen.getByText('Sécurité & Environnement')).toBeInTheDocument();
-  });
-
-  it('change d\'onglet lorsqu\'on clique sur les boutons', async () => {
+  
+  test('affiche le composant ParametresSysteme par défaut', () => {
     render(<CalculateurPatesPapiers />);
     
-    // Par défaut, l'onglet "Vue générale" est actif
-    expect(screen.getByText('Paramètres de base')).toBeInTheDocument();
+    expect(screen.getByTestId('parametres-systeme')).toBeInTheDocument();
+    expect(screen.queryByTestId('comparatif-systemes')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('resultats-financiers')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('impact-environnemental')).not.toBeInTheDocument();
+  });
+  
+  test('change d\'onglet lors du clic sur les boutons de navigation', () => {
+    render(<CalculateurPatesPapiers />);
     
-    // Cliquer sur l'onglet "Analyse comparative"
+    // D'abord l'onglet Paramètres est affiché
+    expect(screen.getByTestId('parametres-systeme')).toBeInTheDocument();
+    
+    // Clic sur l'onglet Comparatif
     fireEvent.click(screen.getByText('Analyse comparative'));
+    expect(screen.getByTestId('comparatif-systemes')).toBeInTheDocument();
+    expect(screen.queryByTestId('parametres-systeme')).not.toBeInTheDocument();
     
-    // Attendre que le contenu de l'onglet "Analyse comparative" soit affiché
-    await waitFor(() => {
-      expect(screen.getByText('Analyse comparative détaillée')).toBeInTheDocument();
-    });
-  });
-
-  it('utilise les fonctions helpers pour les calculs', () => {
-    render(<CalculateurPatesPapiers />);
-    expect(patesPapiersHelpers.calculerROIPatesPapiers).toHaveBeenCalled();
-    expect(patesPapiersHelpers.preparerDonneesGraphiques).toHaveBeenCalled();
-  });
-
-  it('affiche les résultats de calcul', () => {
-    render(<CalculateurPatesPapiers />);
-    expect(screen.getByText('120.00%')).toBeInTheDocument(); // ROI
-    expect(screen.getByText('1.80 ans')).toBeInTheDocument(); // Délai de récupération
-  });
-
-  it('change le type de système lorsqu\'on clique sur les boutons', () => {
-    render(<CalculateurPatesPapiers />);
+    // Clic sur l'onglet Financier
+    fireEvent.click(screen.getByText('Détails financiers'));
+    expect(screen.getByTestId('resultats-financiers')).toBeInTheDocument();
+    expect(screen.queryByTestId('comparatif-systemes')).not.toBeInTheDocument();
     
-    // Cliquer sur le type de système "Semi-automatisé"
-    fireEvent.click(screen.getByText('Semi-automatisé'));
-    
-    // Vérifier que la fonction ajusterParametresSystemeActuel a été appelée
-    expect(patesPapiersHelpers.ajusterParametresSystemeActuel).toHaveBeenCalledWith('semi-auto', expect.any(Object));
+    // Clic sur l'onglet Sécurité
+    fireEvent.click(screen.getByText('Sécurité & Environnement'));
+    expect(screen.getByTestId('impact-environnemental')).toBeInTheDocument();
+    expect(screen.queryByTestId('resultats-financiers')).not.toBeInTheDocument();
   });
-
-  it('permet de modifier les paramètres de base', () => {
+  
+  test('charge les paramètres sauvegardés au démarrage', () => {
+    // Configuration du mock pour simuler des paramètres sauvegardés
+    const parametresMock = {
+      typeSystemeActuel: 'semi-auto',
+      parametresSystemeActuel: { capacite: 80 },
+      parametresSystemeAutomatise: { capaciteTraitement: 150 },
+      parametresGeneraux: { tonnageAnnuel: 25000 },
+      dateEnregistrement: new Date().toISOString()
+    };
+    
+    chargerParametres.mockReturnValueOnce(parametresMock);
+    
     render(<CalculateurPatesPapiers />);
     
-    // Trouver le champ de saisie pour la capacité actuelle
-    const capaciteInput = screen.getByLabelText('Capacité actuelle (ballots/heure)');
+    // Vérification que la fonction chargerParametres a été appelée
+    expect(chargerParametres).toHaveBeenCalledTimes(1);
     
-    // Modifier la valeur
-    fireEvent.change(capaciteInput, { target: { value: '60' } });
-    
-    // Vérifier que la valeur a été mise à jour
-    expect(capaciteInput.value).toBe('60');
+    // Vérification que la notification de chargement réussi est affichée
+    expect(screen.getByText(/Paramètres chargés/)).toBeInTheDocument();
   });
-
-  it('sauvegarde les paramètres dans le localStorage', async () => {
-    render(<CalculateurPatesPapiers />);
+  
+  test('sauvegarde automatiquement les paramètres lorsqu\'ils changent', async () => {
+    // On rend le composant dans un wrapper qui nous donne accès au contexte
+    const TestComponent = () => {
+      const context = React.useContext(CalculateurPapierContext);
+      
+      return (
+        <div>
+          <button
+            data-testid="change-capacite"
+            onClick={() => context.setParametresSystemeActuel({
+              ...context.parametresSystemeActuel,
+              capacite: 60
+            })}
+          >
+            Modifier Capacité
+          </button>
+          <div data-testid="capacite-actuelle">{context.parametresSystemeActuel.capacite}</div>
+        </div>
+      );
+    };
     
-    // Attendre que la sauvegarde soit effectuée
-    await waitFor(() => {
-      expect(patesPapiersHelpers.sauvegarderParametres).toHaveBeenCalled();
-    });
+    render(
+      <CalculateurPatesPapiers>
+        <TestComponent />
+      </CalculateurPatesPapiers>
+    );
+    
+    // Simuler le changement d'un paramètre
+    fireEvent.click(screen.getByTestId('change-capacite'));
+    
+    // Vérification que la fonction sauvegarderParametres est appelée
+    await waitFor(() => expect(sauvegarderParametres).toHaveBeenCalled());
+    
+    // Vérification que la notification est affichée
+    expect(screen.getByText(/Paramètres sauvegardés automatiquement/)).toBeInTheDocument();
   });
-
-  it('essaie de charger les paramètres depuis le localStorage au chargement', () => {
-    render(<CalculateurPatesPapiers />);
-    expect(patesPapiersHelpers.chargerParametres).toHaveBeenCalled();
-  });
-
-  it('affiche/masque les paramètres avancés lorsqu\'on clique sur le bouton', async () => {
-    render(<CalculateurPatesPapiers />);
+  
+  test('calcule correctement les résultats initiaux', () => {
+    // On rend le composant pour accéder au contexte
+    const TestComponent = () => {
+      const context = React.useContext(CalculateurPapierContext);
+      
+      return (
+        <div>
+          <div data-testid="roi">{context.resultats.roi.toFixed(2)}</div>
+          <div data-testid="delai-recuperation">{context.resultats.delaiRecuperation.toFixed(2)}</div>
+          <div data-testid="van">{context.resultats.van.toFixed(2)}</div>
+        </div>
+      );
+    };
     
-    // Les paramètres avancés sont masqués par défaut
-    expect(screen.queryByText('Paramètres avancés')).not.toBeInTheDocument();
+    render(
+      <CalculateurPatesPapiers>
+        <TestComponent />
+      </CalculateurPatesPapiers>
+    );
     
-    // Cliquer sur le bouton "Afficher les paramètres avancés"
-    fireEvent.click(screen.getByText('Afficher les paramètres avancés'));
+    // Vérification que les résultats ne sont pas nuls
+    const roi = screen.getByTestId('roi').textContent;
+    const delaiRecuperation = screen.getByTestId('delai-recuperation').textContent;
+    const van = screen.getByTestId('van').textContent;
     
-    // Attendre que les paramètres avancés soient affichés
-    await waitFor(() => {
-      expect(screen.getByText('Paramètres avancés')).toBeInTheDocument();
-    });
-    
-    // Cliquer à nouveau pour masquer les paramètres avancés
-    fireEvent.click(screen.getByText('Masquer les paramètres avancés'));
-    
-    // Attendre que les paramètres avancés soient masqués
-    await waitFor(() => {
-      expect(screen.queryByText('Paramètres avancés')).not.toBeInTheDocument();
-    });
+    expect(parseFloat(roi)).toBeGreaterThan(0);
+    expect(parseFloat(delaiRecuperation)).toBeGreaterThan(0);
+    expect(parseFloat(van)).not.toBe(0);
   });
 });
