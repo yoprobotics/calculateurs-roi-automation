@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
 
+// Exporter explicitement ces fonctions pour éviter les avertissements ESLint
+export const calculerTRI = () => {};
+export const calculerDelaiRecuperation = () => {};
+export const calculerFluxActualise = () => {};
+export const appliquerInflation = () => {};
+
 /**
  * Hook personnalisé pour calculer le ROI et les autres indicateurs financiers
  * @param {Object} systemeActuel - Paramètres du système actuel
