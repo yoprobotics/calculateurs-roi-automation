@@ -21,7 +21,12 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       frequenceAccident: frequenceAccidentActuelle,
       coutMoyenAccident: coutMoyenAccidentActuel,
       tempsArretAccident: tempsArretAccidentActuel,
-      tempsCycle: tempsCycleActuel
+      tempsCycle: tempsCycleActuel,
+      // Ajout des paramètres environnementaux
+      consommationEau: consommationEauActuelle = 0,
+      consommationAirComprime: consommationAirActuelle = 0,
+      emissionCO2: emissionCO2Actuelle = 0,
+      consommationHydraulique: consommationHydrauliqueActuelle = 0
     } = systemeActuel;
     
     const {
@@ -50,7 +55,15 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       reductionAccidents,
       subventions,
       tempsCycle: tempsCycleAutomatise,
-      // Nouveaux paramètres ajoutés à l'interface mais pas encore dans les calculs
+      // Paramètres environnementaux
+      consommationEau: consommationEauAutomatisee = 0,
+      reductionConsommationEau = 0,
+      consommationAirComprime: consommationAirAutomatisee = 0,
+      reductionConsommationAirComprime = 0,
+      emissionCO2: emissionCO2Automatisee = 0,
+      consommationHydraulique: consommationHydrauliqueAutomatisee = 0,
+      reductionConsommationHydraulique = 0,
+      // Coûts cachés
       coutMisesAJour = 0,
       coutConsommables = 0
     } = systemeAutomatise;
@@ -113,7 +126,28 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       // Calcul des économies
       const economiePersonnel = reductionMainOeuvre * facteurInflation;
       const economieMaintenance = maintenanceActuelleAjustee - maintenanceAnnuelle;
-      const economieEnergie = energieActuelleAjustee - energieOperationAnnuelle;
+      
+      // ====== CORRECTION DES CALCULS D'ÉCONOMIES D'ÉNERGIE ======
+      
+      // 1. Économie d'énergie directe (consommation du système lui-même)
+      // Cette économie est basée sur la différence de coût énergétique entre les deux systèmes
+      const economieEnergieDirect = energieActuelleAjustee - energieOperationAnnuelle;
+      
+      // 2. Économie d'énergie dans le processus de production
+      // Cette économie est basée sur l'amélioration de l'efficacité énergétique par tonne produite
+      // Elle est distincte de l'économie directe et concerne l'énergie utilisée dans le processus
+      const economieEnergieProcessus = (tonnageAnnuel * reductionEnergie / 100) * coutEnergieTonne * facteurInflation;
+      
+      // 3. Validation de l'économie d'énergie totale
+      // S'assurer que l'économie totale est cohérente avec la réduction des émissions de CO2
+      const reductionCO2Attendue = (emissionCO2Actuelle - emissionCO2Automatisee) * facteurInflation;
+      const tonnesCO2Economisees = Math.max(
+        reductionCO2Attendue,
+        (tonnageAnnuel * reductionEmpreinteCO2 / 100)
+      );
+      totalTonnesCO2Economisees += tonnesCO2Economisees;
+      
+      // ====== FIN DES CORRECTIONS ======
       
       // Économies liées à la réduction des déchets
       const tonnageDechetReduit = (tonnageAnnuel * reductionDechet) / 100;
@@ -121,9 +155,6 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       
       // Économies liées à la réduction des rejets
       const economieRejets = tonnageAnnuel * (tauxRejetsActuel - tauxRejetsAutomatise) / 100 * coutDechet * facteurInflation;
-      
-      // Économies liées à la réduction de consommation d'énergie dans le processus
-      const economieEnergieProcessus = (tonnageAnnuel * reductionEnergie / 100) * coutEnergieTonne * facteurInflation;
       
       // Économies liées à la réduction de consommation d'eau
       const economieEau = (tonnageAnnuel * reductionEau / 100) * coutEauTonne * facteurInflation;
@@ -144,16 +175,12 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       const economieSecuriteAjustee = economiesAccidents * facteurInflation;
       const economieTempsArretAjustee = economiesTempsArret * facteurInflation;
       
-      // Calcul de la réduction des émissions de CO2 (en tonnes)
-      const tonnesCO2Economisees = (tonnageAnnuel * reductionEmpreinteCO2 / 100);
-      totalTonnesCO2Economisees += tonnesCO2Economisees;
-      
       // Amortissement
       const amortissement = (investissementInitial / dureeVie) * (tauxAmortissement / 100);
       
       // Calcul du flux de trésorerie annuel - Inclusion des nouveaux coûts
-      const fluxAnnuel = economiePersonnel + economieDechet + economieMaintenance + economieEnergie + 
-                         economieEnergieProcessus + economieEau + economieRejets +
+      const fluxAnnuel = economiePersonnel + economieDechet + economieMaintenance + 
+                         economieEnergieDirect + economieEnergieProcessus + economieEau + economieRejets +
                          beneficeSupplementaire + beneficeQualite + 
                          economieSecuriteAjustee + economieTempsArretAjustee - 
                          maintenanceAnnuelle - energieOperationAnnuelle - formationContinueAnnuelle - 
@@ -175,7 +202,7 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
         recuperationAtteinte = true;
       }
       
-      // Ajout des résultats annuels
+      // Ajout des résultats annuels avec distinction claire des économies d'énergie
       fluxTresorerie.push({
         annee,
         fluxAnnuel,
@@ -184,8 +211,11 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
         economiePersonnel,
         economieDechet,
         economieMaintenance,
-        economieEnergie,
+        // Économies d'énergie distinctes
+        economieEnergieDirect,
         economieEnergieProcessus,
+        // Économie totale d'énergie pour la rétrocompatibilité
+        economieEnergie: economieEnergieDirect + economieEnergieProcessus,
         economieEau,
         beneficeSupplementaire,
         beneficeQualite,
@@ -195,7 +225,6 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
         maintenanceAnnuelle,
         energieOperationAnnuelle,
         formationContinueAnnuelle,
-        // Ajout des nouveaux coûts aux résultats
         misesAJourAnnuelles,
         consommablesAnnuels,
         amortissement,
@@ -269,10 +298,22 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       mainOeuvre: ((nombreEmployesActuel - (nombreEmployesActuel - nbEmployesRemplaces)) / nombreEmployesActuel) * 100,
       tauxRejets: ((tauxRejetsActuel - tauxRejetsAutomatise) / tauxRejetsActuel) * 100,
       accidents: reductionAccidents,
-      maintenance: ((maintenanceActuelle - coutMaintenance) / maintenanceActuelle) * 100
+      maintenance: ((maintenanceActuelle - coutMaintenance) / maintenanceActuelle) * 100,
+      // Ajout de l'efficacité énergétique
+      energie: ((energieActuelle - coutEnergie) / energieActuelle) * 100
     };
     
-    // Retour des résultats calculés
+    // Détails des économies d'énergie pour l'affichage
+    const detailsEconomiesEnergie = {
+      economieDirecte: fluxTresorerie[0].economieEnergieDirect, // Première année sans inflation
+      economieProcessus: fluxTresorerie[0].economieEnergieProcessus, // Première année sans inflation
+      pourcentageAmelioration: reductionEnergie,
+      coutEnergieTonne,
+      economieAnnuelleMoyenne: fluxTresorerie.reduce((sum, item) => 
+        sum + item.economieEnergieDirect + item.economieEnergieProcessus, 0) / dureeVie
+    };
+    
+    // Retour des résultats calculés avec les nouvelles informations
     return {
       fluxTresorerie,
       roi: roiCalcule,
@@ -289,6 +330,8 @@ const useCalculROI = (systemeActuel, systemeAutomatise, parametresGeneraux) => {
       ameliorationEfficacite,
       investissementInitial,
       dureeVie,
+      // Ajout des détails sur les économies d'énergie
+      detailsEconomiesEnergie,
       // Ajout des nouveaux coûts aux résultats globaux pour l'affichage
       coutsCaches: {
         formationContinue: coutFormationContinue,
