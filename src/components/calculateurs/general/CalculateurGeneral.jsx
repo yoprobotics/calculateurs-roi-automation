@@ -1,55 +1,377 @@
-import React, { useState } from 'react';
-import { CalculateurGeneralProvider, useCalculateurGeneral } from '../../../context/CalculateurGeneralContext';
-import SystemeActuel from './SystemeActuel';
-import SystemeAutomatise from './SystemeAutomatise';
-import ResultatsROI from './ResultatsROI';
-import GraphiquesROI from './GraphiquesROI';
-import OngletProduction from './OngletProduction';
-import OngletSecurite from './OngletSecurite';
-import NavigationParAncres from './NavigationParAncres';
-import DocumentationLink from '../../communs/DocumentationLink';
+import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { calculerTRI, calculerDelaiRecuperation, calculerFluxActualise, appliquerInflation } from '../../../utils/calculationHelpers';
 
 /**
- * Conteneur interne du calculateur général - Vue unique et comparative
- * @returns {JSX.Element} - Contenu du calculateur
+ * Calculateur général pour l'automatisation industrielle
+ * Composant principal pour l'estimation du ROI des projets d'automatisation
  */
-const CalculateurGeneralContent = () => {
-  const { resultats } = useCalculateurGeneral();
-  const [sectionActive, setSectionActive] = useState('parametres');
-  const [isDocumentationOpen, setIsDocumentationOpen] = useState(false);
-
-  // Déterminer si le projet est recommandable
-  const projetRecommandable = resultats.van > 0 && resultats.delaiRecuperation < resultats.dureeVie;
-
-  return (
-    <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto relative">
-      <h1 className="text-2xl font-bold text-blue-800 mb-6 text-center">Calculateur de Retour sur Investissement pour l'Automatisation Industrielle</h1>
-
-      {/* Bannière de documentation */}
-      <div className="mb-8 bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-xl font-bold text-blue-800 mb-2">Pourquoi investir dans l'automatisation?</h3>
-            <p className="mb-2">L'automatisation industrielle permet d'améliorer la productivité, la qualité et la rentabilité de vos opérations tout en réduisant les coûts opérationnels.</p>
-          </div>
-          <div className="flex flex-col space-y-2">
-            <DocumentationLink 
-              document="formules-financieres.md" 
-              label="Documentation des formules" 
-              className="font-medium"
-            />
-            <button 
-              onClick={() => setIsDocumentationOpen(!isDocumentationOpen)}
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {isDocumentationOpen ? 'Masquer l\'aide' : 'Afficher l\'aide'}
-            </button>
-          </div>
-        </div>
+const CalculateurGeneral = () => {
+  // États pour les données d'entrée - Investissement
+  const [coutSysteme, setCoutSysteme] = useState(150000);
+  const [coutInstallation, setCoutInstallation] = useState(25000);
+  const [coutIngenierie, setCoutIngenierie] = useState(20000);
+  const [coutFormation, setCoutFormation] = useState(10000);
+  const [coutMaintenance, setCoutMaintenance] = useState(5000);
+  const [coutEnergie, setCoutEnergie] = useState(3000);
+  const [dureeVie, setDureeVie] = useState(10);
+  const [tauxAmortissement, setTauxAmortissement] = useState(20);
+  const [subventions, setSubventions] = useState(0);
+  
+  // États pour les données d'entrée - Économies
+  const [coutMainOeuvre, setCoutMainOeuvre] = useState(45000);
+  const [nbEmployesRemplaces, setNbEmployesRemplaces] = useState(1.5);
+  const [coutErrorHumaine, setCoutErrorHumaine] = useState(15000);
+  const [augmentationProduction, setAugmentationProduction] = useState(15);
+  const [tauxProblemeQualite, setTauxProblemeQualite] = useState(8);
+  const [coutQualite, setCoutQualite] = useState(20000);
+  const [production, setProduction] = useState(100000);
+  const [margeUnitaire, setMargeUnitaire] = useState(0.2);
+  const [tauxInflation, setTauxInflation] = useState(2);
+  const [tauxActualisation, setTauxActualisation] = useState(5);
+  
+  // États pour les résultats
+  const [resultatAnnuel, setResultatAnnuel] = useState([]);
+  const [roi, setRoi] = useState(0);
+  const [delaiRecuperation, setDelaiRecuperation] = useState(0);
+  const [van, setVan] = useState(0);
+  const [tri, setTri] = useState(0);
+  
+  // États pour la comparaison de scénarios
+  const [scenarios, setScenarios] = useState([]);
+  const [scenarioActif, setScenarioActif] = useState('actuel');
+  const [nomScenario, setNomScenario] = useState('Scénario de base');
+  const [analyseMode, setAnalyseMode] = useState('standard'); // 'standard', 'comparaison', 'sensibilite'
+  const [parametreSensibilite, setParametreSensibilite] = useState('coutSysteme');
+  const [resultatsSensibilite, setResultatsSensibilite] = useState([]);
+  const [viewMode, setViewMode] = useState('basique'); // 'basique', 'avance'
+  
+  // Fonction pour calculer l'analyse de sensibilité
+  const calculerSensibilite = () => {
+    const variations = [-50, -30, -20, -10, 0, 10, 20, 30, 50];
+    const resultats = [];
+    
+    // Valeur actuelle du paramètre
+    const valeurBase = {
+      coutSysteme, 
+      coutInstallation, 
+      coutIngenierie, 
+      coutFormation,
+      coutMaintenance, 
+      coutEnergie, 
+      nbEmployesRemplaces,
+      augmentationProduction,
+      coutMainOeuvre,
+      production
+    }[parametreSensibilite];
+    
+    // Pour chaque variation, calculer les nouveaux résultats
+    for (const variation of variations) {
+      // Appliquer la variation
+      const facteur = 1 + variation / 100;
+      const valeurModifiee = valeurBase * facteur;
+      
+      // Créer un clone des états actuels
+      const nouveauParams = {
+        coutSysteme, 
+        coutInstallation, 
+        coutIngenierie, 
+        coutFormation,
+        coutMaintenance, 
+        coutEnergie, 
+        dureeVie,
+        tauxAmortissement,
+        coutMainOeuvre,
+        nbEmployesRemplaces,
+        coutErrorHumaine,
+        augmentationProduction,
+        tauxProblemeQualite,
+        coutQualite,
+        production,
+        margeUnitaire,
+        tauxInflation,
+        tauxActualisation,
+        subventions
+      };
+      
+      // Mettre à jour le paramètre concerné
+      nouveauParams[parametreSensibilite] = valeurModifiee;
+      
+      // Calculer ROI, VAN, délai de récupération avec ces nouveaux paramètres
+      const investissementInitial = nouveauParams.coutSysteme + nouveauParams.coutInstallation + 
+                                   nouveauParams.coutIngenierie + nouveauParams.coutFormation - 
+                                   nouveauParams.subventions;
+      
+      let fluxTresorerie = [];
+      let cumulFluxTresorerie = 0;
+      let valeurActuelleNette = -investissementInitial;
+      let periodeRecuperation = nouveauParams.dureeVie;
+      let recuperationAtteinte = false;
+      
+      // Calcul des flux de trésorerie annuels
+      for (let annee = 1; annee <= nouveauParams.dureeVie; annee++) {
+        // Calcul des coûts ajustés avec l'inflation
+        const facteurInflation = Math.pow(1 + nouveauParams.tauxInflation / 100, annee - 1);
+        const maintenanceAnnuelle = nouveauParams.coutMaintenance * facteurInflation;
+        const energieAnnuelle = nouveauParams.coutEnergie * facteurInflation;
+        const coutEmployeAnnuel = nouveauParams.coutMainOeuvre * facteurInflation;
         
+        // Calcul des économies et bénéfices
+        const economiePersonnel = coutEmployeAnnuel * nouveauParams.nbEmployesRemplaces;
+        const economieErreurs = nouveauParams.coutErrorHumaine * facteurInflation;
+        const economieQualite = nouveauParams.production * (nouveauParams.tauxProblemeQualite / 100) * 
+                              (nouveauParams.coutQualite / nouveauParams.production) * facteurInflation;
+        
+        const productionSupplementaire = nouveauParams.production * (nouveauParams.augmentationProduction / 100);
+        const beneficeSupplementaire = productionSupplementaire * nouveauParams.margeUnitaire * facteurInflation;
+        
+        const amortissement = (investissementInitial / nouveauParams.dureeVie) * (nouveauParams.tauxAmortissement / 100);
+        
+        // Calcul du flux de trésorerie annuel
+        const fluxAnnuel = economiePersonnel + economieErreurs + economieQualite + 
+                         beneficeSupplementaire - maintenanceAnnuelle - energieAnnuelle + amortissement;
+        
+        // Flux actualisé
+        const facteurActualisation = Math.pow(1 + nouveauParams.tauxActualisation / 100, annee);
+        const fluxActualise = fluxAnnuel / facteurActualisation;
+        
+        // VAN cumulative
+        valeurActuelleNette += fluxActualise;
+        
+        // Délai de récupération
+        cumulFluxTresorerie += fluxAnnuel;
+        if (cumulFluxTresorerie >= investissementInitial && !recuperationAtteinte) {
+          const cumulPrecedent = cumulFluxTresorerie - fluxAnnuel;
+          const fractionAnnee = (investissementInitial - cumulPrecedent) / fluxAnnuel;
+          periodeRecuperation = annee - 1 + fractionAnnee;
+          recuperationAtteinte = true;
+        }
+        
+        fluxTresorerie.push({ annee, fluxAnnuel, fluxActualise, cumulFluxTresorerie });
+      }
+      
+      // Calcul du ROI
+      const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
+      const roiCalcule = (totalBenefices / investissementInitial) * 100;
+      
+      // Ajouter les résultats à notre tableau
+      resultats.push({
+        variation,
+        roi: roiCalcule,
+        delaiRecuperation: periodeRecuperation,
+        van: valeurActuelleNette
+      });
+    }
+    
+    setResultatsSensibilite(resultats);
+  };
+  
+  // Fonction pour sauvegarder un scénario
+  const sauvegarderScenario = () => {
+    const scenarioActuel = {
+      id: Date.now().toString(),
+      nom: nomScenario,
+      parametres: {
+        coutSysteme,
+        coutInstallation,
+        coutIngenierie,
+        coutFormation,
+        coutMaintenance,
+        coutEnergie,
+        dureeVie,
+        tauxAmortissement,
+        coutMainOeuvre,
+        nbEmployesRemplaces,
+        coutErrorHumaine,
+        augmentationProduction,
+        tauxProblemeQualite,
+        coutQualite,
+        production,
+        margeUnitaire,
+        tauxInflation,
+        tauxActualisation,
+        subventions
+      },
+      resultats: {
+        roi,
+        delaiRecuperation,
+        van,
+        tri
+      }
+    };
+    
+    setScenarios([...scenarios, scenarioActuel]);
+  };
+  
+  // Fonction pour charger un scénario
+  const chargerScenario = (scenarioId) => {
+    const scenario = scenarios.find(s => s.id === scenarioId);
+    if (scenario) {
+      const { parametres } = scenario;
+      
+      setCoutSysteme(parametres.coutSysteme);
+      setCoutInstallation(parametres.coutInstallation);
+      setCoutIngenierie(parametres.coutIngenierie);
+      setCoutFormation(parametres.coutFormation);
+      setCoutMaintenance(parametres.coutMaintenance);
+      setCoutEnergie(parametres.coutEnergie);
+      setDureeVie(parametres.dureeVie);
+      setTauxAmortissement(parametres.tauxAmortissement);
+      setCoutMainOeuvre(parametres.coutMainOeuvre);
+      setNbEmployesRemplaces(parametres.nbEmployesRemplaces);
+      setCoutErrorHumaine(parametres.coutErrorHumaine);
+      setAugmentationProduction(parametres.augmentationProduction);
+      setTauxProblemeQualite(parametres.tauxProblemeQualite);
+      setCoutQualite(parametres.coutQualite);
+      setProduction(parametres.production);
+      setMargeUnitaire(parametres.margeUnitaire);
+      setTauxInflation(parametres.tauxInflation);
+      setTauxActualisation(parametres.tauxActualisation);
+      setSubventions(parametres.subventions);
+      
+      setScenarioActif(scenarioId);
+      setNomScenario(scenario.nom);
+    }
+  };
+  
+  // Fonction pour supprimer un scénario
+  const supprimerScenario = (scenarioId) => {
+    setScenarios(scenarios.filter(s => s.id !== scenarioId));
+    if (scenarioActif === scenarioId) {
+      setScenarioActif('actuel');
+    }
+  };
+  
+  // Fonction de calcul des résultats
+  const calculerROI = () => {
+    const investissementInitial = coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions;
+    let fluxTresorerie = [];
+    let cumulFluxTresorerie = 0;
+    let valeurActuelleNette = -investissementInitial;
+    let periodeRecuperation = dureeVie;
+    let recuperationAtteinte = false;
+    
+    // Calcul des économies annuelles et bénéfices
+    for (let annee = 1; annee <= dureeVie; annee++) {
+      // Calcul des coûts ajustés avec l'inflation
+      const facteurInflation = Math.pow(1 + tauxInflation / 100, annee - 1);
+      const maintenanceAnnuelle = coutMaintenance * facteurInflation;
+      const energieAnnuelle = coutEnergie * facteurInflation;
+      const coutEmployeAnnuel = coutMainOeuvre * facteurInflation;
+      
+      // Calcul des économies
+      const economiePersonnel = coutEmployeAnnuel * nbEmployesRemplaces;
+      const economieErreurs = coutErrorHumaine * facteurInflation;
+      const economieQualite = production * (tauxProblemeQualite / 100) * (coutQualite / production) * facteurInflation;
+      
+      // Calcul des bénéfices supplémentaires
+      const productionSupplementaire = production * (augmentationProduction / 100);
+      const beneficeSupplementaire = productionSupplementaire * margeUnitaire * facteurInflation;
+      
+      // Amortissement
+      const amortissement = (investissementInitial / dureeVie) * (tauxAmortissement / 100);
+      
+      // Calcul du flux de trésorerie annuel
+      const fluxAnnuel = economiePersonnel + economieErreurs + economieQualite + beneficeSupplementaire - maintenanceAnnuelle - energieAnnuelle + amortissement;
+      
+      // Calcul du flux de trésorerie actualisé
+      const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
+      const fluxActualise = fluxAnnuel / facteurActualisation;
+      
+      // Mise à jour de la VAN
+      valeurActuelleNette += fluxActualise;
+      
+      // Calcul du délai de récupération
+      cumulFluxTresorerie += fluxAnnuel;
+      if (cumulFluxTresorerie >= investissementInitial && !recuperationAtteinte) {
+        // Calcul plus précis avec interpolation
+        const cumulPrecedent = cumulFluxTresorerie - fluxAnnuel;
+        const fractionAnnee = (investissementInitial - cumulPrecedent) / fluxAnnuel;
+        periodeRecuperation = annee - 1 + fractionAnnee;
+        recuperationAtteinte = true;
+      }
+      
+      // Ajout des résultats annuels
+      fluxTresorerie.push({
+        annee,
+        fluxAnnuel,
+        fluxActualise,
+        cumulFluxTresorerie,
+        economiePersonnel,
+        economieErreurs,
+        economieQualite,
+        beneficeSupplementaire,
+        maintenanceAnnuelle,
+        energieAnnuelle,
+        amortissement
+      });
+    }
+    
+    // Calcul du ROI
+    const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
+    const roiCalcule = (totalBenefices / investissementInitial) * 100;
+    
+    // Calcul du TRI (approximation simplifiée)
+    let triApprox = 0;
+    for (let r = 1; r <= 100; r++) {
+      let npv = -investissementInitial;
+      for (let t = 0; t < fluxTresorerie.length; t++) {
+        npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + r / 100, t + 1);
+      }
+      if (npv <= 0) {
+        triApprox = r - 1;
+        break;
+      }
+    }
+    
+    // Mise à jour des états
+    setResultatAnnuel(fluxTresorerie);
+    setRoi(roiCalcule);
+    setDelaiRecuperation(periodeRecuperation);
+    setVan(valeurActuelleNette);
+    setTri(triApprox);
+  };
+  
+  // Calcul initial et lors des changements
+  useEffect(() => {
+    calculerROI();
+    if (analyseMode === 'sensibilite') {
+      calculerSensibilite();
+    }
+  }, [
+    coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance, coutEnergie,
+    dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
+    coutErrorHumaine, augmentationProduction, tauxProblemeQualite, coutQualite,
+    production, margeUnitaire, tauxInflation, tauxActualisation, subventions,
+    analyseMode, parametreSensibilite
+  ]);
+  
+  // Données pour les graphiques d'analyse de sensibilité
+  const dataSensibiliteROI = resultatsSensibilite.map(item => ({
+    variation: `${item.variation > 0 ? '+' : ''}${item.variation}%`,
+    roi: item.roi
+  }));
+  
+  // Données pour le graphique des flux de trésorerie
+  const dataFluxTresorerie = resultatAnnuel.map(item => ({
+    annee: `Année ${item.annee}`,
+    fluxTresorerie: item.fluxAnnuel,
+    fluxActualise: item.fluxActualise
+  }));
+  
+  // Données pour le graphique de rentabilité cumulative
+  const dataCumulatif = resultatAnnuel.map(item => ({
+    annee: `Année ${item.annee}`,
+    cumulatif: item.cumulFluxTresorerie
+  }));
+  
+  return (
+    <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold text-blue-800 mb-6 text-center">Calculateur de Retour sur Investissement pour l'Automatisation Industrielle</h1>
+      
+      <div className="mb-8 bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <h3 className="text-xl font-bold text-blue-800 mb-2">Pourquoi investir dans l'automatisation?</h3>
+        <p className="mb-2">L'automatisation industrielle permet d'améliorer la productivité, la qualité et la rentabilité de vos opérations tout en réduisant les coûts opérationnels.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <div className="bg-white p-3 rounded shadow">
             <h4 className="font-bold text-blue-700">Productivité Accrue</h4>
@@ -66,156 +388,406 @@ const CalculateurGeneralContent = () => {
         </div>
       </div>
       
-      {/* Panel d'aide contextuelle */}
-      {isDocumentationOpen && (
-        <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex justify-between items-start mb-3">
-            <h3 className="font-bold text-yellow-800">Guide d'utilisation du calculateur</h3>
-            <button 
-              onClick={() => setIsDocumentationOpen(false)}
-              className="text-yellow-700 hover:text-yellow-900"
+      {/* Options de mode d'affichage */}
+      <div className="mb-6 flex flex-col md:flex-row justify-between items-center">
+        <div className="flex space-x-4 mb-4 md:mb-0">
+          <button
+            onClick={() => setViewMode('basique')}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              viewMode === 'basique'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Mode Basique
+          </button>
+          <button
+            onClick={() => setViewMode('avance')}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              viewMode === 'avance'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Mode Avancé
+          </button>
+        </div>
+        
+        {viewMode === 'avance' && (
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setAnalyseMode('standard')}
+              className={`px-4 py-2 rounded-lg transition-all ${
+                analyseMode === 'standard'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
+              Analyse Standard
+            </button>
+            <button
+              onClick={() => setAnalyseMode('comparaison')}
+              className={`px-4 py-2 rounded-lg transition-all ${
+                analyseMode === 'comparaison'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Comparer Scénarios
+            </button>
+            <button
+              onClick={() => setAnalyseMode('sensibilite')}
+              className={`px-4 py-2 rounded-lg transition-all ${
+                analyseMode === 'sensibilite'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              Analyse Sensibilité
             </button>
           </div>
+        )}
+      </div>
+      
+      {/* Gestion des scénarios - Mode Avancé */}
+      {viewMode === 'avance' && (
+        <div className="mb-6 bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-blue-700">Gestion des Scénarios</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium text-yellow-800 mb-1">Comment utiliser ce calculateur ?</h4>
-              <ol className="list-decimal pl-5 text-sm space-y-1">
-                <li>Configurez les paramètres de votre système actuel (gauche)</li>
-                <li>Définissez les caractéristiques du système automatisé (droite)</li>
-                <li>Consultez les résultats financiers et les graphiques comparatifs</li>
-              </ol>
+          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-center mb-4">
+            <div className="w-full md:w-1/3">
+              <label className="block text-sm font-medium mb-1">Nom du scénario actuel</label>
+              <input
+                type="text"
+                value={nomScenario}
+                onChange={(e) => setNomScenario(e.target.value)}
+                className="w-full p-2 border rounded"
+                placeholder="Ex: Projet A - Version économique"
+              />
             </div>
-            <div>
-              <h4 className="font-medium text-yellow-800 mb-1">Comprendre les résultats</h4>
-              <ul className="list-disc pl-5 text-sm space-y-1">
-                <li><strong>ROI</strong> : Retour sur investissement sur la durée de vie</li>
-                <li><strong>Délai de récupération</strong> : Temps pour récupérer l'investissement</li>
-                <li><strong>VAN</strong> : Valeur actualisée nette des flux futurs</li>
-                <li><strong>TRI</strong> : Taux de rendement interne du projet</li>
-              </ul>
+            
+            <div className="flex space-x-2 mt-4 md:mt-6">
+              <button
+                onClick={sauvegarderScenario}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-all"
+              >
+                Sauvegarder ce scénario
+              </button>
             </div>
           </div>
           
-          <div className="mt-3 pt-3 border-t border-yellow-200">
-            <h4 className="font-medium text-yellow-800 mb-1">Conseil</h4>
-            <p className="text-sm">Survolez les icônes <span className="inline-block ml-1 w-4 h-4 text-xs font-bold text-white bg-blue-500 rounded-full text-center">i</span> pour obtenir des explications détaillées sur chaque paramètre.</p>
-          </div>
-        </div>
-      )}
-      
-      {/* Navigation par ancres */}
-      <NavigationParAncres sectionActive={sectionActive} setSectionActive={setSectionActive} />
-      
-      {/* Vue comparative côte à côte des systèmes */}
-      <section id="parametres" className="scroll-mt-20 mb-12 pt-2">
-        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
-          <h2 className="font-bold text-lg text-blue-800">Paramètres des systèmes à comparer</h2>
-          <p className="text-sm text-blue-700">Configurez les caractéristiques de votre système actuel et de la solution automatisée envisagée.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="flex flex-col space-y-8">
-            <SystemeActuel />
-          </div>
-          <div className="flex flex-col space-y-8">
-            <SystemeAutomatise />
-          </div>
-        </div>
-      </section>
-      
-      {/* Section relative à la production */}
-      <section id="production" className="scroll-mt-20 mb-12 pt-2">
-        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
-          <h2 className="font-bold text-lg text-blue-800">Analyse détaillée de la production</h2>
-          <p className="text-sm text-blue-700">Visualisez l'impact de l'automatisation sur vos capacités et votre efficacité de production.</p>
-        </div>
-        <OngletProduction />
-      </section>
-      
-      {/* Résultats financiers */}
-      <section id="resultats" className="scroll-mt-20 mb-12 pt-2">
-        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
-          <h2 className="font-bold text-lg text-blue-800">Résultats financiers</h2>
-          <p className="text-sm text-blue-700">Examinez les indicateurs de rentabilité et le retour sur investissement projeté.</p>
-        </div>
-        <ResultatsROI />
-      </section>
-      
-      {/* Graphiques comparatifs */}
-      <section id="graphiques" className="scroll-mt-20 mb-12 pt-2">
-        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
-          <h2 className="font-bold text-lg text-blue-800">Graphiques comparatifs</h2>
-          <p className="text-sm text-blue-700">Visualisez les écarts de performance et les économies générées par catégorie.</p>
-        </div>
-        <GraphiquesROI />
-      </section>
-      
-      {/* Section sécurité et environnement */}
-      <section id="securite" className="scroll-mt-20 mb-12 pt-2">
-        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
-          <h2 className="font-bold text-lg text-blue-800">Sécurité & Environnement</h2>
-          <p className="text-sm text-blue-700">Évaluez les bénéfices en termes de sécurité des opérateurs et d'impact environnemental.</p>
-        </div>
-        <OngletSecurite />
-      </section>
-      
-      {/* Recommandation - Visible sur tous les onglets */}
-      <section id="recommandation" className="scroll-mt-20 mb-6 pt-2">
-        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 mb-6">
-          <h2 className="font-bold text-lg text-blue-800">Recommandation</h2>
-          <p className="text-sm text-blue-700">Conclusion et recommandation basées sur l'analyse globale.</p>
-        </div>
-        <div className="p-4 bg-white rounded-lg shadow">
-          <h3 className="font-medium text-blue-800 mb-2">Notre recommandation</h3>
-          {projetRecommandable ? (
-            <div className="flex items-start">
-              <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="font-bold text-green-700">Projet recommandé</p>
-                <p className="text-sm">Cet investissement en automatisation est financièrement viable avec un ROI positif et un délai de récupération raisonnable.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-start">
-              <svg className="h-5 w-5 text-amber-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <div>
-                <p className="font-bold text-amber-700">À réévaluer</p>
-                <p className="text-sm">Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives.</p>
+          {scenarios.length > 0 && (
+            <div className="mt-4">
+              <h3 className="font-medium text-gray-700 mb-2">Scénarios sauvegardés</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {scenarios.map(scenario => (
+                  <div key={scenario.id} className="border rounded p-3 bg-gray-50 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{scenario.nom}</p>
+                      <p className="text-sm text-gray-600">ROI: {scenario.resultats.roi.toFixed(2)}% | Délai: {scenario.resultats.delaiRecuperation.toFixed(2)} ans</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => chargerScenario(scenario.id)}
+                        className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                      >
+                        Charger
+                      </button>
+                      <button
+                        onClick={() => supprimerScenario(scenario.id)}
+                        className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
-      </section>
+      )}
       
-      <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm text-gray-600 text-center">
-        <p>Les résultats de ce calculateur sont fournis à titre indicatif seulement. Une analyse approfondie est recommandée pour toute décision d'investissement.</p>
-        <DocumentationLink 
-          document="formules-financieres.md" 
-          label="Consultez la documentation détaillée des formules utilisées" 
-          className="mt-2 justify-center"
-        />
+      {/* Analyse de sensibilité - Mode Avancé */}
+      {viewMode === 'avance' && analyseMode === 'sensibilite' && (
+        <div className="mb-6 bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-blue-700">Analyse de Sensibilité</h2>
+          
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Paramètre à analyser</label>
+              <select
+                value={parametreSensibilite}
+                onChange={(e) => setParametreSensibilite(e.target.value)}
+                className="w-full p-2 border rounded"
+              >
+                <option value="coutSysteme">Coût du système</option>
+                <option value="coutInstallation">Coût d'installation</option>
+                <option value="coutIngenierie">Coût d'ingénierie</option>
+                <option value="nbEmployesRemplaces">Nombre d'employés remplacés</option>
+                <option value="augmentationProduction">Augmentation de production</option>
+                <option value="coutMainOeuvre">Coût de main d'œuvre</option>
+                <option value="production">Volume de production</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Voir l'impact de la variation de ce paramètre sur les résultats</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="h-64">
+              <h3 className="font-medium text-gray-700 mb-2">Impact sur le ROI</h3>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dataSensibiliteROI}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="variation" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value.toFixed(2)}%`, 'ROI']} />
+                  <Bar dataKey="roi" fill="#4F46E5" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Comparaison des scénarios - Mode Avancé */}
+      {viewMode === 'avance' && analyseMode === 'comparaison' && scenarios.length > 0 && (
+        <div className="mb-6 bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-blue-700">Comparaison des Scénarios</h2>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-4 py-2 text-left">Scénario</th>
+                  <th className="px-4 py-2 text-right">Investissement</th>
+                  <th className="px-4 py-2 text-right">ROI</th>
+                  <th className="px-4 py-2 text-right">Délai</th>
+                  <th className="px-4 py-2 text-right">VAN</th>
+                  <th className="px-4 py-2 text-right">TRI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Scénario actuel */}
+                <tr className="border-t">
+                  <td className="px-4 py-2 font-medium">{nomScenario} (actuel)</td>
+                  <td className="px-4 py-2 text-right">
+                    {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions)}
+                  </td>
+                  <td className="px-4 py-2 text-right">{roi.toFixed(2)}%</td>
+                  <td className="px-4 py-2 text-right">{delaiRecuperation.toFixed(2)} ans</td>
+                  <td className="px-4 py-2 text-right">
+                    {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(van)}
+                  </td>
+                  <td className="px-4 py-2 text-right">{tri.toFixed(2)}%</td>
+                </tr>
+                
+                {/* Scénarios sauvegardés */}
+                {scenarios.map(scenario => (
+                  <tr key={scenario.id} className="border-t">
+                    <td className="px-4 py-2 font-medium">{scenario.nom}</td>
+                    <td className="px-4 py-2 text-right">
+                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(
+                        scenario.parametres.coutSysteme + 
+                        scenario.parametres.coutInstallation + 
+                        scenario.parametres.coutIngenierie + 
+                        scenario.parametres.coutFormation - 
+                        scenario.parametres.subventions
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-right">{scenario.resultats.roi.toFixed(2)}%</td>
+                    <td className="px-4 py-2 text-right">{scenario.resultats.delaiRecuperation.toFixed(2)} ans</td>
+                    <td className="px-4 py-2 text-right">
+                      {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(scenario.resultats.van)}
+                    </td>
+                    <td className="px-4 py-2 text-right">{scenario.resultats.tri.toFixed(2)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Formulaire d'entrée */}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4 text-blue-700">Paramètres d'investissement</h2>
+          
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-2">Coûts initiaux</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût du système (€)</label>
+                <input
+                  type="number"
+                  value={coutSysteme}
+                  onChange={(e) => setCoutSysteme(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Prix d'achat de l'équipement d'automatisation</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût d'installation (€)</label>
+                <input
+                  type="number"
+                  value={coutInstallation}
+                  onChange={(e) => setCoutInstallation(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Coûts liés à l'installation physique et à l'intégration</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-2">Économies de main d'œuvre</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Coût annuel employé (€)</label>
+                <input
+                  type="number"
+                  value={coutMainOeuvre}
+                  onChange={(e) => setCoutMainOeuvre(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Salaire annuel complet incluant charges sociales</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Nombre d'employés remplacés</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={nbEmployesRemplaces}
+                  onChange={(e) => setNbEmployesRemplaces(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Équivalent temps plein (ETP) d'employés automatisés</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="font-medium text-gray-700 mb-2">Paramètres financiers</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Durée de vie (années)</label>
+                <input
+                  type="number"
+                  value={dureeVie}
+                  onChange={(e) => setDureeVie(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Durée d'utilisation prévue avant remplacement</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Taux d'actualisation (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={tauxActualisation}
+                  onChange={(e) => setTauxActualisation(Number(e.target.value))}
+                  className="w-full p-2 border rounded"
+                />
+                <p className="text-xs text-gray-500 mt-1">Taux utilisé pour calculer la valeur actuelle</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Résultats */}
+        <div className="flex flex-col gap-6">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4 text-blue-700">Résultats</h2>
+            
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-blue-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">ROI global</h3>
+                <p className="text-2xl font-bold text-blue-800">{roi.toFixed(2)}%</p>
+                <p className="text-xs text-gray-600 mt-1">Pourcentage de retour sur l'investissement total</p>
+              </div>
+              <div className="bg-green-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">Délai de récupération</h3>
+                <p className="text-2xl font-bold text-green-800">{delaiRecuperation.toFixed(2)} ans</p>
+                <p className="text-xs text-gray-600 mt-1">Temps pour récupérer l'investissement initial</p>
+              </div>
+              <div className="bg-purple-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">VAN</h3>
+                <p className="text-2xl font-bold text-purple-800">
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(van)}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">Valeur Actuelle Nette du projet</p>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">TRI</h3>
+                <p className="text-2xl font-bold text-indigo-800">{tri.toFixed(2)}%</p>
+                <p className="text-xs text-gray-600 mt-1">Taux de Rendement Interne</p>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+              <h3 className="font-medium text-gray-800 mb-2">Interprétation des résultats</h3>
+              <ul className="list-disc pl-5 space-y-2 text-sm">
+                <li><span className="font-medium">ROI &gt; 100%</span> : L'investissement génère plus de valeur qu'il n'en coûte.</li>
+                <li><span className="font-medium">Délai de récupération &lt; 3 ans</span> : Considéré comme un très bon investissement dans l'industrie.</li>
+                <li><span className="font-medium">VAN positive</span> : Le projet crée de la valeur pour l'entreprise.</li>
+                <li><span className="font-medium">TRI &gt; taux d'actualisation</span> : Le projet est financièrement viable.</li>
+              </ul>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h3 className="font-medium text-blue-800 mb-2">Recommandation</h3>
+              {van > 0 && tri > tauxActualisation ? (
+                <p className="text-green-700">
+                  <span className="font-bold">✓ Projet recommandé</span> - Cet investissement en automatisation semble financièrement viable avec un ROI positif et un délai de récupération raisonnable.
+                </p>
+              ) : (
+                <p className="text-yellow-700">
+                  <span className="font-bold">⚠ À réévaluer</span> - Les paramètres actuels ne montrent pas un retour sur investissement optimal. Ajustez les variables ou envisagez des alternatives.
+                </p>
+              )}
+            </div>
+          </div>
+          
+          {/* Graphique des flux de trésorerie */}
+          {viewMode === 'avance' && (
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h2 className="text-xl font-semibold mb-4 text-blue-700">Analyse des flux de trésorerie</h2>
+              <div className="h-64 mb-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dataFluxTresorerie}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="annee" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value), 'Flux']} />
+                    <Legend />
+                    <Line type="monotone" dataKey="fluxTresorerie" name="Flux annuel" stroke="#22c55e" activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="fluxActualise" name="Flux actualisé" stroke="#3b82f6" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="h-64">
+                <h3 className="font-medium text-gray-700 mb-2">Rentabilité cumulative</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dataCumulatif}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="annee" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value), 'Cumul']} />
+                    <Line type="monotone" dataKey="cumulatif" name="Flux cumulatif" stroke="#4F46E5" strokeWidth={2} />
+                    <Line type="monotone" data={Array(dureeVie).fill().map((_, i) => ({
+                      annee: `Année ${i+1}`,
+                      seuil: coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions
+                    }))} dataKey="seuil" name="Investissement initial" stroke="#ef4444" strokeDasharray="5 5" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  );
-};
-
-/**
- * Conteneur principal du calculateur général avec son provider de contexte
- * @returns {JSX.Element} - Calculateur général complet
- */
-const CalculateurGeneral = () => {
-  return (
-    <CalculateurGeneralProvider>
-      <CalculateurGeneralContent />
-    </CalculateurGeneralProvider>
   );
 };
 
