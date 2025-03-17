@@ -11,43 +11,29 @@ const Navbar = () => {
     setMenuOpen(!menuOpen);
   };
 
+  const refreshApp = () => {
+    window.location.reload();
+  };
+
   return (
     <nav className="bg-white shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex justify-between h-16">
-          {/* Logo et nom */}
-          <div className="flex items-center">
-            <a href="https://yoprobotics.com" target="_blank" rel="noopener noreferrer">
-              <img src="/logo.png" alt="YoProbotics" className="h-8 w-auto mr-3" />
-            </a>
+          {/* Logo et nom - Actualise l'application au clic */}
+          <div className="flex items-center cursor-pointer" onClick={refreshApp}>
+            <img src="/logo.png" alt="YoProbotics" className="h-8 w-auto mr-3" />
             <span className="text-xl font-semibold text-gray-800">Calculateurs ROI</span>
           </div>
           
           {/* Navigation principale - desktop */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center">
             <a 
-              href="https://yoprobotics.com/solutions" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-blue-600 transition-colors"
-            >
-              Solutions
-            </a>
-            <a 
-              href="https://yoprobotics.com/services" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-blue-600 transition-colors"
-            >
-              Services
-            </a>
-            <a 
-              href="https://yoprobotics.com/contact" 
+              href="https://www.yoprobotics.com/formulaire1735622456560" 
               target="_blank" 
               rel="noopener noreferrer"
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
-              Nous contacter
+              Réserver une consultation gratuite
             </a>
           </div>
           
@@ -100,28 +86,12 @@ const Navbar = () => {
       <div className={`${menuOpen ? 'block' : 'hidden'} md:hidden`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
           <a
-            href="https://yoprobotics.com/solutions"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-100"
-          >
-            Solutions
-          </a>
-          <a
-            href="https://yoprobotics.com/services"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-blue-600 hover:bg-gray-100"
-          >
-            Services
-          </a>
-          <a
-            href="https://yoprobotics.com/contact"
+            href="https://www.yoprobotics.com/formulaire1735622456560"
             target="_blank"
             rel="noopener noreferrer"
             className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
           >
-            Nous contacter
+            Réserver une consultation gratuite
           </a>
         </div>
       </div>
