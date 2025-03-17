@@ -1,82 +1,83 @@
 /**
- * Utilitaires de formatage pour l'affichage uniforme des nombres, devises et pourcentages
+ * Formatters.js - Fonctions de formatage pour l'affichage des données
  */
 
 /**
- * Formate un nombre avec séparateur de milliers et décimales
- * @param {number} value - Nombre à formater
- * @param {number} decimalPlaces - Nombre de décimales (défaut: 2)
- * @param {string} locale - Locale pour le formatage (défaut: 'fr-FR')
- * @returns {string} - Nombre formaté
+ * Formate un nombre en devise (€, $, etc.)
+ * @param {number} valeur - Nombre à formater
+ * @param {string} devise - Code de devise (par défaut: 'USD')
+ * @param {number} decimales - Nombre de décimales (par défaut: 0)
+ * @returns {string} - Chaîne formatée
  */
-export const formatNumber = (value, decimalPlaces = 2, locale = 'fr-FR') => {
-  return new Intl.NumberFormat(locale, {
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces
-  }).format(value);
+export const formaterDevise = (valeur, devise = 'USD', decimales = 0) => {
+  return new Intl.NumberFormat('fr-FR', { 
+    style: 'currency', 
+    currency: devise, 
+    maximumFractionDigits: decimales 
+  }).format(valeur);
 };
 
 /**
- * Formate un montant en devise
- * @param {number} value - Montant à formater
- * @param {string} currency - Code de la devise (défaut: 'USD')
- * @param {number} decimalPlaces - Nombre de décimales (défaut: 0)
- * @param {string} locale - Locale pour le formatage (défaut: 'fr-FR')
- * @returns {string} - Montant formaté
+ * Formate un nombre avec des séparateurs de milliers
+ * @param {number} valeur - Nombre à formater
+ * @param {number} decimales - Nombre de décimales (par défaut: 0)
+ * @returns {string} - Chaîne formatée
  */
-export const formatCurrency = (value, currency = 'USD', decimalPlaces = 0, locale = 'fr-FR') => {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces
-  }).format(value);
+export const formaterNombre = (valeur, decimales = 0) => {
+  return new Intl.NumberFormat('fr-FR', { 
+    maximumFractionDigits: decimales 
+  }).format(valeur);
 };
 
 /**
  * Formate un pourcentage
- * @param {number} value - Pourcentage à formater (ex: 15.5 pour 15.5%)
- * @param {number} decimalPlaces - Nombre de décimales (défaut: 2)
- * @param {string} locale - Locale pour le formatage (défaut: 'fr-FR')
- * @returns {string} - Pourcentage formaté
+ * @param {number} valeur - Pourcentage à formater
+ * @param {number} decimales - Nombre de décimales (par défaut: 2)
+ * @returns {string} - Chaîne formatée
  */
-export const formatPercent = (value, decimalPlaces = 2, locale = 'fr-FR') => {
-  return new Intl.NumberFormat(locale, {
+export const formaterPourcentage = (valeur, decimales = 2) => {
+  return new Intl.NumberFormat('fr-FR', { 
     style: 'percent',
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces
-  }).format(value / 100);
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales 
+  }).format(valeur / 100);
 };
 
 /**
- * Formate un nombre en format compact (ex: 1.2k, 1.5M)
- * @param {number} value - Nombre à formater
- * @param {number} decimalPlaces - Nombre de décimales (défaut: 1)
- * @param {string} locale - Locale pour le formatage (défaut: 'fr-FR')
- * @returns {string} - Nombre formaté en notation compacte
+ * Formate une durée en années/mois
+ * @param {number} annees - Nombre d'années
+ * @returns {string} - Chaîne formatée
  */
-export const formatCompact = (value, decimalPlaces = 1, locale = 'fr-FR') => {
-  return new Intl.NumberFormat(locale, {
-    notation: 'compact',
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces
-  }).format(value);
-};
-
-/**
- * Formate une différence (utile pour les comparaisons avant/après)
- * @param {number} value - Valeur de la différence
- * @param {boolean} showPositive - Afficher le signe + pour les valeurs positives (défaut: true)
- * @param {number} decimalPlaces - Nombre de décimales (défaut: 1)
- * @param {string} locale - Locale pour le formatage (défaut: 'fr-FR')
- * @returns {string} - Différence formatée
- */
-export const formatDifference = (value, showPositive = true, decimalPlaces = 1, locale = 'fr-FR') => {
-  const formatter = new Intl.NumberFormat(locale, {
-    minimumFractionDigits: decimalPlaces,
-    maximumFractionDigits: decimalPlaces,
-    signDisplay: showPositive ? 'always' : 'auto'
-  });
+export const formaterDuree = (annees) => {
+  const anneesEntieres = Math.floor(annees);
+  const mois = Math.round((annees - anneesEntieres) * 12);
   
-  return formatter.format(value);
+  if (anneesEntieres === 0) {
+    return `${mois} mois`;
+  } else if (mois === 0) {
+    return `${anneesEntieres} an${anneesEntieres > 1 ? 's' : ''}`;
+  } else {
+    return `${anneesEntieres} an${anneesEntieres > 1 ? 's' : ''} et ${mois} mois`;
+  }
+};
+
+/**
+ * Formate une valeur en gain ou perte avec signe + ou -
+ * @param {number} valeur - Valeur à formater
+ * @param {string} devise - Code de devise (par défaut: 'USD')
+ * @returns {string} - Chaîne formatée
+ */
+export const formaterGainPerte = (valeur, devise = 'USD') => {
+  const signe = valeur >= 0 ? '+' : '';
+  return `${signe}${formaterDevise(valeur, devise)}`;
+};
+
+/**
+ * Formate une variation en pourcentage avec signe + ou -
+ * @param {number} valeur - Pourcentage à formater
+ * @returns {string} - Chaîne formatée
+ */
+export const formaterVariation = (valeur) => {
+  const signe = valeur >= 0 ? '+' : '';
+  return `${signe}${valeur.toFixed(2)}%`;
 };

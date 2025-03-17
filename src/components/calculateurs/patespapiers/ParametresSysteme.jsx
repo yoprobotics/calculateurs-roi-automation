@@ -1,9 +1,5 @@
 import React from 'react';
 import { useCalculateurPapier } from '../../../context/CalculateurPapierContext';
-import FormInput from '../../common/FormInput';
-import ResultCard from '../../common/ResultCard';
-import { formatCurrency, formatPercent, formatNumber } from '../../../utils/formatters';
-import useFormValidation from '../../../hooks/useFormValidation';
 
 const ParametresSysteme = () => {
   const { 
@@ -11,8 +7,6 @@ const ParametresSysteme = () => {
     setTypeSystemeActuel,
     parametresSystemeActuel, 
     setParametresSystemeActuel,
-    parametresSystemeAutomatise,
-    setParametresSystemeAutomatise,
     parametresGeneraux, 
     setParametresGeneraux,
     resultats,
@@ -22,80 +16,6 @@ const ParametresSysteme = () => {
   
   const { afficherDetails } = ui;
   const { delaiRecuperation, roi, van, tri, economieAnnuelle } = resultats;
-  
-  // Configuration des règles de validation
-  const validationRules = {
-    'capacite': { 
-      required: true, 
-      min: 1, 
-      fieldName: 'Capacité actuelle',
-      allowZero: false
-    },
-    'nombreEmployes': { 
-      required: true, 
-      min: 0.1, 
-      fieldName: 'Nombre d\'employés',
-      allowZero: false
-    },
-    'heuresOperationParJour': { 
-      required: true, 
-      min: 1, 
-      max: 24, 
-      fieldName: 'Heures par jour',
-      allowZero: false
-    },
-    'joursOperationParAn': { 
-      required: true, 
-      min: 1, 
-      max: 365, 
-      fieldName: 'Jours par an',
-      allowZero: false
-    },
-    'tonnageAnnuel': { 
-      required: true, 
-      min: 1, 
-      fieldName: 'Tonnage annuel',
-      allowZero: false
-    },
-    'margeBrute': { 
-      required: true, 
-      min: 0, 
-      fieldName: 'Marge brute par tonne'
-    }
-  };
-  
-  // Initialisation de la validation pour les paramètres système actuel
-  const {
-    errors: systemeActuelErrors,
-    validateField: validateSystemeActuelField
-  } = useFormValidation(parametresSystemeActuel, validationRules);
-  
-  // Gestion des changements de champs avec validation
-  const handleSystemeActuelChange = (e) => {
-    const { name, value } = e.target;
-    const newValue = e.target.type === 'number' ? (value === '' ? '' : Number(value)) : value;
-    
-    // Validation du champ
-    const validation = validateSystemeActuelField(name, newValue);
-    
-    // Mise à jour de l'état
-    setParametresSystemeActuel({
-      ...parametresSystemeActuel,
-      [name]: newValue
-    });
-  };
-  
-  // Gestion des changements de paramètres généraux avec validation
-  const handleGenerauxChange = (e) => {
-    const { name, value } = e.target;
-    const newValue = e.target.type === 'number' ? (value === '' ? '' : Number(value)) : value;
-    
-    // Mise à jour de l'état
-    setParametresGeneraux({
-      ...parametresGeneraux,
-      [name]: newValue
-    });
-  };
   
   return (
     <>
@@ -147,85 +67,92 @@ const ParametresSysteme = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormInput
-                label="Capacité actuelle"
-                name="capacite"
-                type="number"
-                value={parametresSystemeActuel.capacite}
-                onChange={handleSystemeActuelChange}
-                error={systemeActuelErrors.capacite}
-                unit="ballots/h"
-                min={1}
-                required
-              />
-              <FormInput
-                label="Nombre d'employés"
-                name="nombreEmployes"
-                type="number"
-                value={parametresSystemeActuel.nombreEmployes}
-                onChange={handleSystemeActuelChange}
-                error={systemeActuelErrors.nombreEmployes}
-                unit="ETP"
-                step="0.1"
-                min={0.1}
-                required
-                helpText="Équivalent temps plein"
-              />
+              <div>
+                <label className="block text-sm font-medium mb-1">Capacité actuelle (ballots/heure)</label>
+                <input
+                  type="number"
+                  value={parametresSystemeActuel.capacite}
+                  onChange={(e) => setParametresSystemeActuel({
+                    ...parametresSystemeActuel,
+                    capacite: Number(e.target.value)
+                  })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Nombre d'employés (ETP)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={parametresSystemeActuel.nombreEmployes}
+                  onChange={(e) => setParametresSystemeActuel({
+                    ...parametresSystemeActuel,
+                    nombreEmployes: Number(e.target.value)
+                  })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
             </div>
           </div>
           
           <div className="mb-6">
             <h3 className="font-medium text-gray-700 mb-2">Temps d'opération</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormInput
-                label="Heures par jour"
-                name="heuresOperationParJour"
-                type="number"
-                value={parametresGeneraux.heuresOperationParJour}
-                onChange={handleGenerauxChange}
-                min={1}
-                max={24}
-                required
-                unit="h"
-              />
-              <FormInput
-                label="Jours par an"
-                name="joursOperationParAn"
-                type="number"
-                value={parametresGeneraux.joursOperationParAn}
-                onChange={handleGenerauxChange}
-                min={1}
-                max={365}
-                required
-                unit="j"
-              />
+              <div>
+                <label className="block text-sm font-medium mb-1">Heures par jour</label>
+                <input
+                  type="number"
+                  value={parametresGeneraux.heuresOperationParJour}
+                  onChange={(e) => setParametresGeneraux({
+                    ...parametresGeneraux,
+                    heuresOperationParJour: Number(e.target.value)
+                  })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Jours par an</label>
+                <input
+                  type="number"
+                  value={parametresGeneraux.joursOperationParAn}
+                  onChange={(e) => setParametresGeneraux({
+                    ...parametresGeneraux,
+                    joursOperationParAn: Number(e.target.value)
+                  })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
             </div>
           </div>
           
           <div className="mb-6">
             <h3 className="font-medium text-gray-700 mb-2">Données de production</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormInput
-                label="Tonnage annuel"
-                name="tonnageAnnuel"
-                type="number"
-                value={parametresGeneraux.tonnageAnnuel}
-                onChange={handleGenerauxChange}
-                min={1}
-                required
-                unit="tonnes"
-              />
-              <FormInput
-                label="Marge brute par tonne"
-                name="margeBrute"
-                type="number"
-                value={parametresGeneraux.margeBrute}
-                onChange={handleGenerauxChange}
-                min={0}
-                required
-                unit="$"
-                step="0.01"
-              />
+              <div>
+                <label className="block text-sm font-medium mb-1">Tonnage annuel (tonnes)</label>
+                <input
+                  type="number"
+                  value={parametresGeneraux.tonnageAnnuel}
+                  onChange={(e) => setParametresGeneraux({
+                    ...parametresGeneraux,
+                    tonnageAnnuel: Number(e.target.value)
+                  })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Marge brute par tonne ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={parametresGeneraux.margeBrute}
+                  onChange={(e) => setParametresGeneraux({
+                    ...parametresGeneraux,
+                    margeBrute: Number(e.target.value)
+                  })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
             </div>
           </div>
           
@@ -253,36 +180,35 @@ const ParametresSysteme = () => {
             </h2>
             
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <ResultCard 
-                title="ROI global"
-                value={formatPercent(roi)}
-                color="green"
-              />
-              <ResultCard 
-                title="Délai de récupération"
-                value={formatNumber(delaiRecuperation)}
-                unit="ans"
-                color={delaiRecuperation <= 2 ? "green" : "blue"}
-              />
-              <ResultCard 
-                title="VAN"
-                value={formatCurrency(van)}
-                color="purple"
-              />
-              <ResultCard 
-                title="TRI"
-                value={formatPercent(tri)}
-                color="indigo"
-              />
+              <div className="bg-green-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">ROI global</h3>
+                <p className="text-2xl font-bold text-green-800">{roi.toFixed(2)}%</p>
+              </div>
+              <div className="bg-blue-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">Délai de récupération</h3>
+                <p className={`text-2xl font-bold ${delaiRecuperation <= 2 ? 'text-green-600' : 'text-blue-800'}`}>
+                  {delaiRecuperation.toFixed(2)} ans
+                </p>
+              </div>
+              <div className="bg-purple-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">VAN</h3>
+                <p className="text-2xl font-bold text-purple-800">
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(van)}
+                </p>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">TRI</h3>
+                <p className="text-2xl font-bold text-indigo-800">{tri.toFixed(2)}%</p>
+              </div>
             </div>
             
             <div className="flex space-x-4 mb-6">
-              <ResultCard 
-                title="Économie annuelle moyenne"
-                value={formatCurrency(economieAnnuelle)}
-                color="yellow"
-                className="flex-1"
-              />
+              <div className="flex-1 bg-yellow-50 p-3 rounded">
+                <h3 className="text-sm font-medium text-gray-700">Économie annuelle moyenne</h3>
+                <p className="text-2xl font-bold text-yellow-700">
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieAnnuelle)}
+                </p>
+              </div>
             </div>
             
             <div className="mb-4">
@@ -292,25 +218,25 @@ const ParametresSysteme = () => {
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Traitement de <strong>{parametresSystemeAutomatise.capaciteTraitement} ballots/heure</strong> contre {parametresSystemeActuel.capacite} actuellement</span>
+                  <span>Traitement de <strong>{parametresSystemeActuel.capacite} ballots/heure</strong> contre 120 avec le nouveau système</span>
                 </div>
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Réduction de la main d'œuvre de <strong>{parametresSystemeAutomatise.nbEmployesRemplaces} ETP</strong></span>
+                  <span>Réduction de la main d'œuvre de <strong>2 ETP</strong></span>
                 </div>
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Diminution des rejets de fils métalliques de <strong>{(parametresSystemeActuel.tauxRejets - parametresSystemeAutomatise.tauxRejets).toFixed(1)}%</strong></span>
+                  <span>Diminution des rejets de fils métalliques de <strong>{(parametresSystemeActuel.tauxRejets - 3.5).toFixed(1)}%</strong></span>
                 </div>
                 <div className="flex items-center">
                   <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Réduction des accidents de <strong>{parametresSystemeAutomatise.reductionAccidents}%</strong></span>
+                  <span>Réduction des accidents de <strong>85%</strong></span>
                 </div>
               </div>
             </div>
@@ -331,7 +257,7 @@ const ParametresSysteme = () => {
               <p className="text-sm font-medium text-blue-800">Impact financier de la sécurité améliorée:</p>
               <p className="text-sm">
                 Économie annuelle estimée: <span className="font-bold">
-                  {formatCurrency(resultats.economiesSecurite + resultats.economiesTempsArret)}
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(resultats.economiesSecurite + resultats.economiesTempsArret)}
                 </span>
               </p>
             </div>
@@ -348,59 +274,61 @@ const ParametresSysteme = () => {
             <div>
               <h3 className="font-medium text-gray-700 mb-2">Système automatisé</h3>
               <div className="space-y-3">
-                <FormInput
-                  label="Capacité de traitement"
-                  name="capaciteTraitement"
-                  type="number"
-                  value={parametresSystemeAutomatise.capaciteTraitement}
-                  onChange={(e) => setParametresSystemeAutomatise({
-                    ...parametresSystemeAutomatise,
-                    capaciteTraitement: Number(e.target.value)
-                  })}
-                  min={1}
-                  unit="ballots/h"
-                />
-                <FormInput
-                  label="Taux de rejet fils système"
-                  name="tauxRejets"
-                  type="number"
-                  value={parametresSystemeAutomatise.tauxRejets}
-                  onChange={(e) => setParametresSystemeAutomatise({
-                    ...parametresSystemeAutomatise,
-                    tauxRejets: Number(e.target.value)
-                  })}
-                  min={0}
-                  max={100}
-                  step="0.1"
-                  unit="%"
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-1">Capacité de traitement (ballots/h)</label>
+                  <input
+                    type="number"
+                    value={parametresSystemeActuel.capaciteTraitement}
+                    onChange={(e) => setParametresSystemeActuel({
+                      ...parametresSystemeActuel,
+                      capaciteTraitement: Number(e.target.value)
+                    })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Taux de rejet fils système (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={parametresSystemeActuel.tauxRejets}
+                    onChange={(e) => setParametresSystemeActuel({
+                      ...parametresSystemeActuel,
+                      tauxRejets: Number(e.target.value)
+                    })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
               </div>
             </div>
             
             <div>
               <h3 className="font-medium text-gray-700 mb-2">Coûts d'exploitation</h3>
               <div className="space-y-3">
-                <FormInput
-                  label="Maintenance actuelle/an"
-                  name="maintenance"
-                  type="number"
-                  value={parametresSystemeActuel.maintenance}
-                  onChange={handleSystemeActuelChange}
-                  min={0}
-                  unit="$"
-                />
-                <FormInput
-                  label="Maintenance système/an"
-                  name="coutMaintenance"
-                  type="number"
-                  value={parametresSystemeAutomatise.coutMaintenance}
-                  onChange={(e) => setParametresSystemeAutomatise({
-                    ...parametresSystemeAutomatise,
-                    coutMaintenance: Number(e.target.value)
-                  })}
-                  min={0}
-                  unit="$"
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-1">Maintenance actuelle/an ($)</label>
+                  <input
+                    type="number"
+                    value={parametresSystemeActuel.maintenance}
+                    onChange={(e) => setParametresSystemeActuel({
+                      ...parametresSystemeActuel,
+                      maintenance: Number(e.target.value)
+                    })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Maintenance système/an ($)</label>
+                  <input
+                    type="number"
+                    value={parametresSystemeActuel.coutMaintenance}
+                    onChange={(e) => setParametresSystemeActuel({
+                      ...parametresSystemeActuel,
+                      coutMaintenance: Number(e.target.value)
+                    })}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
               </div>
             </div>
           </div>
