@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 /**
@@ -121,10 +121,10 @@ const CalculateurPatesPapiers = () => {
         frequenceAccident: 1.5
       });
     }
-  }, [typeSystemeActuel]);
+  }, [typeSystemeActuel, parametresSystemeActuel]);
   
-  // Fonction de calcul des résultats
-  const calculerROI = () => {
+  // Fonction de calcul des résultats - transformée en useCallback pour être utilisable dans useEffect
+  const calculerROI = useCallback(() => {
     const {
       coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance, 
       coutEnergie, dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
@@ -141,9 +141,12 @@ const CalculateurPatesPapiers = () => {
     } = parametresSystemeActuel;
 
     const {
-      margeBrute, tauxInflation, tauxActualisation, tonnageAnnuel,
-      heuresOperationParJour, joursOperationParAn
+      margeBrute, tauxInflation, tauxActualisation, tonnageAnnuel
     } = parametresGeneraux;
+    
+    // Ces variables sont utilisées plus tard pour les calculs
+    const heuresOperationParJour = parametresGeneraux.heuresOperationParJour;
+    const joursOperationParAn = parametresGeneraux.joursOperationParAn;
     
     // Calcul de l'investissement initial
     const investissementInitial = coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions;
@@ -309,12 +312,12 @@ const CalculateurPatesPapiers = () => {
       economiesQualite: dernierBeneficeQualite,
       economiesTempsArret: economiesTempsArretCalc
     });
-  };
+  }, [parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux]);
   
   // Calcul initial et lors des changements des paramètres principaux
   useEffect(() => {
     calculerROI();
-  }, [typeSystemeActuel, parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux]);
+  }, [typeSystemeActuel, parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux, calculerROI]);
   
   // Extraction des valeurs de résultats pour plus de lisibilité
   const { 
@@ -371,7 +374,7 @@ const CalculateurPatesPapiers = () => {
     
     // Données pour le graphique des économies
     const dataEconomies = [
-      { name: 'Main d\'œuvre', value: reductionMainOeuvre > 0 ? reductionMainOeuvre : 0 },
+      { name: 'Main d\\'œuvre', value: reductionMainOeuvre > 0 ? reductionMainOeuvre : 0 },
       { name: 'Qualité', value: economiesQualite > 0 ? economiesQualite : 0 },
       { name: 'Sécurité', value: economiesSecurite + economiesTempsArret > 0 ? economiesSecurite + economiesTempsArret : 0 },
       { name: 'Production', value: differenceProduction * (margeBrute / tonnageAnnuel) > 0 ? differenceProduction * (margeBrute / tonnageAnnuel) : 0 },
@@ -914,7 +917,7 @@ const CalculateurPatesPapiers = () => {
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                       <XAxis type="number" />
                       <YAxis dataKey="name" type="category" width={150} />
-                      <Tooltip formatter={(value) => [`${value} employés`, 'Main d\'œuvre']} />
+                      <Tooltip formatter={(value) => [`${value} employés`, 'Main d\\'œuvre']} />
                       <Bar dataKey="value" nameKey="name" fill={(entry) => entry.fill} />
                     </BarChart>
                   </ResponsiveContainer>
