@@ -393,6 +393,51 @@ export const validerParametres = (parametres) => {
     erreurs.joursOperationParAn = "Les jours d'opération doivent être entre 1 et 365";
   }
   
+  if (!validerChampNumerique(parametresGeneraux.tauxInflation, { min: -10, max: 50 })) {
+    erreurs.tauxInflation = "Le taux d'inflation doit être entre -10% et 50%";
+  }
+  
+  if (!validerChampNumerique(parametresGeneraux.tauxActualisation, { min: 0, max: 50 })) {
+    erreurs.tauxActualisation = "Le taux d'actualisation doit être entre 0% et 50%";
+  }
+  
+  // Validation du système actuel
+  if (!validerChampNumerique(parametresSystemeActuel.capacite, { min: 1 })) {
+    erreurs.capacite = "La capacité actuelle doit être supérieure à 0";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.nombreEmployes, { min: 0.1 })) {
+    erreurs.nombreEmployes = "Le nombre d'employés doit être supérieur à 0";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.maintenance, { min: 0 })) {
+    erreurs.maintenance = "Le coût de maintenance doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.energie, { min: 0 })) {
+    erreurs.energie = "Le coût d'énergie doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.perteProduction, { min: 0, max: 100 })) {
+    erreurs.perteProduction = "La perte de production doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.tauxRejets, { min: 0, max: 100 })) {
+    erreurs.tauxRejets = "Le taux de rejets doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.frequenceAccident, { min: 0 })) {
+    erreurs.frequenceAccident = "La fréquence d'accident doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.coutMoyenAccident, { min: 0 })) {
+    erreurs.coutMoyenAccident = "Le coût moyen par accident doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeActuel.tempsArretAccident, { min: 0 })) {
+    erreurs.tempsArretAccident = "Le temps d'arrêt par accident doit être un nombre positif";
+  }
+  
   // Validation du système automatisé
   if (!validerChampNumerique(parametresSystemeAutomatise.capaciteTraitement, { min: 1 })) {
     erreurs.capaciteTraitement = "La capacité de traitement doit être supérieure à 0";
@@ -402,7 +447,89 @@ export const validerParametres = (parametres) => {
     erreurs.coutSysteme = "Le coût du système doit être un nombre positif";
   }
   
-  // Ajoutez d'autres validations selon vos besoins...
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutInstallation, { min: 0 })) {
+    erreurs.coutInstallation = "Le coût d'installation doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutIngenierie, { min: 0 })) {
+    erreurs.coutIngenierie = "Le coût d'ingénierie doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutFormation, { min: 0 })) {
+    erreurs.coutFormation = "Le coût de formation doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutMaintenance, { min: 0 })) {
+    erreurs.coutMaintenance = "Le coût de maintenance doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutEnergie, { min: 0 })) {
+    erreurs.coutEnergie = "Le coût d'énergie doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.dureeVie, { min: 1, max: 50 })) {
+    erreurs.dureeVie = "La durée de vie doit être entre 1 et 50 ans";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.tauxAmortissement, { min: 0, max: 100 })) {
+    erreurs.tauxAmortissement = "Le taux d'amortissement doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutMainOeuvre, { min: 0 })) {
+    erreurs.coutMainOeuvre = "Le coût de main d'œuvre doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.nbEmployesRemplaces, { min: 0, max: parametresSystemeActuel.nombreEmployes })) {
+    erreurs.nbEmployesRemplaces = `Le nombre d'employés remplacés doit être entre 0 et ${parametresSystemeActuel.nombreEmployes}`;
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.reductionDechet, { min: 0, max: 100 })) {
+    erreurs.reductionDechet = "La réduction des déchets doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutDechet, { min: 0 })) {
+    erreurs.coutDechet = "Le coût des déchets doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.augmentationProduction, { min: 0, max: 100 })) {
+    erreurs.augmentationProduction = "L'augmentation de production doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.reductionEnergie, { min: 0, max: 100 })) {
+    erreurs.reductionEnergie = "La réduction d'énergie doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutEnergieTonne, { min: 0 })) {
+    erreurs.coutEnergieTonne = "Le coût énergétique par tonne doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.reductionEau, { min: 0, max: 100 })) {
+    erreurs.reductionEau = "La réduction d'eau doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.coutEauTonne, { min: 0 })) {
+    erreurs.coutEauTonne = "Le coût d'eau par tonne doit être un nombre positif";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.ameliorationQualite, { min: 0, max: 100 })) {
+    erreurs.ameliorationQualite = "L'amélioration de qualité doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.reductionEmpreinteCO2, { min: 0, max: 100 })) {
+    erreurs.reductionEmpreinteCO2 = "La réduction d'empreinte CO2 doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.tauxRejets, { min: 0, max: 100 })) {
+    erreurs.tauxRejets = "Le taux de rejets doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.reductionAccidents, { min: 0, max: 100 })) {
+    erreurs.reductionAccidents = "La réduction d'accidents doit être entre 0% et 100%";
+  }
+  
+  if (!validerChampNumerique(parametresSystemeAutomatise.subventions, { min: 0 })) {
+    erreurs.subventions = "Les subventions doivent être un nombre positif";
+  }
   
   return erreurs;
 };
