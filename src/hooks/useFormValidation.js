@@ -1,135 +1,160 @@
 import { useState, useCallback } from 'react';
-import { validateNumericField } from '../utils/validators';
+import { validerParametres } from '../utils/validators';
 
 /**
- * Hook personnalisé pour la gestion de la validation des formulaires
- * @param {Object} initialValues - Valeurs initiales du formulaire
- * @param {Object} validationRules - Règles de validation par champ
- * @returns {Object} - Fonctions et états pour gérer la validation
+ * Hook personnalisé pour la validation de formulaires
+ * @param {Object} valuesInitiales - Valeurs initiales du formulaire
+ * @param {Object} reglesValidation - Règles de validation (voir validators.js)
+ * @returns {Object} - Objet contenant les valeurs, erreurs et fonctions utilitaires
  */
-const useFormValidation = (initialValues = {}, validationRules = {}) => {
+const useFormValidation = (valuesInitiales = {}, reglesValidation = {}) => {
   // État pour les valeurs du formulaire
-  const [values, setValues] = useState(initialValues);
+  const [values, setValues] = useState(valuesInitiales);
   
   // État pour les erreurs de validation
   const [errors, setErrors] = useState({});
   
-  // État pour indiquer si le formulaire a été soumis
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  // État pour suivre quels champs ont été touchés
+  const [touched, setTouched] = useState({});
   
-  // Validation d'un champ unique
-  const validateField = useCallback((name, value, rules = {}) => {
-    // Si pas de règles pour ce champ, on considère qu'il est valide
-    if (!validationRules[name] && !rules) {
-      return { isValid: true, errorMessage: '' };
-    }
-
-    // Utilisation des règles spécifiques si fournies, sinon les règles globales
-    const fieldRules = rules || validationRules[name] || {};
-    
-    // Validation numérique par défaut
-    return validateNumericField(value, {
-      ...fieldRules,
-      fieldName: fieldRules.fieldName || name
-    });
-  }, [validationRules]);
-  
-  // Validation de tous les champs du formulaire
-  const validateForm = useCallback(() => {
-    const newErrors = {};
-    let isValid = true;
-    
-    // Validation de chaque champ
-    Object.keys(values).forEach(fieldName => {
-      const value = values[fieldName];
-      const validation = validateField(fieldName, value);
-      
-      if (!validation.isValid) {
-        newErrors[fieldName] = validation.errorMessage;
-        isValid = false;
-      }
-    });
-    
-    setErrors(newErrors);
-    return isValid;
-  }, [values, validateField]);
-  
-  // Gestion du changement de valeur d'un champ
+  // Fonction pour mettre à jour un champ individuel
   const handleChange = useCallback((event) => {
-    const { name, value, type } = event.target;
+    const { name, value, type, checked } = event.target;
     
-    // Conversion selon le type de champ
-    let processedValue = value;
-    if (type === 'number') {
-      processedValue = value === '' ? '' : Number(value);
-    }
+    // Déterminer la valeur selon le type d'élément
+    const fieldValue = type === 'checkbox' ? checked : value;
     
+    // Mettre à jour les valeurs du formulaire
     setValues(prevValues => ({
       ...prevValues,
-      [name]: processedValue
+      [name]: fieldValue
     }));
     
-    // Si le formulaire a été soumis, on valide au fur et à mesure
-    if (isSubmitted) {
-      const validation = validateField(name, processedValue);
+    // Marquer le champ comme touché
+    setTouched(prevTouched => ({
+      ...prevTouched,
+      [name]: true
+    }));
+    
+    // Valider seulement ce champ spécifique
+    if (reglesValidation[name]) {
+      const fieldErrors = validerParametres(
+        { [name]: fieldValue },
+        { [name]: reglesValidation[name] }
+      );
       
       setErrors(prevErrors => ({
         ...prevErrors,
-        [name]: validation.isValid ? '' : validation.errorMessage
+        [name]: fieldErrors[name] || null
       }));
     }
-  }, [isSubmitted, validateField]);
+  }, [reglesValidation]);
   
-  // Version simplifiée du handleChange pour utilisation directe avec les setters
-  const setValue = useCallback((name, value) => {
+  // Fonction pour mettre à jour plusieurs champs à la fois
+  const setFieldValues = useCallback((newValues) => {
     setValues(prevValues => ({
       ...prevValues,
-      [name]: value
+      ...newValues
     }));
     
-    // Si le formulaire a été soumis, on valide au fur et à mesure
-    if (isSubmitted) {
-      const validation = validateField(name, value);
+    // Marquer ces champs comme touchés
+    const newTouched = Object.keys(newValues).reduce((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {});
+    
+    setTouched(prevTouched => ({
+      ...prevTouched,
+      ...newTouched
+    }));
+    
+    // Valider les nouveaux champs
+    if (Object.keys(reglesValidation).length > 0) {
+      const newValuesToValidate = Object.keys(newValues)
+        .filter(key => reglesValidation[key])
+        .reduce((acc, key) => {
+          acc[key] = newValues[key];
+          return acc;
+        }, {});
+      
+      const newRegles = Object.keys(newValuesToValidate).reduce((acc, key) => {
+        acc[key] = reglesValidation[key];
+        return acc;
+      }, {});
+      
+      const fieldErrors = validerParametres(newValuesToValidate, newRegles);
       
       setErrors(prevErrors => ({
         ...prevErrors,
-        [name]: validation.isValid ? '' : validation.errorMessage
+        ...fieldErrors
       }));
     }
-  }, [isSubmitted, validateField]);
+  }, [reglesValidation]);
   
-  // Gestion de la soumission du formulaire
-  const handleSubmit = useCallback((onSubmit) => (event) => {
-    if (event) {
-      event.preventDefault();
-    }
+  // Fonction pour marquer un champ comme touché
+  const handleBlur = useCallback((event) => {
+    const { name } = event.target;
     
-    setIsSubmitted(true);
-    const isValid = validateForm();
+    // Marquer le champ comme touché
+    setTouched(prevTouched => ({
+      ...prevTouched,
+      [name]: true
+    }));
     
-    if (isValid && onSubmit) {
-      onSubmit(values);
+    // Valider le champ lors de la perte de focus
+    if (reglesValidation[name]) {
+      const fieldErrors = validerParametres(
+        { [name]: values[name] },
+        { [name]: reglesValidation[name] }
+      );
+      
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        [name]: fieldErrors[name] || null
+      }));
     }
-  }, [validateForm, values]);
+  }, [reglesValidation, values]);
   
-  // Réinitialisation du formulaire
-  const resetForm = useCallback((newValues = initialValues) => {
+  // Fonction pour valider tout le formulaire
+  const validateForm = useCallback(() => {
+    const formErrors = validerParametres(values, reglesValidation);
+    setErrors(formErrors);
+    
+    // Marquer tous les champs comme touchés
+    const allTouched = Object.keys(reglesValidation).reduce((acc, key) => {
+      acc[key] = true;
+      return acc;
+    }, {});
+    
+    setTouched(prevTouched => ({
+      ...prevTouched,
+      ...allTouched
+    }));
+    
+    return Object.keys(formErrors).length === 0; // Renvoie true si pas d'erreurs
+  }, [values, reglesValidation]);
+  
+  // Fonction pour réinitialiser le formulaire
+  const resetForm = useCallback((newValues = valuesInitiales) => {
     setValues(newValues);
     setErrors({});
-    setIsSubmitted(false);
-  }, [initialValues]);
+    setTouched({});
+  }, [valuesInitiales]);
   
+  // Déterminer si le formulaire est valide
+  const isValid = Object.keys(errors).length === 0;
+  
+  // Renvoyer les valeurs et fonctions nécessaires
   return {
     values,
     errors,
-    setValues,
-    setValue,
+    touched,
     handleChange,
-    handleSubmit,
+    handleBlur,
+    setFieldValues,
     validateForm,
-    validateField,
     resetForm,
-    isValid: Object.keys(errors).length === 0
+    isValid
   };
 };
 
