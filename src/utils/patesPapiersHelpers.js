@@ -1,349 +1,131 @@
-import { calculerFluxActualise, appliquerInflation } from './calculationHelpers';
+/**
+ * Fonctions utilitaires pour le calculateur de l'industrie des pâtes et papiers
+ */
 
 /**
- * Calcule le retour sur investissement (ROI) pour un projet d'automatisation dans l'industrie des pâtes et papiers
- * @param {Object} parametresSystemeAutomatise - Paramètres du système automatisé
- * @param {Object} parametresSystemeActuel - Paramètres du système actuel
- * @param {Object} parametresGeneraux - Paramètres généraux
- * @returns {Object} - Les résultats du calcul incluant ROI, VAN, TRI, etc.
+ * Calcule le flux de trésorerie actualisé
+ * @param {number} flux - Flux de trésorerie
+ * @param {number} tauxActualisation - Taux d'actualisation (en pourcentage)
+ * @param {number} annee - Année du flux
+ * @returns {number} - Flux actualisé
  */
-export const calculerROIPatesPapiers = (parametresSystemeAutomatise, parametresSystemeActuel, parametresGeneraux) => {
-  const {
-    coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance, 
-    coutEnergie, dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
-    reductionDechet, coutDechet, augmentationProduction, reductionEnergie,
-    coutEnergieTonne, reductionEau, coutEauTonne, ameliorationQualite,
-    reductionEmpreinteCO2, capaciteTraitement, tauxRejets, reductionAccidents,
-    subventions
-  } = parametresSystemeAutomatise;
-
-  const {
-    capacite, nombreEmployes, maintenance: maintenanceActuelle, 
-    energie: energieActuelle, perteProduction, tauxRejets: tauxRejetsManuel,
-    frequenceAccident, coutMoyenAccident, tempsArretAccident
-  } = parametresSystemeActuel;
-
-  const {
-    margeBrute, tauxInflation, tauxActualisation, tonnageAnnuel,
-    heuresOperationParJour, joursOperationParAn
-  } = parametresGeneraux;
-  
-  // Calcul de l'investissement initial
-  const investissementInitial = coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions;
-  
-  // Initialisation des variables
-  let fluxTresorerie = [];
-  let cumulFluxTresorerie = 0;
-  let valeurActuelleNette = -investissementInitial;
-  let periodeRecuperation = dureeVie;
-  let recuperationAtteinte = false;
-  let totalTonnesCO2Economisees = 0;
-  
-  // Calcul du nombre d'heures d'opération par an
-  const heuresOperationAnnuelles = heuresOperationParJour * joursOperationParAn;
-  
-  // Calcul de la production annuelle (actuelle vs automatisée)
-  const productionActuelle = capacite * heuresOperationAnnuelles * (1 - perteProduction / 100);
-  const productionAutomatisee = capaciteTraitement * heuresOperationAnnuelles;
-  const differenceProductionCalc = productionAutomatisee - productionActuelle;
-  
-  // Calcul des économies d'accidents
-  const economiesAccidents = (frequenceAccident * coutMoyenAccident * reductionAccidents / 100);
-  
-  // Calcul des économies liées au temps d'arrêt dû aux accidents
-  const valeurProductionHoraire = (tonnageAnnuel * margeBrute) / heuresOperationAnnuelles;
-  const economiesTempsArretCalc = frequenceAccident * tempsArretAccident * valeurProductionHoraire * reductionAccidents / 100;
-  
-  // Calcul de la réduction de main d'œuvre
-  const reductionMainOeuvreCalc = (nombreEmployes - (nombreEmployes - nbEmployesRemplaces)) * coutMainOeuvre;
-  
-  // Variable pour stocker le bénéfice de qualité de la dernière année (pour l'affichage)
-  let dernierBeneficeQualite = 0;
-  
-  // Calcul des économies annuelles et bénéfices
-  for (let annee = 1; annee <= dureeVie; annee++) {
-    // Calcul des coûts ajustés avec l'inflation
-    const facteurInflation = Math.pow(1 + tauxInflation / 100, annee - 1);
-    const maintenanceAnnuelle = coutMaintenance * facteurInflation;
-    const maintenanceActuelleAjustee = maintenanceActuelle * facteurInflation;
-    const energieOperationAnnuelle = coutEnergie * facteurInflation;
-    const energieActuelleAjustee = energieActuelle * facteurInflation;
-    
-    // Calcul des économies
-    const economiePersonnel = reductionMainOeuvreCalc * facteurInflation;
-    const economieMaintenance = maintenanceActuelleAjustee - maintenanceAnnuelle;
-    const economieEnergie = energieActuelleAjustee - energieOperationAnnuelle;
-    
-    // Économies liées à la réduction des déchets
-    const tonnageDechetReduit = (tonnageAnnuel * reductionDechet) / 100;
-    const economieDechet = tonnageDechetReduit * coutDechet * facteurInflation;
-    
-    // Économies liées à la réduction des rejets (fils vs manuel)
-    const economieRejets = tonnageAnnuel * (tauxRejetsManuel - tauxRejets) / 100 * coutDechet * facteurInflation;
-    
-    // Économies liées à la réduction de consommation d'énergie dans le processus
-    const economieEnergieProcessus = (tonnageAnnuel * reductionEnergie / 100) * coutEnergieTonne * facteurInflation;
-    
-    // Économies liées à la réduction de consommation d'eau
-    const economieEau = (tonnageAnnuel * reductionEau / 100) * coutEauTonne * facteurInflation;
-    
-    // Bénéfices liés à l'augmentation de la production
-    const productionSupplementaire = tonnageAnnuel * (augmentationProduction / 100);
-    const beneficeSupplementaire = productionSupplementaire * margeBrute * facteurInflation;
-    
-    // Bénéfices liés à l'amélioration de la qualité (moins de retours, meilleure réputation)
-    const beneficeQualite = (tonnageAnnuel * ameliorationQualite / 100) * (margeBrute * 0.2) * facteurInflation;
-    
-    // Stockage de la dernière valeur pour l'affichage
-    if (annee === dureeVie) {
-      dernierBeneficeQualite = beneficeQualite;
-    }
-    
-    // Économies liées à la sécurité (ajustées pour l'inflation)
-    const economieSecuriteAjustee = economiesAccidents * facteurInflation;
-    const economieTempsArretAjustee = economiesTempsArretCalc * facteurInflation;
-    
-    // Calcul de la réduction des émissions de CO2 (en tonnes)
-    const tonnesCO2Economisees = (tonnageAnnuel * reductionEmpreinteCO2 / 100);
-    totalTonnesCO2Economisees += tonnesCO2Economisees;
-    
-    // Amortissement
-    const amortissement = (investissementInitial / dureeVie) * (tauxAmortissement / 100);
-    
-    // Calcul du flux de trésorerie annuel
-    const fluxAnnuel = economiePersonnel + economieDechet + economieMaintenance + economieEnergie + 
-                     economieEnergieProcessus + economieEau + economieRejets +
-                     beneficeSupplementaire + beneficeQualite + 
-                     economieSecuriteAjustee + economieTempsArretAjustee - 
-                     maintenanceAnnuelle - energieOperationAnnuelle + amortissement;
-    
-    // Calcul du flux de trésorerie actualisé
-    const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
-    const fluxActualise = fluxAnnuel / facteurActualisation;
-    
-    // Mise à jour de la VAN
-    valeurActuelleNette += fluxActualise;
-    
-    // Calcul du délai de récupération
-    cumulFluxTresorerie += fluxAnnuel;
-    if (cumulFluxTresorerie >= investissementInitial && !recuperationAtteinte) {
-      const cumulPrecedent = cumulFluxTresorerie - fluxAnnuel;
-      const fractionAnnee = (investissementInitial - cumulPrecedent) / fluxAnnuel;
-      periodeRecuperation = annee - 1 + fractionAnnee;
-      recuperationAtteinte = true;
-    }
-    
-    // Ajout des résultats annuels
-    fluxTresorerie.push({
-      annee,
-      fluxAnnuel,
-      fluxActualise,
-      cumulFluxTresorerie,
-      economiePersonnel,
-      economieDechet,
-      economieMaintenance,
-      economieEnergie,
-      economieEnergieProcessus,
-      economieEau,
-      beneficeSupplementaire,
-      beneficeQualite,
-      economieRejets,
-      economieSecuriteAjustee,
-      economieTempsArretAjustee,
-      maintenanceAnnuelle,
-      energieOperationAnnuelle,
-      amortissement,
-      tonnesCO2Economisees
-    });
-  }
-  
-  // Calcul du ROI
-  const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
-  const roiCalcule = (totalBenefices / investissementInitial) * 100;
-  
-  // Calcul du TRI (approximation simplifiée)
-  let triApprox = 0;
-  for (let r = 1; r <= 100; r++) {
-    let npv = -investissementInitial;
-    for (let t = 0; t < fluxTresorerie.length; t++) {
-      npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + r / 100, t + 1);
-    }
-    if (npv <= 0) {
-      triApprox = r - 1;
-      break;
-    }
-  }
-  
-  // Calcul de l'économie annuelle moyenne
-  const economieAnnuelleCalc = totalBenefices / dureeVie;
-  
-  // Résultats
-  return {
-    fluxTresorerie,
-    roi: roiCalcule,
-    delaiRecuperation: periodeRecuperation,
-    van: valeurActuelleNette,
-    tri: triApprox,
-    economiesCO2: totalTonnesCO2Economisees,
-    differenceProduction: differenceProductionCalc,
-    economieAnnuelle: economieAnnuelleCalc,
-    reductionMainOeuvre: reductionMainOeuvreCalc,
-    economiesSecurite: economiesAccidents,
-    economiesQualite: dernierBeneficeQualite,
-    economiesTempsArret: economiesTempsArretCalc
-  };
+export const calculerFluxActualise = (flux, tauxActualisation, annee) => {
+  const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
+  return flux / facteurActualisation;
 };
 
 /**
- * Ajuste les paramètres par défaut en fonction du type de système actuel
- * @param {string} typeSystemeActuel - Type de système actuel
- * @param {Object} parametresActuels - Paramètres actuels
- * @returns {Object} - Paramètres ajustés
+ * Applique l'inflation à une valeur
+ * @param {number} valeur - Valeur initiale
+ * @param {number} tauxInflation - Taux d'inflation annuel (en pourcentage)
+ * @param {number} annees - Nombre d'années
+ * @returns {number} - Valeur ajustée avec l'inflation
  */
-export const ajusterParametresSystemeActuel = (typeSystemeActuel, parametresActuels) => {
-  let parametresAjustes = { ...parametresActuels };
-  
-  if (typeSystemeActuel === 'manuel') {
-    parametresAjustes = {
-      ...parametresActuels,
-      capacite: 45,
-      nombreEmployes: 2.5,
-      coutSysteme: 15000, 
-      maintenance: 6000,
-      energie: 4000,
-      tauxRejets: 8,
-      perteProduction: 12,
-      frequenceAccident: 5.2
-    };
-  } else if (typeSystemeActuel === 'semi-auto') {
-    parametresAjustes = {
-      ...parametresActuels,
-      capacite: 80,
-      nombreEmployes: 1.5,
-      coutSysteme: 120000,
-      maintenance: 18000,
-      energie: 8000,
-      tauxRejets: 5.5,
-      perteProduction: 8,
-      frequenceAccident: 3.8
-    };
-  } else if (typeSystemeActuel === 'auto-ancien') {
-    parametresAjustes = {
-      ...parametresActuels,
-      capacite: 100,
-      nombreEmployes: 1,
-      coutSysteme: 250000,
-      maintenance: 25000,
-      energie: 10000,
-      tauxRejets: 4.2,
-      perteProduction: 5,
-      frequenceAccident: 1.5
-    };
-  }
-  
-  return parametresAjustes;
+export const appliquerInflation = (valeur, tauxInflation, annees) => {
+  const facteurInflation = Math.pow(1 + tauxInflation / 100, annees);
+  return valeur * facteurInflation;
 };
 
 /**
- * Prépare les données pour les graphiques
- * @param {Object} resultats - Résultats des calculs
+ * Calcule l'économie liée à la réduction des émissions de CO2
+ * @param {number} tonnageAnnuel - Tonnage annuel de production
+ * @param {number} pourcentageReduction - Pourcentage de réduction des émissions
+ * @param {number} dureeVie - Durée de vie du système en années
+ * @returns {number} - Tonnes de CO2 économisées sur la durée de vie
+ */
+export const calculerEconomiesCO2 = (tonnageAnnuel, pourcentageReduction, dureeVie) => {
+  const reductionAnnuelle = tonnageAnnuel * (pourcentageReduction / 100);
+  return reductionAnnuelle * dureeVie;
+};
+
+/**
+ * Calcule l'économie liée à la réduction des déchets
+ * @param {number} tonnageAnnuel - Tonnage annuel de production
+ * @param {number} pourcentageReduction - Pourcentage de réduction des déchets
+ * @param {number} coutDechet - Coût par tonne de déchets
+ * @param {number} tauxInflation - Taux d'inflation
+ * @param {number} annee - Année du calcul
+ * @returns {number} - Économie en dollars pour l'année spécifiée
+ */
+export const calculerEconomieDechet = (
+  tonnageAnnuel,
+  pourcentageReduction,
+  coutDechet,
+  tauxInflation,
+  annee
+) => {
+  const tonnageDechetReduit = (tonnageAnnuel * pourcentageReduction) / 100;
+  return tonnageDechetReduit * coutDechet * appliquerInflation(1, tauxInflation, annee - 1);
+};
+
+/**
+ * Calcule l'économie liée à la réduction des rejets de fils métalliques
+ * @param {number} tonnageAnnuel - Tonnage annuel de production
+ * @param {number} tauxRejetActuel - Taux de rejet actuel (en pourcentage)
+ * @param {number} tauxRejetAutomatise - Taux de rejet du système automatisé (en pourcentage)
+ * @param {number} coutDechet - Coût par tonne de déchets
+ * @param {number} tauxInflation - Taux d'inflation
+ * @param {number} annee - Année du calcul
+ * @returns {number} - Économie en dollars pour l'année spécifiée
+ */
+export const calculerEconomieRejets = (
+  tonnageAnnuel,
+  tauxRejetActuel,
+  tauxRejetAutomatise,
+  coutDechet,
+  tauxInflation,
+  annee
+) => {
+  return (
+    tonnageAnnuel *
+    (tauxRejetActuel - tauxRejetAutomatise) / 100 *
+    coutDechet *
+    appliquerInflation(1, tauxInflation, annee - 1)
+  );
+};
+
+/**
+ * Sauvegarde les paramètres du calculateur dans le localStorage
+ * @param {Object} parametres - Tous les paramètres à sauvegarder
+ * @param {string} typeSystemeActuel - Type de système actuel (manuel, semi-auto, auto-ancien)
  * @param {Object} parametresSystemeActuel - Paramètres du système actuel
  * @param {Object} parametresSystemeAutomatise - Paramètres du système automatisé
  * @param {Object} parametresGeneraux - Paramètres généraux
- * @returns {Object} - Données pour les graphiques
+ * @returns {boolean} - Succès ou échec de la sauvegarde
  */
-export const preparerDonneesGraphiques = (resultats, parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux) => {
-  const { 
-    capacite: capaciteActuelle, nombreEmployes: nombreEmployesActuel,
-    tauxRejets: tauxRejetsManuel, frequenceAccident: frequenceAccidentActuel,
-    maintenanceActuelle = parametresSystemeActuel.maintenance,
-    energieActuelle = parametresSystemeActuel.energie
-  } = parametresSystemeActuel;
-  
-  const {
-    capaciteTraitement, tauxRejets: tauxRejetsFils, reductionAccidents, 
-    coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance,
-    coutEnergie, nbEmployesRemplaces, subventions
-  } = parametresSystemeAutomatise;
-  
-  const { margeBrute, tonnageAnnuel } = parametresGeneraux;
-  
-  const {
-    reductionMainOeuvre, economiesQualite, economiesSecurite, economiesTempsArret,
-    differenceProduction, fluxTresorerie
-  } = resultats;
-  
-  // Comparaison des capacités
-  const dataComparaisonCapacite = [
-    { name: 'Système Actuel', value: capaciteActuelle, fill: '#ef4444' },
-    { name: 'Solution Automatisée', value: capaciteTraitement, fill: '#22c55e' }
-  ];
-  
-  // Comparaison du nombre d'employés
-  const dataComparaisonEmployes = [
-    { name: 'Système Actuel', value: nombreEmployesActuel, fill: '#ef4444' },
-    { name: 'Solution Automatisée', value: nombreEmployesActuel - nbEmployesRemplaces, fill: '#22c55e' }
-  ];
-  
-  // Comparaison des taux de rejets
-  const dataComparaisonRejets = [
-    { name: 'Système Actuel', value: tauxRejetsManuel, fill: '#ef4444' },
-    { name: 'Solution Automatisée', value: tauxRejetsFils, fill: '#22c55e' }
-  ];
-  
-  // Comparaison des fréquences d'accidents
-  const dataComparaisonAccidents = [
-    { name: 'Système Actuel', value: frequenceAccidentActuel, fill: '#ef4444' },
-    { name: 'Solution Automatisée', value: frequenceAccidentActuel * (1 - reductionAccidents/100), fill: '#22c55e' }
-  ];
-  
-  // Données pour le graphique des économies
-  const dataEconomies = [
-    { name: 'Main d\'œuvre', value: reductionMainOeuvre > 0 ? reductionMainOeuvre : 0 },
-    { name: 'Qualité', value: economiesQualite > 0 ? economiesQualite : 0 },
-    { name: 'Sécurité', value: economiesSecurite + economiesTempsArret > 0 ? economiesSecurite + economiesTempsArret : 0 },
-    { name: 'Production', value: differenceProduction * (margeBrute / tonnageAnnuel) > 0 ? differenceProduction * (margeBrute / tonnageAnnuel) : 0 },
-    { name: 'Maintenance', value: maintenanceActuelle - coutMaintenance > 0 ? maintenanceActuelle - coutMaintenance : 0 },
-    { name: 'Énergie', value: energieActuelle - coutEnergie > 0 ? energieActuelle - coutEnergie : 0 }
-  ];
-  
-  // Données pour le graphique de ROI cumulatif
-  const dataCumulatif = fluxTresorerie.map(item => ({
-    annee: `Année ${item.annee}`,
-    cumulatif: item.cumulFluxTresorerie,
-    seuil: coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions
-  }));
-  
-  return {
-    dataComparaisonCapacite,
-    dataComparaisonEmployes,
-    dataComparaisonRejets,
-    dataComparaisonAccidents,
-    dataEconomies,
-    dataCumulatif
-  };
-};
-
-/**
- * Sauvegarde les paramètres de calcul dans le localStorage
- * @param {Object} parametres - Paramètres à sauvegarder
- */
-export const sauvegarderParametres = (parametres) => {
+export const sauvegarderParametres = (
+  typeSystemeActuel,
+  parametresSystemeActuel,
+  parametresSystemeAutomatise,
+  parametresGeneraux
+) => {
   try {
-    localStorage.setItem('patesPapiers.parametres', JSON.stringify(parametres));
+    const parametres = {
+      typeSystemeActuel,
+      parametresSystemeActuel,
+      parametresSystemeAutomatise,
+      parametresGeneraux,
+      dateEnregistrement: new Date().toISOString(),
+    };
+    
+    localStorage.setItem('patesPapiers_parametres', JSON.stringify(parametres));
+    return true;
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des paramètres:', error);
+    return false;
   }
 };
 
 /**
- * Charge les paramètres de calcul depuis le localStorage
+ * Charge les paramètres du calculateur depuis le localStorage
  * @returns {Object|null} - Paramètres chargés ou null en cas d'erreur
  */
 export const chargerParametres = () => {
   try {
-    const parametresString = localStorage.getItem('patesPapiers.parametres');
-    return parametresString ? JSON.parse(parametresString) : null;
+    const parametresJSON = localStorage.getItem('patesPapiers_parametres');
+    if (!parametresJSON) return null;
+    
+    return JSON.parse(parametresJSON);
   } catch (error) {
     console.error('Erreur lors du chargement des paramètres:', error);
     return null;
@@ -351,185 +133,87 @@ export const chargerParametres = () => {
 };
 
 /**
- * Valide un champ numérique
- * @param {any} valeur - Valeur à valider
- * @param {Object} options - Options de validation (min, max, requis)
- * @returns {boolean} - true si la valeur est valide
+ * Valide les paramètres du système
+ * @param {Object} parametres - Paramètres à valider
+ * @returns {Object} - Résultat de la validation {valide: boolean, erreurs: []}
  */
-export const validerChampNumerique = (valeur, options = {}) => {
-  const { min = Number.MIN_SAFE_INTEGER, max = Number.MAX_SAFE_INTEGER, requis = true } = options;
+export const validerParametres = (parametres) => {
+  const erreurs = [];
   
-  if (valeur === '' || valeur === null || valeur === undefined) {
-    return !requis;
+  // Vérification des valeurs négatives
+  Object.entries(parametres).forEach(([cle, valeur]) => {
+    if (typeof valeur === 'number' && valeur < 0) {
+      erreurs.push(`Le paramètre ${cle} ne peut pas être négatif`);
+    }
+  });
+  
+  // Validation spécifique pour les pourcentages
+  const champsPourcentage = [
+    'perteProduction', 
+    'tauxRejets', 
+    'reductionDechet', 
+    'augmentationProduction',
+    'reductionEnergie',
+    'reductionEau',
+    'ameliorationQualite',
+    'reductionEmpreinteCO2',
+    'reductionAccidents'
+  ];
+  
+  champsPourcentage.forEach(champ => {
+    if (parametres[champ] !== undefined && parametres[champ] > 100) {
+      erreurs.push(`Le pourcentage ${champ} ne peut pas dépasser 100%`);
+    }
+  });
+  
+  // Validation cohérence employés remplacés
+  if (
+    parametres.nbEmployesRemplaces !== undefined && 
+    parametres.nombreEmployes !== undefined && 
+    parametres.nbEmployesRemplaces > parametres.nombreEmployes
+  ) {
+    erreurs.push(`Le nombre d'employés remplacés ne peut pas être supérieur au nombre total d'employés`);
   }
   
-  const nombre = Number(valeur);
-  return !isNaN(nombre) && nombre >= min && nombre <= max;
+  return {
+    valide: erreurs.length === 0,
+    erreurs
+  };
 };
 
 /**
- * Valide un objet de paramètres complet
- * @param {Object} parametres - Paramètres à valider
- * @returns {Object} - Objet contenant les erreurs de validation
+ * Formate un montant en devise
+ * @param {number} montant - Montant à formater
+ * @param {string} devise - Code de la devise (par défaut: USD)
+ * @param {number} decimales - Nombre de décimales (par défaut: 0)
+ * @returns {string} - Montant formaté
  */
-export const validerParametres = (parametres) => {
-  const { parametresSystemeActuel, parametresSystemeAutomatise, parametresGeneraux } = parametres;
-  let erreurs = {};
-  
-  // Validation des paramètres généraux
-  if (!validerChampNumerique(parametresGeneraux.margeBrute, { min: 0 })) {
-    erreurs.margeBrute = "La marge brute doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresGeneraux.tonnageAnnuel, { min: 1 })) {
-    erreurs.tonnageAnnuel = "Le tonnage annuel doit être supérieur à 0";
-  }
-  
-  if (!validerChampNumerique(parametresGeneraux.heuresOperationParJour, { min: 1, max: 24 })) {
-    erreurs.heuresOperationParJour = "Les heures d'opération doivent être entre 1 et 24";
-  }
-  
-  if (!validerChampNumerique(parametresGeneraux.joursOperationParAn, { min: 1, max: 365 })) {
-    erreurs.joursOperationParAn = "Les jours d'opération doivent être entre 1 et 365";
-  }
-  
-  if (!validerChampNumerique(parametresGeneraux.tauxInflation, { min: -10, max: 50 })) {
-    erreurs.tauxInflation = "Le taux d'inflation doit être entre -10% et 50%";
-  }
-  
-  if (!validerChampNumerique(parametresGeneraux.tauxActualisation, { min: 0, max: 50 })) {
-    erreurs.tauxActualisation = "Le taux d'actualisation doit être entre 0% et 50%";
-  }
-  
-  // Validation du système actuel
-  if (!validerChampNumerique(parametresSystemeActuel.capacite, { min: 1 })) {
-    erreurs.capacite = "La capacité actuelle doit être supérieure à 0";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.nombreEmployes, { min: 0.1 })) {
-    erreurs.nombreEmployes = "Le nombre d'employés doit être supérieur à 0";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.maintenance, { min: 0 })) {
-    erreurs.maintenance = "Le coût de maintenance doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.energie, { min: 0 })) {
-    erreurs.energie = "Le coût d'énergie doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.perteProduction, { min: 0, max: 100 })) {
-    erreurs.perteProduction = "La perte de production doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.tauxRejets, { min: 0, max: 100 })) {
-    erreurs.tauxRejets = "Le taux de rejets doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.frequenceAccident, { min: 0 })) {
-    erreurs.frequenceAccident = "La fréquence d'accident doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.coutMoyenAccident, { min: 0 })) {
-    erreurs.coutMoyenAccident = "Le coût moyen par accident doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeActuel.tempsArretAccident, { min: 0 })) {
-    erreurs.tempsArretAccident = "Le temps d'arrêt par accident doit être un nombre positif";
-  }
-  
-  // Validation du système automatisé
-  if (!validerChampNumerique(parametresSystemeAutomatise.capaciteTraitement, { min: 1 })) {
-    erreurs.capaciteTraitement = "La capacité de traitement doit être supérieure à 0";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutSysteme, { min: 0 })) {
-    erreurs.coutSysteme = "Le coût du système doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutInstallation, { min: 0 })) {
-    erreurs.coutInstallation = "Le coût d'installation doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutIngenierie, { min: 0 })) {
-    erreurs.coutIngenierie = "Le coût d'ingénierie doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutFormation, { min: 0 })) {
-    erreurs.coutFormation = "Le coût de formation doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutMaintenance, { min: 0 })) {
-    erreurs.coutMaintenance = "Le coût de maintenance doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutEnergie, { min: 0 })) {
-    erreurs.coutEnergie = "Le coût d'énergie doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.dureeVie, { min: 1, max: 50 })) {
-    erreurs.dureeVie = "La durée de vie doit être entre 1 et 50 ans";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.tauxAmortissement, { min: 0, max: 100 })) {
-    erreurs.tauxAmortissement = "Le taux d'amortissement doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutMainOeuvre, { min: 0 })) {
-    erreurs.coutMainOeuvre = "Le coût de main d'œuvre doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.nbEmployesRemplaces, { min: 0, max: parametresSystemeActuel.nombreEmployes })) {
-    erreurs.nbEmployesRemplaces = `Le nombre d'employés remplacés doit être entre 0 et ${parametresSystemeActuel.nombreEmployes}`;
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.reductionDechet, { min: 0, max: 100 })) {
-    erreurs.reductionDechet = "La réduction des déchets doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutDechet, { min: 0 })) {
-    erreurs.coutDechet = "Le coût des déchets doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.augmentationProduction, { min: 0, max: 100 })) {
-    erreurs.augmentationProduction = "L'augmentation de production doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.reductionEnergie, { min: 0, max: 100 })) {
-    erreurs.reductionEnergie = "La réduction d'énergie doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutEnergieTonne, { min: 0 })) {
-    erreurs.coutEnergieTonne = "Le coût énergétique par tonne doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.reductionEau, { min: 0, max: 100 })) {
-    erreurs.reductionEau = "La réduction d'eau doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.coutEauTonne, { min: 0 })) {
-    erreurs.coutEauTonne = "Le coût d'eau par tonne doit être un nombre positif";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.ameliorationQualite, { min: 0, max: 100 })) {
-    erreurs.ameliorationQualite = "L'amélioration de qualité doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.reductionEmpreinteCO2, { min: 0, max: 100 })) {
-    erreurs.reductionEmpreinteCO2 = "La réduction d'empreinte CO2 doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.tauxRejets, { min: 0, max: 100 })) {
-    erreurs.tauxRejets = "Le taux de rejets doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.reductionAccidents, { min: 0, max: 100 })) {
-    erreurs.reductionAccidents = "La réduction d'accidents doit être entre 0% et 100%";
-  }
-  
-  if (!validerChampNumerique(parametresSystemeAutomatise.subventions, { min: 0 })) {
-    erreurs.subventions = "Les subventions doivent être un nombre positif";
-  }
-  
-  return erreurs;
+export const formaterMontant = (montant, devise = 'USD', decimales = 0) => {
+  return new Intl.NumberFormat('fr-FR', { 
+    style: 'currency', 
+    currency: devise, 
+    maximumFractionDigits: decimales 
+  }).format(montant);
+};
+
+/**
+ * Formate un pourcentage
+ * @param {number} valeur - Valeur à formater
+ * @param {number} decimales - Nombre de décimales (par défaut: 2)
+ * @returns {string} - Pourcentage formaté
+ */
+export const formaterPourcentage = (valeur, decimales = 2) => {
+  return `${valeur.toFixed(decimales)}%`;
+};
+
+/**
+ * Formate une valeur numérique
+ * @param {number} valeur - Valeur à formater
+ * @param {number} decimales - Nombre de décimales (par défaut: 2)
+ * @returns {string} - Valeur formatée
+ */
+export const formaterNombre = (valeur, decimales = 2) => {
+  return new Intl.NumberFormat('fr-FR', { 
+    maximumFractionDigits: decimales 
+  }).format(valeur);
 };
