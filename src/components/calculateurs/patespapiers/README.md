@@ -1,78 +1,64 @@
-# Calculateur ROI pour l'industrie des pâtes et papiers
+# Structure Modulaire du Calculateur Pâtes et Papiers
 
-Ce module propose un calculateur de retour sur investissement (ROI) spécifique pour l'automatisation du désempilement et débrochage de ballots dans l'industrie des pâtes et papiers.
+Ce dossier contient l'implémentation restructurée du calculateur spécifique pour l'industrie des pâtes et papiers, suivant une architecture modulaire pour améliorer la maintenabilité et la testabilité.
 
-## Structure modulaire
+## Organisation
 
-Le calculateur est organisé en composants modulaires qui correspondent aux différents onglets de l'interface utilisateur :
+- `CalculateurPatesPapiers.jsx` : Composant principal qui orchestre les sous-composants
+- `ParametresSysteme.jsx` : Gestion de la vue générale et des paramètres de base
+- `ComparatifSystemes.jsx` : Visualisations et tableaux comparatifs
+- `ResultatsFinanciers.jsx` : Détails financiers et flux de trésorerie
+- `ImpactEnvironnemental.jsx` : Analyses de sécurité et impact environnemental
 
-```
-patespapiers/
-├── CalculateurPatesPapiers.jsx    # Composant principal
-├── ParametresSysteme.jsx          # Onglet "Vue générale"
-├── ComparatifSystemes.jsx         # Onglet "Analyse comparative"
-├── ResultatsFinanciers.jsx        # Onglet "Détails financiers"
-└── ImpactEnvironnemental.jsx      # Onglet "Sécurité & Environnement"
-```
+## Architecture
 
-## Contexte
+L'architecture suit un modèle de composants modulaires avec un contexte React partagé pour la gestion d'état. Chaque composant a une responsabilité spécifique :
 
-La gestion de l'état est centralisée dans un contexte React (`CalculateurPapierContext`) qui contient :
-- Les paramètres du système actuel
-- Les paramètres du système automatisé
-- Les paramètres généraux de l'entreprise
-- Les résultats calculés
-- Les fonctions de calcul du ROI
+1. **CalculateurPatesPapiers** : 
+   - Composant racine qui orchestre les autres composants
+   - Gère la navigation entre les onglets
+   - Maintient le contexte global pour les paramètres et les résultats
 
-## Fonctionnalités principales
+2. **ParametresSysteme** :
+   - Gère l'affichage et la modification des paramètres de base
+   - Affiche la vue générale du système
+   - Permet la configuration du type de système actuel
 
-1. **Comparaison de systèmes actuels** :
-   - Système manuel
-   - Système semi-automatisé
-   - Système automatisé ancien
+3. **ComparatifSystemes** :
+   - Affiche les visualisations comparatives entre le système actuel et automatisé
+   - Génère des graphiques de comparaison de capacité, d'employés, etc.
+   - Présente les économies annuelles par catégorie
 
-2. **Calculs financiers** :
-   - ROI (Retour sur Investissement)
-   - VAN (Valeur Actuelle Nette)
-   - TRI (Taux de Rendement Interne)
-   - Délai de récupération
+4. **ResultatsFinanciers** :
+   - Affiche les détails financiers et flux de trésorerie
+   - Visualise le ROI, la VAN, le TRI, etc.
+   - Présente les projections financières
 
-3. **Analyse des économies** :
-   - Économies de main d'œuvre
-   - Gains de productivité
-   - Économies liées à la réduction des déchets
-   - Économies énergétiques
-   - Économies liées à la sécurité
+5. **ImpactEnvironnemental** :
+   - Affiche les analyses de sécurité et impact environnemental
+   - Visualise les réductions d'émissions CO2
+   - Présente les améliorations de sécurité
 
-4. **Impact environnemental et sécurité** :
-   - Réduction des émissions de CO2
-   - Réduction de la consommation d'eau
-   - Réduction des accidents de travail
+## Avantages de cette architecture
+
+1. **Maintenance simplifiée** : Chaque composant est plus petit et plus facile à comprendre
+2. **Responsabilités séparées** : Chaque composant a une responsabilité unique
+3. **Réutilisation facilitée** : Les composants peuvent être réutilisés dans d'autres parties de l'application
+4. **Tests unitaires** : Structure plus adaptée aux tests unitaires
+5. **Évolutivité** : Facilite l'ajout de nouvelles fonctionnalités
 
 ## Utilisation
 
-Le calculateur s'intègre dans l'application principale via le composant `AppCalculateursROI` :
+Pour utiliser ce calculateur dans l'application :
 
 ```jsx
-import CalculateurPatesPapiers from './calculateurs/patespapiers/CalculateurPatesPapiers';
+import CalculateurPatesPapiers from './components/calculateurs/patespapiers';
 
-// Dans le composant AppCalculateursROI
-{calculateurActif === 'patespapiers' && (
-  <CalculateurPatesPapiers />
-)}
+function App() {
+  return (
+    <div className="App">
+      <CalculateurPatesPapiers />
+    </div>
+  );
+}
 ```
-
-## Visualisations
-
-Le calculateur utilise la bibliothèque Recharts pour proposer diverses visualisations :
-- Graphiques à barres pour la comparaison des systèmes
-- Graphiques linéaires pour l'analyse des flux de trésorerie
-- Visualisations des économies par catégorie
-
-## Extensions futures
-
-Voici quelques pistes d'amélioration pour les futures versions :
-- Ajout d'une fonctionnalité d'export PDF des résultats
-- Intégration de scénarios personnalisés sauvegardables
-- Ajout d'une analyse de sensibilité
-- Intégration avec des données réelles de l'industrie des pâtes et papiers
