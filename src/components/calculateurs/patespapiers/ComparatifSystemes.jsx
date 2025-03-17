@@ -1,45 +1,42 @@
-import React, { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useCalculateurPapier } from '../../../context/CalculateurPapierContext';
+import React, { useContext, useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { CalculateurPapierContext } from './CalculateurPatesPapiers';
 
 const ComparatifSystemes = () => {
+  // Accès au contexte partagé
   const { 
     parametresSystemeActuel,
     parametresSystemeAutomatise,
     parametresGeneraux,
     resultats
-  } = useCalculateurPapier();
+  } = useContext(CalculateurPapierContext);
+  
+  // Extraction des valeurs de résultats pour plus de lisibilité
+  const { 
+    roi, delaiRecuperation, van, tri, 
+    differenceProduction, economieAnnuelle, 
+    reductionMainOeuvre, economiesSecurite, 
+    economiesQualite, economiesTempsArret, fluxTresorerie 
+  } = resultats;
+  
+  // Extraction des valeurs des paramètres généraux
+  const { 
+    margeBrute, tonnageAnnuel 
+  } = parametresGeneraux;
   
   // Extraction des valeurs des paramètres du système actuel
   const {
-    capacite: capaciteActuelle, 
-    nombreEmployes: nombreEmployesActuel,
-    maintenance: maintenanceActuelle, 
-    energie: energieActuelle,
-    tauxRejets: tauxRejetsManuel, 
-    frequenceAccident: frequenceAccidentActuel
+    capacite: capaciteActuelle, nombreEmployes: nombreEmployesActuel,
+    maintenance: maintenanceActuelle, energie: energieActuelle,
+    tauxRejets: tauxRejetsManuel, frequenceAccident: frequenceAccidentActuel
   } = parametresSystemeActuel;
   
   // Extraction des valeurs des paramètres du système automatisé
   const {
-    capaciteTraitement, 
-    tauxRejets: tauxRejetsFils, 
-    reductionAccidents, 
-    nbEmployesRemplaces,
-    coutMaintenance
+    capaciteTraitement, tauxRejets: tauxRejetsFils, reductionAccidents, 
+    coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance,
+    coutEnergie, dureeVie, nbEmployesRemplaces, subventions
   } = parametresSystemeAutomatise;
-  
-  // Extraction des valeurs des paramètres généraux
-  const { margeBrute, tonnageAnnuel } = parametresGeneraux;
-  
-  // Extraction des résultats pertinents
-  const { 
-    differenceProduction, 
-    reductionMainOeuvre, 
-    economiesQualite, 
-    economiesSecurite, 
-    economiesTempsArret
-  } = resultats;
   
   // Données pour les graphiques mémorisées pour éviter les recalculs inutiles
   const dataGraphiques = useMemo(() => {
@@ -74,36 +71,31 @@ const ComparatifSystemes = () => {
       { name: 'Sécurité', value: economiesSecurite + economiesTempsArret > 0 ? economiesSecurite + economiesTempsArret : 0 },
       { name: 'Production', value: differenceProduction * (margeBrute / tonnageAnnuel) > 0 ? differenceProduction * (margeBrute / tonnageAnnuel) : 0 },
       { name: 'Maintenance', value: maintenanceActuelle - coutMaintenance > 0 ? maintenanceActuelle - coutMaintenance : 0 },
-      { name: 'Énergie', value: energieActuelle - parametresSystemeAutomatise.coutEnergie > 0 ? energieActuelle - parametresSystemeAutomatise.coutEnergie : 0 }
+      { name: 'Énergie', value: energieActuelle - coutEnergie > 0 ? energieActuelle - coutEnergie : 0 }
     ];
+    
+    // Données pour le graphique de ROI cumulatif
+    const dataCumulatif = fluxTresorerie.map(item => ({
+      annee: `Année ${item.annee}`,
+      cumulatif: item.cumulFluxTresorerie,
+      seuil: coutSysteme + coutInstallation + coutIngenierie + coutFormation - subventions
+    }));
     
     return {
       dataComparaisonCapacite,
       dataComparaisonEmployes,
       dataComparaisonRejets,
       dataComparaisonAccidents,
-      dataEconomies
+      dataEconomies,
+      dataCumulatif
     };
   }, [
-    capaciteActuelle, 
-    capaciteTraitement, 
-    nombreEmployesActuel, 
-    nbEmployesRemplaces,
-    tauxRejetsManuel, 
-    tauxRejetsFils, 
-    frequenceAccidentActuel, 
-    reductionAccidents,
-    reductionMainOeuvre, 
-    economiesQualite, 
-    economiesSecurite, 
-    economiesTempsArret,
-    differenceProduction, 
-    margeBrute, 
-    tonnageAnnuel, 
-    maintenanceActuelle, 
-    coutMaintenance,
-    energieActuelle, 
-    parametresSystemeAutomatise.coutEnergie
+    capaciteActuelle, capaciteTraitement, nombreEmployesActuel, nbEmployesRemplaces,
+    tauxRejetsManuel, tauxRejetsFils, frequenceAccidentActuel, reductionAccidents,
+    reductionMainOeuvre, economiesQualite, economiesSecurite, economiesTempsArret,
+    differenceProduction, margeBrute, tonnageAnnuel, maintenanceActuelle, coutMaintenance,
+    energieActuelle, coutEnergie, fluxTresorerie, coutSysteme, coutInstallation,
+    coutIngenierie, coutFormation, subventions
   ]);
   
   return (
@@ -155,7 +147,7 @@ const ComparatifSystemes = () => {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
           <div className="h-80">
             <h4 className="text-sm font-medium text-gray-700 mb-2 text-center">Taux de rejets (%)</h4>
             <ResponsiveContainer width="100%" height="100%">
@@ -194,75 +186,6 @@ const ComparatifSystemes = () => {
               <Bar dataKey="value" fill="#22c55e" />
             </BarChart>
           </ResponsiveContainer>
-        </div>
-      </div>
-      
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h2 className="text-xl font-semibold mb-4 text-green-700">Tableau comparatif</h2>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
-                <th className="py-3 px-6 text-left">Critère</th>
-                <th className="py-3 px-6 text-center">Système Actuel</th>
-                <th className="py-3 px-6 text-center">Solution Automatisée</th>
-                <th className="py-3 px-6 text-center">Différence</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-600 text-sm">
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-6 text-left font-medium">Capacité (ballots/h)</td>
-                <td className="py-3 px-6 text-center">{capaciteActuelle}</td>
-                <td className="py-3 px-6 text-center">{capaciteTraitement}</td>
-                <td className="py-3 px-6 text-center text-green-600 font-medium">
-                  +{capaciteTraitement - capaciteActuelle} (+{((capaciteTraitement/capaciteActuelle - 1) * 100).toFixed(1)}%)
-                </td>
-              </tr>
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-6 text-left font-medium">Main d'œuvre (ETP)</td>
-                <td className="py-3 px-6 text-center">{nombreEmployesActuel}</td>
-                <td className="py-3 px-6 text-center">{(nombreEmployesActuel - nbEmployesRemplaces).toFixed(1)}</td>
-                <td className="py-3 px-6 text-center text-green-600 font-medium">
-                  -{nbEmployesRemplaces} (-{((nbEmployesRemplaces/nombreEmployesActuel) * 100).toFixed(1)}%)
-                </td>
-              </tr>
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-6 text-left font-medium">Taux de rejets (%)</td>
-                <td className="py-3 px-6 text-center">{tauxRejetsManuel.toFixed(1)}%</td>
-                <td className="py-3 px-6 text-center">{tauxRejetsFils.toFixed(1)}%</td>
-                <td className="py-3 px-6 text-center text-green-600 font-medium">
-                  -{(tauxRejetsManuel - tauxRejetsFils).toFixed(1)}%
-                </td>
-              </tr>
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-6 text-left font-medium">Fréquence d'accidents</td>
-                <td className="py-3 px-6 text-center">{frequenceAccidentActuel.toFixed(1)}/an</td>
-                <td className="py-3 px-6 text-center">{(frequenceAccidentActuel * (1 - reductionAccidents/100)).toFixed(1)}/an</td>
-                <td className="py-3 px-6 text-center text-green-600 font-medium">
-                  -{(frequenceAccidentActuel * reductionAccidents/100).toFixed(1)} (-{reductionAccidents}%)
-                </td>
-              </tr>
-              <tr className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="py-3 px-6 text-left font-medium">Coût de maintenance</td>
-                <td className="py-3 px-6 text-center">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(maintenanceActuelle)}/an</td>
-                <td className="py-3 px-6 text-center">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(coutMaintenance)}/an</td>
-                <td className="py-3 px-6 text-center text-green-600 font-medium">
-                  {maintenanceActuelle > coutMaintenance ? '-' : '+'}
-                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(Math.abs(maintenanceActuelle - coutMaintenance))}/an
-                </td>
-              </tr>
-              <tr className="hover:bg-gray-50">
-                <td className="py-3 px-6 text-left font-medium">Coût énergétique</td>
-                <td className="py-3 px-6 text-center">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(energieActuelle)}/an</td>
-                <td className="py-3 px-6 text-center">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(parametresSystemeAutomatise.coutEnergie)}/an</td>
-                <td className="py-3 px-6 text-center text-green-600 font-medium">
-                  {energieActuelle > parametresSystemeAutomatise.coutEnergie ? '-' : '+'}
-                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD' }).format(Math.abs(energieActuelle - parametresSystemeAutomatise.coutEnergie))}/an
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
