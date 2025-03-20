@@ -40,14 +40,15 @@ const useCalculROI = (
       coutParBallotAutomatise: 0,
       economieParBallot: 0,
       tco: 0 // Total Cost of Ownership
-    }
+    },
+    erreurs: {} // Ajout d'un champ pour stocker les erreurs de validation
   });
   
   /**
    * Calcule le TRI en utilisant la méthode de Newton-Raphson
    * @param {Array} fluxTresorerie - Tableau des flux de trésorerie par année
    * @param {Number} investissementInitial - Montant de l'investissement initial
-   * @returns {Number} TRI calculé
+   * @returns {Number|null} TRI calculé ou null si non calculable
    */
   const calculerTRI = (fluxTresorerie, investissementInitial) => {
     // Fonction pour calculer la VAN à un taux donné
@@ -69,11 +70,29 @@ const useCalculROI = (
     };
     
     // Vérifier si une solution existe
-    const fluxPositifs = fluxTresorerie.some(flux => flux.fluxAnnuel > 0);
-    const fluxNegatifs = fluxTresorerie.some(flux => flux.fluxAnnuel < 0);
+    // Le TRI n'existe généralement que s'il y a au moins un changement de signe dans les flux
+    let fluxPositifs = false;
+    let fluxNegatifs = false;
+
+    // Vérifier l'investissement initial d'abord
+    if (investissementInitial > 0) {
+      fluxNegatifs = true;
+    } else if (investissementInitial < 0) {
+      fluxPositifs = true;
+    }
+
+    // Puis vérifier tous les flux annuels
+    for (let flux of fluxTresorerie) {
+      if (flux.fluxAnnuel > 0) fluxPositifs = true;
+      if (flux.fluxAnnuel < 0) fluxNegatifs = true;
+      
+      // Si on a trouvé les deux signes, on peut sortir de la boucle
+      if (fluxPositifs && fluxNegatifs) break;
+    }
     
-    if (!fluxPositifs || !fluxNegatifs && investissementInitial > 0) {
-      return null; // Pas de solution TRI
+    // S'il n'y a pas de changement de signe, pas de TRI
+    if (!fluxPositifs || !fluxNegatifs) {
+      return null;
     }
     
     // Méthode de Newton-Raphson
@@ -93,6 +112,12 @@ const useCalculROI = (
       }
       
       const nouveauTaux = taux - van / derivee;
+      
+      // Protection contre les valeurs négatives et trop grandes
+      if (nouveauTaux < -1 || nouveauTaux > 1000) {
+        break;
+      }
+      
       if (Math.abs(nouveauTaux - taux) < PRECISION) {
         return nouveauTaux * 100; // Convertir en pourcentage
       }
@@ -100,22 +125,84 @@ const useCalculROI = (
       taux = nouveauTaux;
     }
     
-    // Méthode de repli - approximation itérative si Newton-Raphson échoue
-    for (let r = 1; r <= 100; r++) {
-      let npv = -investissementInitial;
-      for (let t = 0; t < fluxTresorerie.length; t++) {
-        npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + r / 100, t + 1);
+    // Si la méthode de Newton-Raphson échoue, utiliser la recherche binaire
+    let tauxMin = -0.99; // Taux minimum théorique
+    let tauxMax = 10;    // 1000% comme limite supérieure
+    
+    for (let i = 0; i < MAX_ITERATIONS; i++) {
+      let tauxMilieu = (tauxMin + tauxMax) / 2;
+      let vanMilieu = calculerVAN(tauxMilieu);
+      
+      if (Math.abs(vanMilieu) < PRECISION) {
+        return tauxMilieu * 100; // Convertir en pourcentage
       }
-      if (npv <= 0) {
-        return r - 1 + (Math.abs(npv) / (Math.abs(npv) + Math.abs(calculerVAN((r - 1) / 100))));
+      
+      if (vanMilieu > 0) {
+        tauxMin = tauxMilieu;
+      } else {
+        tauxMax = tauxMilieu;
+      }
+      
+      if (Math.abs(tauxMax - tauxMin) < PRECISION) {
+        return tauxMilieu * 100; // Convertir en pourcentage
       }
     }
     
     return null; // Pas de solution trouvée
   };
+
+  /**
+   * Valide les entrées utilisateur pour s'assurer de la cohérence des calculs
+   * @returns {Object} Erreurs trouvées
+   */
+  const validerEntrees = () => {
+    let erreurs = {};
+
+    // Vérification des capacités (pour éviter division par zéro)
+    if (!parametresSystemeActuel.capacite || parametresSystemeActuel.capacite <= 0) {
+      erreurs.capaciteActuelle = "La capacité du système actuel doit être supérieure à 0";
+    }
+    
+    if (!parametresSystemeAutomatise.capaciteTraitement || parametresSystemeAutomatise.capaciteTraitement <= 0) {
+      erreurs.capaciteAutomatisee = "La capacité du système automatisé doit être supérieure à 0";
+    }
+
+    // Validation des heures d'opération
+    if (parametresGeneraux.heuresOperationParJour <= 0 || parametresGeneraux.heuresOperationParJour > 24) {
+      erreurs.heuresOperation = "Les heures d'opération par jour doivent être entre 1 et 24";
+    }
+
+    if (parametresGeneraux.joursOperationParAn <= 0 || parametresGeneraux.joursOperationParAn > 365) {
+      erreurs.joursOperation = "Les jours d'opération par an doivent être entre 1 et 365";
+    }
+
+    // Validation financière
+    if (parametresGeneraux.tauxActualisation < 0) {
+      erreurs.tauxActualisation = "Le taux d'actualisation ne peut pas être négatif";
+    }
+
+    if (parametresSystemeAutomatise.dureeVie <= 0) {
+      erreurs.dureeVie = "La durée de vie doit être supérieure à 0";
+    }
+
+    return erreurs;
+  };
   
   // Fonction de calcul des résultats
   const calculerROI = () => {
+    // Validation des entrées
+    const erreurs = validerEntrees();
+    const erreursTrouvees = Object.keys(erreurs).length > 0;
+
+    // Si des erreurs sont trouvées, mettre à jour l'état et sortir
+    if (erreursTrouvees) {
+      setResultats(prev => ({
+        ...prev,
+        erreurs
+      }));
+      return;
+    }
+
     const {
       coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance, 
       coutEnergie, dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
@@ -190,8 +277,8 @@ const useCalculROI = (
     const coutOperationnelAutomatise = coutMaintenance + coutEnergie + ((nombreEmployes - nbEmployesRemplaces) * coutMainOeuvre) + 
                                      (frequenceAccident * coutMoyenAccident * (1 - reductionAccidents/100));
     
-    const coutParBallotActuel = coutOperationnelActuel / ballotsAnnuelsActuels;
-    const coutParBallotAutomatise = coutOperationnelAutomatise / ballotsAnnuelsAutomatises;
+    const coutParBallotActuel = ballotsAnnuelsActuels > 0 ? coutOperationnelActuel / ballotsAnnuelsActuels : 0;
+    const coutParBallotAutomatise = ballotsAnnuelsAutomatises > 0 ? coutOperationnelAutomatise / ballotsAnnuelsAutomatises : 0;
     const economieParBallot = coutParBallotActuel - coutParBallotAutomatise;
     
     // Total Cost of Ownership sur la durée de vie
@@ -353,7 +440,8 @@ const useCalculROI = (
         coutParBallotAutomatise: coutParBallotAutomatise,
         economieParBallot: economieParBallot,
         tco: tco
-      }
+      },
+      erreurs: {} // Réinitialiser les erreurs
     });
   };
   
