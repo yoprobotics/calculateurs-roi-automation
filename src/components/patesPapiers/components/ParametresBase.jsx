@@ -39,15 +39,21 @@ const ParametresBase = ({
     // Production effective (tenant compte des pertes)
     const productionEffective = ballotsAnnuels * (1 - perteProduction / 100);
     
-    // Coût opérationnel annuel
+    // Coût main d'œuvre annuel
+    const coutMainOeuvreAnnuel = parametresSystemeActuel.nombreEmployes * 
+                              (parametresSystemeActuel.coutMainOeuvre || 55000);
+    
+    // Coût opérationnel annuel incluant tous les coûts
     const coutOperationnelAnnuel = (
       parametresSystemeActuel.maintenance + 
       parametresSystemeActuel.energie + 
-      (parametresSystemeActuel.nombreEmployes * (parametresSystemeActuel.coutMainOeuvre || 55000))
+      (parametresSystemeActuel.coutEau || 0) +
+      coutMainOeuvreAnnuel +
+      (parametresSystemeActuel.frequenceAccident * parametresSystemeActuel.coutMoyenAccident)
     );
     
     // Coût par ballot
-    const coutParBallot = coutOperationnelAnnuel / productionEffective;
+    const coutParBallot = productionEffective > 0 ? coutOperationnelAnnuel / productionEffective : 0;
     
     return {
       tempsCycle,
@@ -375,37 +381,6 @@ const ParametresBase = ({
       </div>
       
       <div className="mb-6">
-        <h3 className="font-medium text-gray-700 mb-2">Données de production</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <LabelAvecInfoBulle texte="Tonnage annuel (tonnes)" cle="tonnageAnnuel" categorie="parametresGeneraux" />
-            <input
-              type="number"
-              value={parametresGeneraux.tonnageAnnuel}
-              onChange={(e) => setParametresGeneraux({
-                ...parametresGeneraux,
-                tonnageAnnuel: Number(e.target.value)
-              })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <LabelAvecInfoBulle texte="Marge brute par tonne ($)" cle="margeBrute" categorie="parametresGeneraux" />
-            <input
-              type="number"
-              step="0.01"
-              value={parametresGeneraux.margeBrute}
-              onChange={(e) => setParametresGeneraux({
-                ...parametresGeneraux,
-                margeBrute: Number(e.target.value)
-              })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-        </div>
-      </div>
-      
-      <div>
         <h3 className="font-medium text-gray-700 mb-2">Paramètres financiers</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
