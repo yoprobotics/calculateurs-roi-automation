@@ -1,14 +1,18 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 // Import des hooks personnalisés
 import useParametres from './hooks/useParametres';
 import useCalculROI from './hooks/useCalculROI';
+
+// Import des styles d'impression
+import './styles/printStyles.css';
 
 // Import des composants d'interface
 import Header from './components/Header';
 import Navigation from './components/Navigation';
 import ActionButtons from './components/ActionButtons';
 import RapportComplet from './components/RapportComplet';
+import ResetButton from './components/ResetButton';
 
 // Import des composants d'onglets
 import VueGenerale from './components/onglets/VueGenerale';
@@ -46,6 +50,20 @@ const CalculateurPatesPapiers = () => {
   // État pour gérer l'affichage du rapport complet
   const [afficherRapportComplet, setAfficherRapportComplet] = useState(false);
   
+  // Gestion de l'impression - Afficher automatiquement le rapport complet en mode impression
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      // Active le rapport complet avant l'impression
+      setAfficherRapportComplet(true);
+    };
+    
+    window.addEventListener('beforeprint', handleBeforePrint);
+    
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+    };
+  }, []);
+  
   // Fonction pour changer l'onglet et afficher/masquer les détails
   const changerOnglet = useCallback((onglet) => {
     setUi(prev => ({ ...prev, ongletActif: onglet }));
@@ -66,16 +84,17 @@ const CalculateurPatesPapiers = () => {
   const { afficherDetails, ongletActif } = ui;
   
   return (
-    <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto">
+    <div className="bg-gray-50 p-6 rounded-lg shadow-lg max-w-6xl mx-auto print:p-0 print:shadow-none print:max-w-none">
       {/* En-tête */}
       <Header capaciteTraitement={parametresSystemeAutomatise.capaciteTraitement} />
       
       {/* Bouton pour afficher/masquer le rapport complet */}
       {!afficherRapportComplet && (
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between mb-4">
+          <ResetButton />
           <button
             onClick={toggleRapportComplet}
-            className="flex items-center text-sm font-medium text-blue-700 hover:text-blue-800 transition-colors"
+            className="flex items-center text-sm font-medium text-blue-700 hover:text-blue-800 transition-colors print:hidden"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
@@ -88,7 +107,7 @@ const CalculateurPatesPapiers = () => {
       {/* Affichage conditionnel du rapport complet ou du calculateur */}
       {afficherRapportComplet ? (
         <div>
-          <div className="mb-4">
+          <div className="mb-4 print:hidden">
             <button
               onClick={toggleRapportComplet}
               className="flex items-center text-sm font-medium text-blue-700 hover:text-blue-800 transition-colors"
@@ -169,6 +188,13 @@ const CalculateurPatesPapiers = () => {
           />
         </>
       )}
+      
+      {/* Affichage d'une note en pied de page - uniquement visible à l'impression */}
+      <div className="hidden print:block mt-8 text-xs text-gray-500 text-center">
+        <p>Calculateur ROI - Industrie des pâtes et papiers</p>
+        <p>Rapport généré le {new Date().toLocaleDateString('fr-FR')}</p>
+        <p>yoprobotics.com</p>
+      </div>
     </div>
   );
 };
