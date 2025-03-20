@@ -45,7 +45,17 @@ const VueGenerale = ({
         />
       </div>
       
-      {/* Deuxième rangée: Résultats financiers */}
+      {/* Paramètres avancés - affichage conditionnel au-dessus des résultats */}
+      {ui.afficherDetails && (
+        <div className="mb-8">
+          <ParametresAvances
+            parametresSystemeAutomatise={parametresSystemeAutomatise}
+            setParametresSystemeAutomatise={setParametresSystemeAutomatise}
+          />
+        </div>
+      )}
+      
+      {/* Résultats financiers - en troisième position */}
       <div className="mb-8">
         <ResultatsSommaire
           resultats={resultats}
@@ -53,14 +63,6 @@ const VueGenerale = ({
           parametresSystemeAutomatise={parametresSystemeAutomatise}
         />
       </div>
-      
-      {/* Paramètres avancés - affichage conditionnel */}
-      {ui.afficherDetails && (
-        <ParametresAvances
-          parametresSystemeAutomatise={parametresSystemeAutomatise}
-          setParametresSystemeAutomatise={setParametresSystemeAutomatise}
-        />
-      )}
     </>
   );
 };
