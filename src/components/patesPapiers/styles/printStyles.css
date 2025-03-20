@@ -1,0 +1,170 @@
+/* Styles d'impression pour le calculateur de pâtes et papiers */
+
+@media print {
+  /* Réinitialisation des styles généraux pour l'impression */
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Masque les éléments non nécessaires à l'impression */
+  button, 
+  .print-hide,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Styles spécifiques pour le calculateur */
+  .bg-gray-50, 
+  .bg-white {
+    background-color: white !important;
+    box-shadow: none !important;
+  }
+  
+  .p-6, 
+  .p-4, 
+  .p-3 {
+    padding: 0.25in !important;
+  }
+  
+  .rounded-lg,
+  .rounded-md,
+  .rounded {
+    border-radius: 0 !important;
+  }
+  
+  .shadow,
+  .shadow-lg,
+  .shadow-md {
+    box-shadow: none !important;
+  }
+  
+  /* Amélioration des contrastes pour les couleurs */
+  .text-green-700,
+  .text-green-800,
+  .text-green-600 {
+    color: #166534 !important; /* vert foncé */
+  }
+  
+  .text-blue-700,
+  .text-blue-800,
+  .text-blue-600 {
+    color: #1e40af !important; /* bleu foncé */
+  }
+  
+  .text-gray-600,
+  .text-gray-700 {
+    color: #4b5563 !important; /* gris foncé */
+  }
+  
+  /* Fonds de couleur claire pour l'impression */
+  .bg-green-50 {
+    background-color: #f0fdf4 !important;
+    border: 1px solid #dcfce7 !important;
+  }
+  
+  .bg-blue-50 {
+    background-color: #eff6ff !important;
+    border: 1px solid #dbeafe !important;
+  }
+  
+  .bg-red-50 {
+    background-color: #fef2f2 !important;
+    border: 1px solid #fee2e2 !important;
+  }
+  
+  .bg-purple-50,
+  .bg-indigo-50,
+  .bg-yellow-50 {
+    background-color: #fafafa !important;
+    border: 1px solid #f5f5f5 !important;
+  }
+  
+  /* Ajustements pour les tableaux */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  th {
+    background-color: #f9fafb !important;
+    color: black !important;
+    font-weight: bold !important;
+    text-align: left !important;
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+  
+  td {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+  
+  /* Gestion des sauts de page */
+  h2, h3 {
+    page-break-after: avoid !important;
+  }
+  
+  table, figure, .page-break-inside-avoid {
+    page-break-inside: avoid !important;
+  }
+  
+  .page-break-before {
+    page-break-before: always !important;
+  }
+  
+  /* Assure que les liens sont visibles et utilisables */
+  a {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+  }
+  
+  /* Force l'affichage des textes et images */
+  p, h1, h2, h3, h4, h5, h6, img {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* Ajustements supplémentaires pour les graphiques */
+  .recharts-wrapper {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Styles pour la mise en page du rapport */
+  .rapport-section {
+    margin-bottom: 0.5in !important;
+  }
+  
+  /* En-tête du rapport */
+  header {
+    margin-bottom: 0.3in !important;
+  }
+  
+  /* Pied de page */
+  footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    border-top: 1px solid #e5e7eb !important;
+    padding-top: 0.1in !important;
+    font-size: 8pt !important;
+    text-align: center !important;
+  }
+  
+  /* Adaptations spécifiques pour le rapport complet */
+  .grid {
+    display: block !important;
+  }
+  
+  .grid > div {
+    margin-bottom: 0.3in !important;
+  }
+  
+  /* Pour les éléments qui doivent être affichés en mode impression */
+  .print-only {
+    display: block !important;
+  }
+}
