@@ -24,9 +24,9 @@ const VueGenerale = ({
 }) => {
   return (
     <>
-      {/* Première rangée: Paramètres + Résultats */}
+      {/* Première rangée: Paramètres système actuel et automatisé côte à côte */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        {/* Paramètres de base */}
+        {/* Paramètres système actuel */}
         <ParametresBase
           typeSystemeActuel={typeSystemeActuel}
           parametresSystemeActuel={parametresSystemeActuel}
@@ -37,20 +37,20 @@ const VueGenerale = ({
           toggleDetails={toggleDetails}
         />
         
-        {/* Résultats */}
-        <ResultatsSommaire
-          resultats={resultats}
-          parametresSystemeActuel={parametresSystemeActuel}
-          parametresSystemeAutomatise={parametresSystemeAutomatise}
-        />
-      </div>
-      
-      {/* Deuxième rangée: Paramètres système automatisé */}
-      <div className="mb-8">
+        {/* Paramètres système automatisé */}
         <ParametresSystemeAutomatise
           parametresSystemeAutomatise={parametresSystemeAutomatise}
           parametresGeneraux={parametresGeneraux}
           setParametresSystemeAutomatise={setParametresSystemeAutomatise}
+        />
+      </div>
+      
+      {/* Deuxième rangée: Résultats financiers */}
+      <div className="mb-8">
+        <ResultatsSommaire
+          resultats={resultats}
+          parametresSystemeActuel={parametresSystemeActuel}
+          parametresSystemeAutomatise={parametresSystemeAutomatise}
         />
       </div>
       
