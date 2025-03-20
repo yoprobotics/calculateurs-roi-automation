@@ -87,6 +87,36 @@ const ParametresSystemeAutomatise = ({
           </div>
         </div>
         
+        {/* Taux de rejet et amélioration de la production */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Taux de rejet (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.tauxRejets}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                tauxRejets: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Augmentation production (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.augmentationProduction}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                augmentationProduction: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        
         {/* Paramètres opérationnels clés */}
         <div className="bg-blue-50 rounded-lg p-3 mb-4">
           <h4 className="text-sm font-medium text-blue-800 mb-2">Indicateurs opérationnels</h4>
@@ -101,20 +131,36 @@ const ParametresSystemeAutomatise = ({
             </div>
           </div>
         </div>
-        
-        {/* Taux de rejet */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Taux de rejet (%)</label>
-          <input
-            type="number"
-            step="0.1"
-            value={parametresSystemeAutomatise.tauxRejets}
-            onChange={(e) => setParametresSystemeAutomatise({
-              ...parametresSystemeAutomatise,
-              tauxRejets: Number(e.target.value)
-            })}
-            className="w-full p-2 border rounded"
-          />
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Personnel</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Employés remplacés (ETP)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.nbEmployesRemplaces}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                nbEmployesRemplaces: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Coût annuel par employé ($)</label>
+            <input
+              type="number"
+              value={parametresSystemeAutomatise.coutMainOeuvre}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                coutMainOeuvre: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
         </div>
       </div>
       
@@ -227,8 +273,99 @@ const ParametresSystemeAutomatise = ({
         </div>
       </div>
       
-      <div>
-        <h3 className="font-medium text-gray-700 mb-2">Impacts environnementaux</h3>
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Amortissement</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Durée de vie (années)</label>
+            <input
+              type="number"
+              value={parametresSystemeAutomatise.dureeVie}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                dureeVie: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Taux d'amortissement (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.tauxAmortissement}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                tauxAmortissement: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Économies d'énergie et ressources</h3>
+        <div className="grid grid-cols-2 gap-4 mb-2">
+          <div>
+            <label className="block text-sm font-medium mb-1">Réduction énergie (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.reductionEnergie}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                reductionEnergie: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Coût énergie par tonne ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={parametresSystemeAutomatise.coutEnergieTonne}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                coutEnergieTonne: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Réduction eau (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.reductionEau}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                reductionEau: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Coût eau par tonne ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={parametresSystemeAutomatise.coutEauTonne}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                coutEauTonne: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Réduction des déchets</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Réduction déchets (%)</label>
@@ -244,18 +381,67 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction empreinte CO2 (%)</label>
+            <label className="block text-sm font-medium mb-1">Coût par tonne de déchet ($)</label>
             <input
               type="number"
-              step="0.1"
-              value={parametresSystemeAutomatise.reductionEmpreinteCO2}
+              step="0.01"
+              value={parametresSystemeAutomatise.coutDechet}
               onChange={(e) => setParametresSystemeAutomatise({
                 ...parametresSystemeAutomatise,
-                reductionEmpreinteCO2: Number(e.target.value)
+                coutDechet: Number(e.target.value)
               })}
               className="w-full p-2 border rounded"
             />
           </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Sécurité et qualité</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Réduction accidents (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.reductionAccidents}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                reductionAccidents: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Amélioration qualité (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeAutomatise.ameliorationQualite}
+              onChange={(e) => setParametresSystemeAutomatise({
+                ...parametresSystemeAutomatise,
+                ameliorationQualite: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="font-medium text-gray-700 mb-2">Impact environnemental</h3>
+        <div>
+          <label className="block text-sm font-medium mb-1">Réduction empreinte CO2 (%)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={parametresSystemeAutomatise.reductionEmpreinteCO2}
+            onChange={(e) => setParametresSystemeAutomatise({
+              ...parametresSystemeAutomatise,
+              reductionEmpreinteCO2: Number(e.target.value)
+            })}
+            className="w-full p-2 border rounded"
+          />
         </div>
       </div>
     </div>
