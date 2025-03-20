@@ -10,6 +10,7 @@ import definitionsInfoBulles from '../utils/definitionsInfoBulles';
 const ParametresSystemeAutomatise = ({
   parametresSystemeAutomatise,
   parametresGeneraux,
+  parametresSystemeActuel,
   setParametresSystemeAutomatise
 }) => {
   // Accès aux définitions des info-bulles
@@ -38,14 +39,26 @@ const ParametresSystemeAutomatise = ({
       parametresSystemeAutomatise.subventions
     );
     
-    // Coût opérationnel annuel
+    // Coût main d'œuvre après réduction
+    const coutMainOeuvreAnnuel = (parametresSystemeActuel.nombreEmployes - parametresSystemeAutomatise.nbEmployesRemplaces) * 
+                             parametresSystemeAutomatise.coutMainOeuvre;
+    
+    // Coût lié aux accidents (réduit par la réduction des accidents)
+    const coutAccidentsAnnuel = parametresSystemeActuel.frequenceAccident * 
+                            parametresSystemeActuel.coutMoyenAccident * 
+                            (1 - parametresSystemeAutomatise.reductionAccidents / 100);
+    
+    // Coût opérationnel annuel total
     const coutOperationnelAnnuel = (
       parametresSystemeAutomatise.coutMaintenance + 
-      parametresSystemeAutomatise.coutEnergie
+      parametresSystemeAutomatise.coutEnergie +
+      (parametresSystemeAutomatise.coutEau || 0) +
+      coutMainOeuvreAnnuel +
+      coutAccidentsAnnuel
     );
     
     // Coût par ballot
-    const coutParBallot = coutOperationnelAnnuel / ballotsAnnuels;
+    const coutParBallot = ballotsAnnuels > 0 ? coutOperationnelAnnuel / ballotsAnnuels : 0;
     
     return {
       tempsCycle,
@@ -56,7 +69,7 @@ const ParametresSystemeAutomatise = ({
       coutOperationnelAnnuel,
       coutParBallot
     };
-  }, [parametresSystemeAutomatise, parametresGeneraux]);
+  }, [parametresSystemeAutomatise, parametresGeneraux, parametresSystemeActuel]);
   
   /**
    * Helper pour créer un label avec une info-bulle
@@ -290,6 +303,18 @@ const ParametresSystemeAutomatise = ({
               className="w-full p-2 border rounded"
             />
           </div>
+        </div>
+        <div className="mt-2">
+          <LabelAvecInfoBulle texte="Coût eau annuel ($)" cle="coutEau" />
+          <input
+            type="number"
+            value={parametresSystemeAutomatise.coutEau || 0}
+            onChange={(e) => setParametresSystemeAutomatise({
+              ...parametresSystemeAutomatise,
+              coutEau: Number(e.target.value)
+            })}
+            className="w-full p-2 border rounded"
+          />
         </div>
       </div>
       
