@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import InfoBulle from './common/InfoBulle';
+import definitionsInfoBulles from '../utils/definitionsInfoBulles';
 
 /**
  * Composant pour les paramètres du système automatisé
@@ -10,6 +12,9 @@ const ParametresSystemeAutomatise = ({
   parametresGeneraux,
   setParametresSystemeAutomatise
 }) => {
+  // Accès aux définitions des info-bulles
+  const { systemeAutomatise } = definitionsInfoBulles;
+  
   // Calcul des paramètres opérationnels dérivés
   const parametresOperationnels = useMemo(() => {
     // Temps de cycle en secondes par ballot
@@ -53,6 +58,21 @@ const ParametresSystemeAutomatise = ({
     };
   }, [parametresSystemeAutomatise, parametresGeneraux]);
   
+  /**
+   * Helper pour créer un label avec une info-bulle
+   * @param {String} texte - Texte du label
+   * @param {String} cle - Clé pour la définition de l'info-bulle
+   * @returns {JSX.Element} Label avec info-bulle
+   */
+  const LabelAvecInfoBulle = ({ texte, cle }) => (
+    <label className="block text-sm font-medium mb-1 flex items-center">
+      {texte}
+      <span className="ml-1">
+        <InfoBulle texte={systemeAutomatise[cle]} />
+      </span>
+    </label>
+  );
+  
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <h2 className="text-xl font-semibold mb-4 text-blue-700 flex items-center">
@@ -68,7 +88,7 @@ const ParametresSystemeAutomatise = ({
         {/* Paramètres de capacité avec temps de cycle correspondant */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Capacité (ballots/heure)</label>
+            <LabelAvecInfoBulle texte="Capacité (ballots/heure)" cle="capaciteTraitement" />
             <input
               type="number"
               value={parametresSystemeAutomatise.capaciteTraitement}
@@ -80,7 +100,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div className="flex flex-col">
-            <label className="block text-sm font-medium mb-1">Temps de cycle</label>
+            <LabelAvecInfoBulle texte="Temps de cycle" cle="tempsCycle" />
             <div className="flex items-center h-10 px-3 bg-blue-50 rounded text-blue-800 font-medium">
               {parametresOperationnels.tempsCycle.toFixed(1)} secondes / ballot
             </div>
@@ -90,7 +110,7 @@ const ParametresSystemeAutomatise = ({
         {/* Taux de rejet et amélioration de la production */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Taux de rejet (%)</label>
+            <LabelAvecInfoBulle texte="Taux de rejet (%)" cle="tauxRejets" />
             <input
               type="number"
               step="0.1"
@@ -103,7 +123,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Augmentation production (%)</label>
+            <LabelAvecInfoBulle texte="Augmentation production (%)" cle="augmentationProduction" />
             <input
               type="number"
               step="0.1"
@@ -122,11 +142,11 @@ const ParametresSystemeAutomatise = ({
           <h4 className="text-sm font-medium text-blue-800 mb-2">Indicateurs opérationnels</h4>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-blue-600 mb-1">Ballots par jour</label>
+              <LabelAvecInfoBulle texte="Ballots par jour" cle="ballotsParJour" />
               <div className="text-sm font-medium">{parametresOperationnels.ballotsParJour.toFixed(0)}</div>
             </div>
             <div>
-              <label className="block text-xs text-blue-600 mb-1">Coût par ballot</label>
+              <LabelAvecInfoBulle texte="Coût par ballot" cle="coutParBallot" />
               <div className="text-sm font-medium">${parametresOperationnels.coutParBallot.toFixed(2)}</div>
             </div>
           </div>
@@ -137,7 +157,7 @@ const ParametresSystemeAutomatise = ({
         <h3 className="font-medium text-gray-700 mb-2">Personnel</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Employés remplacés (ETP)</label>
+            <LabelAvecInfoBulle texte="Employés remplacés (ETP)" cle="nbEmployesRemplaces" />
             <input
               type="number"
               step="0.1"
@@ -150,7 +170,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût annuel par employé ($)</label>
+            <LabelAvecInfoBulle texte="Coût annuel par employé ($)" cle="coutMainOeuvre" />
             <input
               type="number"
               value={parametresSystemeAutomatise.coutMainOeuvre}
@@ -168,7 +188,7 @@ const ParametresSystemeAutomatise = ({
         <h3 className="font-medium text-gray-700 mb-2">Coûts d'investissement</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Coût du système ($)</label>
+            <LabelAvecInfoBulle texte="Coût du système ($)" cle="coutSysteme" />
             <input
               type="number"
               value={parametresSystemeAutomatise.coutSysteme}
@@ -180,7 +200,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût d'installation ($)</label>
+            <LabelAvecInfoBulle texte="Coût d'installation ($)" cle="coutInstallation" />
             <input
               type="number"
               value={parametresSystemeAutomatise.coutInstallation}
@@ -195,7 +215,7 @@ const ParametresSystemeAutomatise = ({
         
         <div className="grid grid-cols-2 gap-4 mt-2">
           <div>
-            <label className="block text-sm font-medium mb-1">Coût d'ingénierie ($)</label>
+            <LabelAvecInfoBulle texte="Coût d'ingénierie ($)" cle="coutIngenierie" />
             <input
               type="number"
               value={parametresSystemeAutomatise.coutIngenierie}
@@ -207,7 +227,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût de formation ($)</label>
+            <LabelAvecInfoBulle texte="Coût de formation ($)" cle="coutFormation" />
             <input
               type="number"
               value={parametresSystemeAutomatise.coutFormation}
@@ -221,7 +241,7 @@ const ParametresSystemeAutomatise = ({
         </div>
         
         <div className="mt-2">
-          <label className="block text-sm font-medium mb-1">Subventions ($)</label>
+          <LabelAvecInfoBulle texte="Subventions ($)" cle="subventions" />
           <input
             type="number"
             value={parametresSystemeAutomatise.subventions}
@@ -247,7 +267,7 @@ const ParametresSystemeAutomatise = ({
         <h3 className="font-medium text-gray-700 mb-2">Coûts d'exploitation</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Maintenance annuelle ($)</label>
+            <LabelAvecInfoBulle texte="Maintenance annuelle ($)" cle="coutMaintenance" />
             <input
               type="number"
               value={parametresSystemeAutomatise.coutMaintenance}
@@ -259,7 +279,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Énergie annuelle ($)</label>
+            <LabelAvecInfoBulle texte="Énergie annuelle ($)" cle="coutEnergie" />
             <input
               type="number"
               value={parametresSystemeAutomatise.coutEnergie}
@@ -277,7 +297,7 @@ const ParametresSystemeAutomatise = ({
         <h3 className="font-medium text-gray-700 mb-2">Amortissement</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Durée de vie (années)</label>
+            <LabelAvecInfoBulle texte="Durée de vie (années)" cle="dureeVie" />
             <input
               type="number"
               value={parametresSystemeAutomatise.dureeVie}
@@ -289,7 +309,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Taux d'amortissement (%)</label>
+            <LabelAvecInfoBulle texte="Taux d'amortissement (%)" cle="tauxAmortissement" />
             <input
               type="number"
               step="0.1"
@@ -308,7 +328,7 @@ const ParametresSystemeAutomatise = ({
         <h3 className="font-medium text-gray-700 mb-2">Économies d'énergie et ressources</h3>
         <div className="grid grid-cols-2 gap-4 mb-2">
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction énergie (%)</label>
+            <LabelAvecInfoBulle texte="Réduction énergie (%)" cle="reductionEnergie" />
             <input
               type="number"
               step="0.1"
@@ -321,7 +341,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût énergie par tonne ($)</label>
+            <LabelAvecInfoBulle texte="Coût énergie par tonne ($)" cle="coutEnergieTonne" />
             <input
               type="number"
               step="0.01"
@@ -336,7 +356,7 @@ const ParametresSystemeAutomatise = ({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction eau (%)</label>
+            <LabelAvecInfoBulle texte="Réduction eau (%)" cle="reductionEau" />
             <input
               type="number"
               step="0.1"
@@ -349,7 +369,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût eau par tonne ($)</label>
+            <LabelAvecInfoBulle texte="Coût eau par tonne ($)" cle="coutEauTonne" />
             <input
               type="number"
               step="0.01"
@@ -368,7 +388,7 @@ const ParametresSystemeAutomatise = ({
         <h3 className="font-medium text-gray-700 mb-2">Réduction des déchets</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction déchets (%)</label>
+            <LabelAvecInfoBulle texte="Réduction déchets (%)" cle="reductionDechet" />
             <input
               type="number"
               step="0.1"
@@ -381,7 +401,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût par tonne de déchet ($)</label>
+            <LabelAvecInfoBulle texte="Coût par tonne de déchet ($)" cle="coutDechet" />
             <input
               type="number"
               step="0.01"
@@ -400,7 +420,7 @@ const ParametresSystemeAutomatise = ({
         <h3 className="font-medium text-gray-700 mb-2">Sécurité et qualité</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Réduction accidents (%)</label>
+            <LabelAvecInfoBulle texte="Réduction accidents (%)" cle="reductionAccidents" />
             <input
               type="number"
               step="0.1"
@@ -413,7 +433,7 @@ const ParametresSystemeAutomatise = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Amélioration qualité (%)</label>
+            <LabelAvecInfoBulle texte="Amélioration qualité (%)" cle="ameliorationQualite" />
             <input
               type="number"
               step="0.1"
@@ -431,7 +451,7 @@ const ParametresSystemeAutomatise = ({
       <div>
         <h3 className="font-medium text-gray-700 mb-2">Impact environnemental</h3>
         <div>
-          <label className="block text-sm font-medium mb-1">Réduction empreinte CO2 (%)</label>
+          <LabelAvecInfoBulle texte="Réduction empreinte CO2 (%)" cle="reductionEmpreinteCO2" />
           <input
             type="number"
             step="0.1"
