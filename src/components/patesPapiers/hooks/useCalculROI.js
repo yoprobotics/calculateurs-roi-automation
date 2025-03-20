@@ -18,17 +18,101 @@ const useCalculROI = (
   const [resultats, setResultats] = useState({
     fluxTresorerie: [],
     roi: 0,
+    roiActualise: 0,
     delaiRecuperation: 0,
+    delaiRecuperationActualise: 0,
     van: 0,
     tri: 0,
+    indiceRentabilite: 0,
     economiesCO2: 0,
     differenceProduction: 0,
     economieAnnuelle: 0,
     reductionMainOeuvre: 0,
     economiesSecurite: 0,
     economiesQualite: 0,
-    economiesTempsArret: 0
+    economiesTempsArret: 0,
+    parametresOperationnels: {
+      tempsCycleActuel: 0,
+      tempsCycleAutomatise: 0,
+      gainProductivite: 0,
+      heuresOperationAnnuelles: 0,
+      coutParBallotActuel: 0,
+      coutParBallotAutomatise: 0,
+      economieParBallot: 0,
+      tco: 0 // Total Cost of Ownership
+    }
   });
+  
+  /**
+   * Calcule le TRI en utilisant la méthode de Newton-Raphson
+   * @param {Array} fluxTresorerie - Tableau des flux de trésorerie par année
+   * @param {Number} investissementInitial - Montant de l'investissement initial
+   * @returns {Number} TRI calculé
+   */
+  const calculerTRI = (fluxTresorerie, investissementInitial) => {
+    // Fonction pour calculer la VAN à un taux donné
+    const calculerVAN = (taux) => {
+      let van = -investissementInitial;
+      for (let t = 0; t < fluxTresorerie.length; t++) {
+        van += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + taux, t + 1);
+      }
+      return van;
+    };
+    
+    // Fonction pour la dérivée de la VAN
+    const calculerDeriveeVAN = (taux) => {
+      let derivee = 0;
+      for (let t = 0; t < fluxTresorerie.length; t++) {
+        derivee -= (t + 1) * fluxTresorerie[t].fluxAnnuel / Math.pow(1 + taux, t + 2);
+      }
+      return derivee;
+    };
+    
+    // Vérifier si une solution existe
+    const fluxPositifs = fluxTresorerie.some(flux => flux.fluxAnnuel > 0);
+    const fluxNegatifs = fluxTresorerie.some(flux => flux.fluxAnnuel < 0);
+    
+    if (!fluxPositifs || !fluxNegatifs && investissementInitial > 0) {
+      return null; // Pas de solution TRI
+    }
+    
+    // Méthode de Newton-Raphson
+    let taux = 0.1; // Estimation initiale
+    const MAX_ITERATIONS = 100;
+    const PRECISION = 0.0001;
+    
+    for (let i = 0; i < MAX_ITERATIONS; i++) {
+      const van = calculerVAN(taux);
+      if (Math.abs(van) < PRECISION) {
+        return taux * 100; // Convertir en pourcentage
+      }
+      
+      const derivee = calculerDeriveeVAN(taux);
+      if (Math.abs(derivee) < PRECISION) {
+        break; // Éviter division par zéro
+      }
+      
+      const nouveauTaux = taux - van / derivee;
+      if (Math.abs(nouveauTaux - taux) < PRECISION) {
+        return nouveauTaux * 100; // Convertir en pourcentage
+      }
+      
+      taux = nouveauTaux;
+    }
+    
+    // Méthode de repli - approximation itérative si Newton-Raphson échoue
+    for (let r = 1; r <= 100; r++) {
+      let npv = -investissementInitial;
+      for (let t = 0; t < fluxTresorerie.length; t++) {
+        npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + r / 100, t + 1);
+      }
+      if (npv <= 0) {
+        return r - 1 + (Math.abs(npv) / (Math.abs(npv) + Math.abs(calculerVAN((r - 1) / 100))));
+      }
+    }
+    
+    return null; // Pas de solution trouvée
+  };
   
   // Fonction de calcul des résultats
   const calculerROI = () => {
@@ -58,10 +142,15 @@ const useCalculROI = (
     // Initialisation des variables
     let fluxTresorerie = [];
     let cumulFluxTresorerie = 0;
+    let cumulFluxActualises = 0;
     let valeurActuelleNette = -investissementInitial;
     let periodeRecuperation = dureeVie;
+    let periodeRecuperationActualisee = dureeVie;
     let recuperationAtteinte = false;
+    let recuperationActualiseeAtteinte = false;
     let totalTonnesCO2Economisees = 0;
+    let totalBeneficesActualises = 0;
+    let totalCoutsOperationnels = 0;
     
     // Calcul du nombre d'heures d'opération par an
     const heuresOperationAnnuelles = heuresOperationParJour * joursOperationParAn;
@@ -70,6 +159,11 @@ const useCalculROI = (
     const productionActuelle = capacite * heuresOperationAnnuelles * (1 - perteProduction / 100);
     const productionAutomatisee = capaciteTraitement * heuresOperationAnnuelles;
     const differenceProductionCalc = productionAutomatisee - productionActuelle;
+    
+    // Calcul des temps de cycle
+    const tempsCycleActuel = 3600 / capacite; // secondes par ballot
+    const tempsCycleAutomatise = 3600 / capaciteTraitement; // secondes par ballot
+    const gainProductivite = ((capaciteTraitement - capacite) / capacite) * 100;
     
     // Calcul des économies d'accidents
     const economiesAccidents = (frequenceAccident * coutMoyenAccident * reductionAccidents / 100);
@@ -83,6 +177,25 @@ const useCalculROI = (
     
     // Variable pour stocker le bénéfice de qualité de la dernière année (pour l'affichage)
     let dernierBeneficeQualite = 0;
+    
+    // Calcul des coûts par ballot
+    const ballotsAnnuelsActuels = productionActuelle;
+    const ballotsAnnuelsAutomatises = productionAutomatisee;
+    
+    // Coûts opérationnels annuels du système actuel
+    const coutOperationnelActuel = maintenanceActuelle + energieActuelle + (nombreEmployes * coutMainOeuvre) + 
+                                 (frequenceAccident * coutMoyenAccident);
+    
+    // Coûts opérationnels annuels du système automatisé
+    const coutOperationnelAutomatise = coutMaintenance + coutEnergie + ((nombreEmployes - nbEmployesRemplaces) * coutMainOeuvre) + 
+                                     (frequenceAccident * coutMoyenAccident * (1 - reductionAccidents/100));
+    
+    const coutParBallotActuel = coutOperationnelActuel / ballotsAnnuelsActuels;
+    const coutParBallotAutomatise = coutOperationnelAutomatise / ballotsAnnuelsAutomatises;
+    const economieParBallot = coutParBallotActuel - coutParBallotAutomatise;
+    
+    // Total Cost of Ownership sur la durée de vie
+    let tco = investissementInitial;
     
     // Calcul des économies annuelles et bénéfices
     for (let annee = 1; annee <= dureeVie; annee++) {
@@ -147,8 +260,9 @@ const useCalculROI = (
       
       // Mise à jour de la VAN
       valeurActuelleNette += fluxActualise;
+      totalBeneficesActualises += fluxActualise;
       
-      // Calcul du délai de récupération
+      // Calcul du délai de récupération simple
       cumulFluxTresorerie += fluxAnnuel;
       if (cumulFluxTresorerie >= investissementInitial && !recuperationAtteinte) {
         const cumulPrecedent = cumulFluxTresorerie - fluxAnnuel;
@@ -157,12 +271,28 @@ const useCalculROI = (
         recuperationAtteinte = true;
       }
       
+      // Calcul du délai de récupération actualisé
+      cumulFluxActualises += fluxActualise;
+      if (cumulFluxActualises >= investissementInitial && !recuperationActualiseeAtteinte) {
+        const cumulActualisePrecedent = cumulFluxActualises - fluxActualise;
+        const fractionAnneeActualisee = (investissementInitial - cumulActualisePrecedent) / fluxActualise;
+        periodeRecuperationActualisee = annee - 1 + fractionAnneeActualisee;
+        recuperationActualiseeAtteinte = true;
+      }
+      
+      // Mise à jour du TCO
+      const coutOperationnelAnnuel = maintenanceAnnuelle + energieOperationAnnuelle + 
+                                  ((nombreEmployes - nbEmployesRemplaces) * coutMainOeuvre * facteurInflation);
+      tco += coutOperationnelAnnuel / facteurActualisation; // Actualisation des coûts opérationnels
+      totalCoutsOperationnels += coutOperationnelAnnuel / facteurActualisation;
+      
       // Ajout des résultats annuels
       fluxTresorerie.push({
         annee,
         fluxAnnuel,
         fluxActualise,
         cumulFluxTresorerie,
+        cumulFluxActualises,
         economiePersonnel,
         economieDechet,
         economieMaintenance,
@@ -181,40 +311,49 @@ const useCalculROI = (
       });
     }
     
-    // Calcul du ROI
+    // Calcul du ROI simple
     const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
     const roiCalcule = (totalBenefices / investissementInitial) * 100;
     
-    // Calcul du TRI (approximation simplifiée)
-    let triApprox = 0;
-    for (let r = 1; r <= 100; r++) {
-      let npv = -investissementInitial;
-      for (let t = 0; t < fluxTresorerie.length; t++) {
-        npv += fluxTresorerie[t].fluxAnnuel / Math.pow(1 + r / 100, t + 1);
-      }
-      if (npv <= 0) {
-        triApprox = r - 1;
-        break;
-      }
-    }
+    // Calcul du ROI actualisé
+    const roiActualise = (totalBeneficesActualises / investissementInitial) * 100;
+    
+    // Calcul du TRI avec la méthode améliorée
+    const triCalcule = calculerTRI(fluxTresorerie, investissementInitial);
     
     // Calcul de l'économie annuelle moyenne
     const economieAnnuelleCalc = totalBenefices / dureeVie;
+    
+    // Calcul de l'indice de rentabilité (IR) = VAN / Investissement initial
+    const indiceRentabilite = valeurActuelleNette / investissementInitial;
     
     // Mise à jour des résultats
     setResultats({
       fluxTresorerie,
       roi: roiCalcule,
+      roiActualise: roiActualise,
       delaiRecuperation: periodeRecuperation,
+      delaiRecuperationActualise: periodeRecuperationActualisee,
       van: valeurActuelleNette,
-      tri: triApprox,
+      tri: triCalcule !== null ? triCalcule : 0,
+      indiceRentabilite: indiceRentabilite,
       economiesCO2: totalTonnesCO2Economisees,
       differenceProduction: differenceProductionCalc,
       economieAnnuelle: economieAnnuelleCalc,
       reductionMainOeuvre: reductionMainOeuvreCalc,
       economiesSecurite: economiesAccidents,
       economiesQualite: dernierBeneficeQualite,
-      economiesTempsArret: economiesTempsArretCalc
+      economiesTempsArret: economiesTempsArretCalc,
+      parametresOperationnels: {
+        tempsCycleActuel: tempsCycleActuel,
+        tempsCycleAutomatise: tempsCycleAutomatise,
+        gainProductivite: gainProductivite,
+        heuresOperationAnnuelles: heuresOperationAnnuelles,
+        coutParBallotActuel: coutParBallotActuel,
+        coutParBallotAutomatise: coutParBallotAutomatise,
+        economieParBallot: economieParBallot,
+        tco: tco
+      }
     });
   };
   

@@ -10,11 +10,18 @@ import React from 'react';
  */
 const ResultatsSommaire = ({ resultats, parametresSystemeActuel, parametresSystemeAutomatise }) => {
   const { 
-    roi, delaiRecuperation, van, tri, economieAnnuelle, economiesSecurite, economiesTempsArret 
+    roi, roiActualise, delaiRecuperation, delaiRecuperationActualise, van, tri, indiceRentabilite,
+    economieAnnuelle, economiesSecurite, economiesTempsArret 
   } = resultats;
   
   const { capacite: capaciteActuelle } = parametresSystemeActuel;
-  const { capaciteTraitement, nbEmployesRemplaces, reductionAccidents } = parametresSystemeAutomatise;
+  const { 
+    capaciteTraitement, 
+    nbEmployesRemplaces, 
+    reductionAccidents, 
+    reductionDechet,
+    reductionEmpreinteCO2
+  } = parametresSystemeAutomatise;
   
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -27,14 +34,28 @@ const ResultatsSommaire = ({ resultats, parametresSystemeActuel, parametresSyste
       
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-green-50 p-3 rounded">
-          <h3 className="text-sm font-medium text-gray-700">ROI global</h3>
+          <h3 className="text-sm font-medium text-gray-700">ROI simple</h3>
           <p className="text-2xl font-bold text-green-800">{roi.toFixed(2)}%</p>
+          <p className="text-xs text-gray-500 mt-1">Non actualisé</p>
+        </div>
+        <div className="bg-green-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">ROI actualisé</h3>
+          <p className="text-2xl font-bold text-green-700">{roiActualise.toFixed(2)}%</p>
+          <p className="text-xs text-gray-500 mt-1">Tenant compte de la valeur temporelle</p>
         </div>
         <div className="bg-blue-50 p-3 rounded">
           <h3 className="text-sm font-medium text-gray-700">Délai de récupération</h3>
           <p className={`text-2xl font-bold ${delaiRecuperation <= 2 ? 'text-green-600' : 'text-blue-800'}`}>
             {delaiRecuperation.toFixed(2)} ans
           </p>
+          <p className="text-xs text-gray-500 mt-1">Non actualisé</p>
+        </div>
+        <div className="bg-blue-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">Délai de récup. actualisé</h3>
+          <p className={`text-2xl font-bold ${delaiRecuperationActualise <= 2.5 ? 'text-green-600' : 'text-blue-700'}`}>
+            {delaiRecuperationActualise.toFixed(2)} ans
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Tenant compte de la valeur temporelle</p>
         </div>
         <div className="bg-purple-50 p-3 rounded">
           <h3 className="text-sm font-medium text-gray-700">VAN</h3>
@@ -44,7 +65,7 @@ const ResultatsSommaire = ({ resultats, parametresSystemeActuel, parametresSyste
         </div>
         <div className="bg-indigo-50 p-3 rounded">
           <h3 className="text-sm font-medium text-gray-700">TRI</h3>
-          <p className="text-2xl font-bold text-indigo-800">{tri.toFixed(2)}%</p>
+          <p className="text-2xl font-bold text-indigo-800">{tri ? tri.toFixed(2) : "N/A"}%</p>
         </div>
       </div>
       
@@ -54,6 +75,13 @@ const ResultatsSommaire = ({ resultats, parametresSystemeActuel, parametresSyste
           <p className="text-2xl font-bold text-yellow-700">
             {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(economieAnnuelle)}
           </p>
+        </div>
+        <div className="flex-1 bg-emerald-50 p-3 rounded">
+          <h3 className="text-sm font-medium text-gray-700">Indice de rentabilité</h3>
+          <p className={`text-2xl font-bold ${indiceRentabilite >= 1.5 ? 'text-emerald-700' : 'text-emerald-600'}`}>
+            {indiceRentabilite.toFixed(2)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">VAN / Investissement</p>
         </div>
       </div>
       
@@ -77,6 +105,18 @@ const ResultatsSommaire = ({ resultats, parametresSystemeActuel, parametresSyste
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
             <span>Réduction des accidents de <strong>{reductionAccidents}%</strong></span>
+          </div>
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Réduction des déchets de <strong>{reductionDechet}%</strong></span>
+          </div>
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Réduction de l'empreinte CO₂ de <strong>{reductionEmpreinteCO2}%</strong></span>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import ParametresBase from '../ParametresBase';
 import ParametresAvances from '../ParametresAvances';
 import ResultatsSommaire from '../ResultatsSommaire';
+import ParametresOperationnels from '../ParametresOperationnels';
 
 /**
  * Composant pour l'onglet Vue générale
@@ -42,6 +43,14 @@ const VueGenerale = ({
           parametresSystemeAutomatise={parametresSystemeAutomatise}
         />
       </div>
+      
+      {/* Paramètres opérationnels clés (toujours visibles) */}
+      <ParametresOperationnels
+        resultats={resultats}
+        parametresGeneraux={parametresGeneraux}
+        parametresSystemeActuel={parametresSystemeActuel}
+        parametresSystemeAutomatise={parametresSystemeAutomatise}
+      />
       
       {/* Paramètres avancés - affichage conditionnel */}
       {ui.afficherDetails && (
