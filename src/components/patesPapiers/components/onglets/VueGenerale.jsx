@@ -2,7 +2,7 @@ import React from 'react';
 import ParametresBase from '../ParametresBase';
 import ParametresAvances from '../ParametresAvances';
 import ResultatsSommaire from '../ResultatsSommaire';
-import ParametresOperationnels from '../ParametresOperationnels';
+import ParametresSystemeAutomatise from '../ParametresSystemeAutomatise';
 
 /**
  * Composant pour l'onglet Vue générale
@@ -24,6 +24,7 @@ const VueGenerale = ({
 }) => {
   return (
     <>
+      {/* Première rangée: Paramètres + Résultats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         {/* Paramètres de base */}
         <ParametresBase
@@ -44,13 +45,14 @@ const VueGenerale = ({
         />
       </div>
       
-      {/* Paramètres opérationnels clés (toujours visibles) */}
-      <ParametresOperationnels
-        resultats={resultats}
-        parametresGeneraux={parametresGeneraux}
-        parametresSystemeActuel={parametresSystemeActuel}
-        parametresSystemeAutomatise={parametresSystemeAutomatise}
-      />
+      {/* Deuxième rangée: Paramètres système automatisé */}
+      <div className="mb-8">
+        <ParametresSystemeAutomatise
+          parametresSystemeAutomatise={parametresSystemeAutomatise}
+          parametresGeneraux={parametresGeneraux}
+          setParametresSystemeAutomatise={setParametresSystemeAutomatise}
+        />
+      </div>
       
       {/* Paramètres avancés - affichage conditionnel */}
       {ui.afficherDetails && (
