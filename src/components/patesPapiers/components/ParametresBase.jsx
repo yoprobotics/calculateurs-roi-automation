@@ -124,6 +124,36 @@ const ParametresBase = ({
           </div>
         </div>
         
+        {/* Perte de production et taux de rejet */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Taux de rejet (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeActuel.tauxRejets}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                tauxRejets: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Perte de production (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeActuel.perteProduction}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                perteProduction: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        
         {/* Paramètres opérationnels clés */}
         <div className="bg-gray-50 rounded-lg p-3 mb-4">
           <h4 className="text-sm font-medium text-gray-700 mb-2">Indicateurs opérationnels</h4>
@@ -137,6 +167,80 @@ const ParametresBase = ({
               <div className="text-sm font-medium">${parametresOperationnels.coutParBallot.toFixed(2)}</div>
             </div>
           </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Personnel</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Nombre d'employés (ETP)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeActuel.nombreEmployes}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                nombreEmployes: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Coût annuel par employé ($)</label>
+            <input
+              type="number"
+              value={parametresSystemeActuel.coutMainOeuvre || 55000}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                coutMainOeuvre: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Sécurité et accidents</h3>
+        <div className="grid grid-cols-2 gap-4 mb-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">Fréquence accidents/an</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeActuel.frequenceAccident}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                frequenceAccident: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Coût moyen par accident ($)</label>
+            <input
+              type="number"
+              value={parametresSystemeActuel.coutMoyenAccident}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                coutMoyenAccident: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Temps d'arrêt par accident (heures)</label>
+          <input
+            type="number"
+            value={parametresSystemeActuel.tempsArretAccident}
+            onChange={(e) => setParametresSystemeActuel({
+              ...parametresSystemeActuel,
+              tempsArretAccident: Number(e.target.value)
+            })}
+            className="w-full p-2 border rounded"
+          />
         </div>
       </div>
       
@@ -232,6 +336,38 @@ const ParametresBase = ({
       </div>
       
       <div>
+        <h3 className="font-medium text-gray-700 mb-2">Paramètres financiers</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Taux d'inflation (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresGeneraux.tauxInflation}
+              onChange={(e) => setParametresGeneraux({
+                ...parametresGeneraux,
+                tauxInflation: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Taux d'actualisation (%)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={parametresGeneraux.tauxActualisation}
+              onChange={(e) => setParametresGeneraux({
+                ...parametresGeneraux,
+                tauxActualisation: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-6">
         <button 
           onClick={toggleDetails}
           className="flex items-center text-sm font-medium text-green-700 hover:text-green-800 transition-colors"
