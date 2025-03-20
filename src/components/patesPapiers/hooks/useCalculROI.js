@@ -185,6 +185,11 @@ const useCalculROI = (
       erreurs.dureeVie = "La durée de vie doit être supérieure à 0";
     }
 
+    // Validation des employés remplacés
+    if (parametresSystemeAutomatise.nbEmployesRemplaces > parametresSystemeActuel.nombreEmployes) {
+      erreurs.nbEmployesRemplaces = "Le nombre d'employés remplacés ne peut pas dépasser le nombre total d'employés actuel";
+    }
+
     return erreurs;
   };
   
@@ -205,7 +210,7 @@ const useCalculROI = (
 
     const {
       coutSysteme, coutInstallation, coutIngenierie, coutFormation, coutMaintenance, 
-      coutEnergie, dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
+      coutEnergie, coutEau = 0, dureeVie, tauxAmortissement, coutMainOeuvre, nbEmployesRemplaces,
       reductionDechet, coutDechet, augmentationProduction, reductionEnergie,
       coutEnergieTonne, reductionEau, coutEauTonne, ameliorationQualite,
       reductionEmpreinteCO2, capaciteTraitement, tauxRejets, reductionAccidents,
@@ -214,7 +219,7 @@ const useCalculROI = (
 
     const {
       capacite, nombreEmployes, maintenance: maintenanceActuelle, 
-      energie: energieActuelle, perteProduction, tauxRejets: tauxRejetsManuel,
+      energie: energieActuelle, coutEau: coutEauActuel = 0, perteProduction, tauxRejets: tauxRejetsManuel,
       frequenceAccident, coutMoyenAccident, tempsArretAccident
     } = parametresSystemeActuel;
 
@@ -270,11 +275,13 @@ const useCalculROI = (
     const ballotsAnnuelsAutomatises = productionAutomatisee;
     
     // Coûts opérationnels annuels du système actuel
-    const coutOperationnelActuel = maintenanceActuelle + energieActuelle + (nombreEmployes * coutMainOeuvre) + 
+    const coutOperationnelActuel = maintenanceActuelle + energieActuelle + coutEauActuel +
+                                 (nombreEmployes * coutMainOeuvre) + 
                                  (frequenceAccident * coutMoyenAccident);
     
     // Coûts opérationnels annuels du système automatisé
-    const coutOperationnelAutomatise = coutMaintenance + coutEnergie + ((nombreEmployes - nbEmployesRemplaces) * coutMainOeuvre) + 
+    const coutOperationnelAutomatise = coutMaintenance + coutEnergie + coutEau +
+                                     ((nombreEmployes - nbEmployesRemplaces) * coutMainOeuvre) + 
                                      (frequenceAccident * coutMoyenAccident * (1 - reductionAccidents/100));
     
     const coutParBallotActuel = ballotsAnnuelsActuels > 0 ? coutOperationnelActuel / ballotsAnnuelsActuels : 0;
@@ -292,11 +299,14 @@ const useCalculROI = (
       const maintenanceActuelleAjustee = maintenanceActuelle * facteurInflation;
       const energieOperationAnnuelle = coutEnergie * facteurInflation;
       const energieActuelleAjustee = energieActuelle * facteurInflation;
+      const eauOperationAnnuelle = coutEau * facteurInflation;
+      const eauActuelleAjustee = coutEauActuel * facteurInflation;
       
       // Calcul des économies
       const economiePersonnel = reductionMainOeuvreCalc * facteurInflation;
       const economieMaintenance = maintenanceActuelleAjustee - maintenanceAnnuelle;
       const economieEnergie = energieActuelleAjustee - energieOperationAnnuelle;
+      const economieEauDirecte = eauActuelleAjustee - eauOperationAnnuelle;
       
       // Économies liées à la réduction des déchets
       const tonnageDechetReduit = (tonnageAnnuel * reductionDechet) / 100;
@@ -336,10 +346,10 @@ const useCalculROI = (
       
       // Calcul du flux de trésorerie annuel
       const fluxAnnuel = economiePersonnel + economieDechet + economieMaintenance + economieEnergie + 
-                       economieEnergieProcessus + economieEau + economieRejets +
+                       economieEnergieProcessus + economieEau + economieRejets + economieEauDirecte +
                        beneficeSupplementaire + beneficeQualite + 
                        economieSecuriteAjustee + economieTempsArretAjustee - 
-                       maintenanceAnnuelle - energieOperationAnnuelle + amortissement;
+                       maintenanceAnnuelle - energieOperationAnnuelle - eauOperationAnnuelle + amortissement;
       
       // Calcul du flux de trésorerie actualisé
       const facteurActualisation = Math.pow(1 + tauxActualisation / 100, annee);
@@ -368,7 +378,7 @@ const useCalculROI = (
       }
       
       // Mise à jour du TCO
-      const coutOperationnelAnnuel = maintenanceAnnuelle + energieOperationAnnuelle + 
+      const coutOperationnelAnnuel = maintenanceAnnuelle + energieOperationAnnuelle + eauOperationAnnuelle +
                                   ((nombreEmployes - nbEmployesRemplaces) * coutMainOeuvre * facteurInflation);
       tco += coutOperationnelAnnuel / facteurActualisation; // Actualisation des coûts opérationnels
       totalCoutsOperationnels += coutOperationnelAnnuel / facteurActualisation;
@@ -386,6 +396,7 @@ const useCalculROI = (
         economieEnergie,
         economieEnergieProcessus,
         economieEau,
+        economieEauDirecte,
         beneficeSupplementaire,
         beneficeQualite,
         economieRejets,
@@ -393,6 +404,7 @@ const useCalculROI = (
         economieTempsArretAjustee,
         maintenanceAnnuelle,
         energieOperationAnnuelle,
+        eauOperationAnnuelle,
         amortissement,
         tonnesCO2Economisees
       });
@@ -400,10 +412,10 @@ const useCalculROI = (
     
     // Calcul du ROI simple
     const totalBenefices = fluxTresorerie.reduce((sum, item) => sum + item.fluxAnnuel, 0);
-    const roiCalcule = (totalBenefices / investissementInitial) * 100;
+    const roiCalcule = investissementInitial > 0 ? (totalBenefices / investissementInitial) * 100 : 0;
     
     // Calcul du ROI actualisé
-    const roiActualise = (totalBeneficesActualises / investissementInitial) * 100;
+    const roiActualise = investissementInitial > 0 ? (totalBeneficesActualises / investissementInitial) * 100 : 0;
     
     // Calcul du TRI avec la méthode améliorée
     const triCalcule = calculerTRI(fluxTresorerie, investissementInitial);
@@ -412,7 +424,7 @@ const useCalculROI = (
     const economieAnnuelleCalc = totalBenefices / dureeVie;
     
     // Calcul de l'indice de rentabilité (IR) = VAN / Investissement initial
-    const indiceRentabilite = valeurActuelleNette / investissementInitial;
+    const indiceRentabilite = investissementInitial > 0 ? valeurActuelleNette / investissementInitial : 0;
     
     // Mise à jour des résultats
     setResultats({
