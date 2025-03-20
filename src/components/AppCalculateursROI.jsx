@@ -5,7 +5,7 @@ import Footer from './common/Footer';
 import Disclaimer from './common/Disclaimer';
 import DisclaimerModal from './common/DisclaimerModal';
 import CalculateurGeneral from './calculateurs/general/CalculateurGeneral';
-import CalculateurPatesPapiers from './calculateurs/patespapiers/CalculateurPatesPapiers';
+import CalculateurPatesPapiers from './patesPapiers'; // Import de la version modulaire
 
 /**
  * Composant principal de l'application
