@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import InfoBulle from './common/InfoBulle';
+import definitionsInfoBulles from '../utils/definitionsInfoBulles';
 
 /**
  * Composant pour les paramètres de base du calculateur
@@ -14,6 +16,9 @@ const ParametresBase = ({
   setParametresGeneraux,
   toggleDetails
 }) => {
+  // Accès aux définitions des info-bulles
+  const { systemeActuel, parametresGeneraux: defGeneraux } = definitionsInfoBulles;
+  
   // Calcul des paramètres opérationnels dérivés
   const parametresOperationnels = useMemo(() => {
     // Temps de cycle en secondes par ballot
@@ -54,6 +59,21 @@ const ParametresBase = ({
       coutParBallot
     };
   }, [parametresSystemeActuel, parametresGeneraux]);
+  
+  /**
+   * Helper pour créer un label avec une info-bulle
+   * @param {String} texte - Texte du label
+   * @param {String} cle - Clé pour la définition de l'info-bulle
+   * @returns {JSX.Element} Label avec info-bulle
+   */
+  const LabelAvecInfoBulle = ({ texte, cle, categorie = 'systemeActuel' }) => (
+    <label className="block text-sm font-medium mb-1 flex items-center">
+      {texte}
+      <span className="ml-1">
+        <InfoBulle texte={definitionsInfoBulles[categorie][cle]} />
+      </span>
+    </label>
+  );
   
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -105,7 +125,7 @@ const ParametresBase = ({
         {/* Paramètres de capacité avec temps de cycle correspondant */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Capacité (ballots/heure)</label>
+            <LabelAvecInfoBulle texte="Capacité (ballots/heure)" cle="capacite" />
             <input
               type="number"
               value={parametresSystemeActuel.capacite}
@@ -117,7 +137,7 @@ const ParametresBase = ({
             />
           </div>
           <div className="flex flex-col">
-            <label className="block text-sm font-medium mb-1">Temps de cycle</label>
+            <LabelAvecInfoBulle texte="Temps de cycle" cle="tempsCycle" />
             <div className="flex items-center h-10 px-3 bg-gray-100 rounded text-gray-800 font-medium">
               {parametresOperationnels.tempsCycle.toFixed(1)} secondes / ballot
             </div>
@@ -127,7 +147,7 @@ const ParametresBase = ({
         {/* Perte de production et taux de rejet */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Taux de rejet (%)</label>
+            <LabelAvecInfoBulle texte="Taux de rejet (%)" cle="tauxRejets" />
             <input
               type="number"
               step="0.1"
@@ -140,7 +160,7 @@ const ParametresBase = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Perte de production (%)</label>
+            <LabelAvecInfoBulle texte="Perte de production (%)" cle="perteProduction" />
             <input
               type="number"
               step="0.1"
@@ -159,11 +179,11 @@ const ParametresBase = ({
           <h4 className="text-sm font-medium text-gray-700 mb-2">Indicateurs opérationnels</h4>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Ballots par jour</label>
+              <LabelAvecInfoBulle texte="Ballots par jour" cle="ballotsParJour" categorie="systemeActuel" />
               <div className="text-sm font-medium">{parametresOperationnels.ballotsParJour.toFixed(0)}</div>
             </div>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Coût par ballot</label>
+              <LabelAvecInfoBulle texte="Coût par ballot" cle="coutParBallot" categorie="systemeActuel" />
               <div className="text-sm font-medium">${parametresOperationnels.coutParBallot.toFixed(2)}</div>
             </div>
           </div>
@@ -174,7 +194,7 @@ const ParametresBase = ({
         <h3 className="font-medium text-gray-700 mb-2">Personnel</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Nombre d'employés (ETP)</label>
+            <LabelAvecInfoBulle texte="Nombre d'employés (ETP)" cle="nombreEmployes" />
             <input
               type="number"
               step="0.1"
@@ -187,7 +207,7 @@ const ParametresBase = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût annuel par employé ($)</label>
+            <LabelAvecInfoBulle texte="Coût annuel par employé ($)" cle="coutMainOeuvre" />
             <input
               type="number"
               value={parametresSystemeActuel.coutMainOeuvre || 55000}
@@ -205,7 +225,7 @@ const ParametresBase = ({
         <h3 className="font-medium text-gray-700 mb-2">Sécurité et accidents</h3>
         <div className="grid grid-cols-2 gap-4 mb-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Fréquence accidents/an</label>
+            <LabelAvecInfoBulle texte="Fréquence accidents/an" cle="frequenceAccident" />
             <input
               type="number"
               step="0.1"
@@ -218,7 +238,7 @@ const ParametresBase = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Coût moyen par accident ($)</label>
+            <LabelAvecInfoBulle texte="Coût moyen par accident ($)" cle="coutMoyenAccident" />
             <input
               type="number"
               value={parametresSystemeActuel.coutMoyenAccident}
@@ -231,7 +251,7 @@ const ParametresBase = ({
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Temps d'arrêt par accident (heures)</label>
+          <LabelAvecInfoBulle texte="Temps d'arrêt par accident (heures)" cle="tempsArretAccident" />
           <input
             type="number"
             value={parametresSystemeActuel.tempsArretAccident}
@@ -244,11 +264,91 @@ const ParametresBase = ({
         </div>
       </div>
       
+      {/* Ajout de la section Énergie et ressources */}
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Énergie et ressources</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <LabelAvecInfoBulle texte="Coût énergie annuel ($)" cle="energie" />
+            <input
+              type="number"
+              value={parametresSystemeActuel.energie}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                energie: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <LabelAvecInfoBulle texte="Coût eau annuel ($)" cle="coutEau" />
+            <input
+              type="number"
+              value={parametresSystemeActuel.coutEau || 0}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                coutEau: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Ajout de la section Impact environnemental */}
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Impact environnemental</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <LabelAvecInfoBulle texte="Coût par tonne de déchet ($)" cle="coutDechet" />
+            <input
+              type="number"
+              step="0.01"
+              value={parametresSystemeActuel.coutDechet || 0}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                coutDechet: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <LabelAvecInfoBulle texte="Émissions CO2 (tonnes/an)" cle="empreinteCO2" />
+            <input
+              type="number"
+              step="0.1"
+              value={parametresSystemeActuel.empreinteCO2 || 0}
+              onChange={(e) => setParametresSystemeActuel({
+                ...parametresSystemeActuel,
+                empreinteCO2: Number(e.target.value)
+              })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div className="mb-6">
+        <h3 className="font-medium text-gray-700 mb-2">Maintenance</h3>
+        <div>
+          <LabelAvecInfoBulle texte="Coût maintenance annuel ($)" cle="maintenance" />
+          <input
+            type="number"
+            value={parametresSystemeActuel.maintenance}
+            onChange={(e) => setParametresSystemeActuel({
+              ...parametresSystemeActuel,
+              maintenance: Number(e.target.value)
+            })}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+      </div>
+      
       <div className="mb-6">
         <h3 className="font-medium text-gray-700 mb-2">Temps d'opération</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Heures par jour</label>
+            <LabelAvecInfoBulle texte="Heures par jour" cle="heuresOperationParJour" categorie="parametresGeneraux" />
             <input
               type="number"
               value={parametresGeneraux.heuresOperationParJour}
@@ -260,7 +360,7 @@ const ParametresBase = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Jours par an</label>
+            <LabelAvecInfoBulle texte="Jours par an" cle="joursOperationParAn" categorie="parametresGeneraux" />
             <input
               type="number"
               value={parametresGeneraux.joursOperationParAn}
@@ -278,7 +378,7 @@ const ParametresBase = ({
         <h3 className="font-medium text-gray-700 mb-2">Données de production</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Tonnage annuel (tonnes)</label>
+            <LabelAvecInfoBulle texte="Tonnage annuel (tonnes)" cle="tonnageAnnuel" categorie="parametresGeneraux" />
             <input
               type="number"
               value={parametresGeneraux.tonnageAnnuel}
@@ -290,7 +390,7 @@ const ParametresBase = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Marge brute par tonne ($)</label>
+            <LabelAvecInfoBulle texte="Marge brute par tonne ($)" cle="margeBrute" categorie="parametresGeneraux" />
             <input
               type="number"
               step="0.01"
@@ -305,41 +405,11 @@ const ParametresBase = ({
         </div>
       </div>
       
-      <div className="mb-6">
-        <h3 className="font-medium text-gray-700 mb-2">Coûts d'exploitation</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Maintenance annuelle ($)</label>
-            <input
-              type="number"
-              value={parametresSystemeActuel.maintenance}
-              onChange={(e) => setParametresSystemeActuel({
-                ...parametresSystemeActuel,
-                maintenance: Number(e.target.value)
-              })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Énergie annuelle ($)</label>
-            <input
-              type="number"
-              value={parametresSystemeActuel.energie}
-              onChange={(e) => setParametresSystemeActuel({
-                ...parametresSystemeActuel,
-                energie: Number(e.target.value)
-              })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-        </div>
-      </div>
-      
       <div>
         <h3 className="font-medium text-gray-700 mb-2">Paramètres financiers</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Taux d'inflation (%)</label>
+            <LabelAvecInfoBulle texte="Taux d'inflation (%)" cle="tauxInflation" categorie="parametresGeneraux" />
             <input
               type="number"
               step="0.1"
@@ -352,7 +422,7 @@ const ParametresBase = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Taux d'actualisation (%)</label>
+            <LabelAvecInfoBulle texte="Taux d'actualisation (%)" cle="tauxActualisation" categorie="parametresGeneraux" />
             <input
               type="number"
               step="0.1"
