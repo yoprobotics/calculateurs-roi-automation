@@ -40,6 +40,7 @@ const VueGenerale = ({
         {/* Paramètres système automatisé */}
         <ParametresSystemeAutomatise
           parametresSystemeAutomatise={parametresSystemeAutomatise}
+          parametresSystemeActuel={parametresSystemeActuel}
           parametresGeneraux={parametresGeneraux}
           setParametresSystemeAutomatise={setParametresSystemeAutomatise}
         />
@@ -50,7 +51,9 @@ const VueGenerale = ({
         <div className="mb-8">
           <ParametresAvances
             parametresSystemeAutomatise={parametresSystemeAutomatise}
+            parametresGeneraux={parametresGeneraux}
             setParametresSystemeAutomatise={setParametresSystemeAutomatise}
+            setParametresGeneraux={setParametresGeneraux}
           />
         </div>
       )}
